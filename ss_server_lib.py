@@ -2,14 +2,13 @@
 import multiprocessing
 import time
 from os.path import isfile
-import numpy as np
+from shutil import copyfile
 import sqlite3
+import numpy as np
 
 # first party imports. Safe to use from x import *
-import shape_sifter_tools as ss
-import shape_sifter_clients
-import bb_client_lib as bb
-import taxidermist_lib
+import shape_sifter_tools.shape_sifter_tools as ss
+
 
 """ This file contains all of the shape sifter server specific functions.
 Common functions and classes used by more than the server are stored elsewhere."""
@@ -18,19 +17,22 @@ Common functions and classes used by more than the server are stored elsewhere."
 # TODO: Properly plan belt buckle timeouts and status changes
 
 
-class server_init:
+class ServerInit:
     """Write something here"""
 
     def __init__(self):
+
+        # get google drive directory
+        self.google_path = get_google_drive_path()
+
         # declarations and initializations. All objects ending with _const are NOT to be modified at run time!
-        self.server_settings_file_const = 'settings.ini'
-        self.server_log_file_const = 'log\\log_server.txt'
-        self.server_db_fname_const = 'db\\shape_sifter.sqlite'
-        self.server_db_template_const = 'db\\shape_sifter_template.sqlite'
-        self.part_log_fname_const = 'log\\part_log.txt'
-        self.active_part_table_const = ('active_part_db',)
+        self.server_settings_file_const = self.google_path + 'settings.ini'
+        self.server_log_file_const = self.google_path + 'log\\log_server.txt'
+        self.server_db_fname_const = self.google_path + 'db\\shape_sifter.sqlite'
+        self.server_db_template_const = self.google_path + 'db\\shape_sifter_template.sqlite'
+        self.part_log_fname_const = self.google_path + 'log\\part_log.txt'
+        self.active_part_table_const = ('active_part_db',)   # the fuck is this for? I think it's the name of the DB?
         self.prev_id = ''
-        self.jobs = []
 
         # create logger, default debug level. Level will be changed once config file is loaded
         self.logger = ss.create_logger(self.server_log_file_const, 'DEBUG')
@@ -42,7 +44,7 @@ class server_init:
             ss.create_server_config(self.server_settings_file_const)
 
         # load config file and assign values.
-        # TODO: Turn this into a function that verifies the settings and returns an object. It should also handle key exceptions
+        # TODO: Turn this into a function that verifies the settings and returns an object. It should also handle key exceptions. It should also log it's actions.
         self.server_config = ss.load_server_config(self.server_settings_file_const, self.logger)
         self.server_log_level = self.server_config['server']['log_level']
         self.server_bb_ack_timeout = self.server_config['server']['bb_ack_timeout']
@@ -50,6 +52,7 @@ class server_init:
         self.taxi_log_level = self.server_config['cf']['log_level']
         self.mtm_log_level = self.server_config['mtm']['log_level']
         self.cf_log_level = self.server_config['cf']['log_level']
+        self.suip_log_level = self.server_config['suip']['log_level']
 
         self.bb_com_port = self.server_config['bb']['com_port']
         self.bb_baud_rate = self.server_config['bb']['baud_rate']
@@ -71,62 +74,74 @@ class server_init:
         self.secondary_curr = self.active_part_db.cursor()
 
         # pipe from taxidermist to BB
+        # TODO: Remove this pipe. The taxidermist should not communicate directly with the belt buckle.
         self.pipe_bb_recv_taxi, self.pipe_taxi_send_bb = multiprocessing.Pipe(duplex=False)
-
-        # start taxidermist
+        
+        # taxi pipes
         self.pipe_taxi_recv_server, self.pipe_server_send_taxi = multiprocessing.Pipe(duplex=False)
         self.pipe_server_recv_taxi, self.pipe_taxi_send_server = multiprocessing.Pipe(duplex=False)
-        self.p1 = multiprocessing.Process(target=taxidermist_lib.taxidermist, args=(self.pipe_taxi_recv_server, self.pipe_taxi_send_server, self.pipe_taxi_send_bb, self.taxi_log_level))
-        self.jobs.append(self.p1)
-        self.taxi = self.p1.start()
-        self.logger.info('taxidermist started')
 
-        # Start mtmind simulator
+        # mt mind pipes
         self.pipe_mtm_recv_server, self.pipe_server_send_mtm = multiprocessing.Pipe(duplex=False)
         self.pipe_server_recv_mtm, self.pipe_mtm_send_server = multiprocessing.Pipe(duplex=False)
-        self.p2 = multiprocessing.Process(target=shape_sifter_clients.mt_mind_sim, args=(self.pipe_mtm_recv_server, self.pipe_mtm_send_server, self.mtm_log_level))
-        self.jobs.append(self.p2)
-        self.mtm = self.p2.start()
-        self.logger.info('mt_mind_sim started')
-
-        # start classifist
+        
+        # classifist pipes
         self.pipe_classifist_recv, self.pipe_server_send_cf = multiprocessing.Pipe(duplex=False)
         self.pipe_server_recv_cf, self.pipe_classifist_send = multiprocessing.Pipe(duplex=False)
-        self.p3 = multiprocessing.Process(target=shape_sifter_clients.classifist, args=(self.pipe_classifist_recv, self.pipe_classifist_send, self.server_db_fname_const, self.cf_log_level))
-        self.jobs.append(self.p3)
-        self.classifist = self.p3.start()
-        self.logger.info('classifist started')
-
-        # start belt buckle
+        
+        # belt buckle pipes
         self.pipe_bb_recv, self.pipe_server_send_bb = multiprocessing.Pipe(duplex=False)
         self.pipe_server_recv_bb, self.pipe_bb_send = multiprocessing.Pipe(duplex=False)
-        self.p4 = multiprocessing.Process(target=bb.belt_buckle_client,
-                                          args=(self.pipe_bb_recv, self.pipe_bb_send,
-                                                self.pipe_bb_recv_taxi,
-                                                self.bb_com_port, self.bb_baud_rate,
-                                                self.bb_log_level, self.bb_skip_handshake))
-        self.jobs.append(self.p4)
-        self.bb = self.p4.start()
-        self.logger.info('belt buckle started')
 
-        # # start the SUIP_er_simple
-        # pipe_suip_recv, pipe_server_send_suip = multiprocessing.Pipe(duplex=False)
-        # pipe_server_recv_suip, pipe_suip_send = multiprocessing.Pipe(duplex=False)
-        # p5 = multiprocessing.Process(target=shape_sifter_clients.suip_er_simple, args=())
-        # jobs.append(p5)
-        # dev_mule = p5.start()
-        # logger.info('SUIP started')
-
-        # start the SUIP
+        # suip pipes
         self.pipe_suip_recv, self.pipe_server_send_suip = multiprocessing.Pipe(duplex=False)
         self.pipe_server_recv_suip, self.pipe_suip_send = multiprocessing.Pipe(duplex=False)
-        self.p5 = multiprocessing.Process(target=shape_sifter_clients.suip, args=(self.pipe_suip_recv, self.pipe_suip_send, self.server_db_fname_const))
-        self.jobs.append(self.p5)
-        self.suip = self.p5.start()
-        self.logger.info('SUIP started')
+        
+
+class ClientParams:
+    """ For clients to get server config parameters. """
+
+    def __init__(self, server_init: ServerInit, client_type: str):
+        self.google_path = server_init.google_path
+        self.server_db_fname_const = server_init.server_db_fname_const
+        self.log_level = server_init.server_log_level                   # uses server log level if unspecified
+
+        if client_type == "taxi":
+            self.log_fname_const = "log\\log_taxi.txt"
+            self.log_level = server_init.taxi_log_level
+            self.pipe_recv = server_init.pipe_taxi_recv_server
+            self.pipe_send = server_init.pipe_taxi_send_server
+
+        if client_type == "mtmind":
+            self.log_fname_const = "log\\log_mtmind.txt"
+            self.log_level = server_init.mtm_log_level
+            self.pipe_recv = server_init.pipe_mtm_recv_server
+            self.pipe_send = server_init.pipe_mtm_send_server
+
+        if client_type == "classifist":
+            self.log_fname_const = "log\\log_classifist.txt"
+            self.log_level = server_init.cf_log_level
+            self.pipe_recv = server_init.pipe_classifist_recv
+            self.pipe_send = server_init.pipe_classifist_send
+
+        if client_type == "bb":
+            self.log_fname_const = "log\\log_bb.txt"
+            self.log_level = server_init.bb_log_level
+            self.pipe_recv = server_init.pipe_bb_recv
+            self.pipe_send = server_init.pipe_bb_send
+            self.com_port = server_init.bb_com_port
+            self.baud_rate = server_init.bb_baud_rate
+            self.timeout = server_init.bb_timeout
+            self.skip_handshake = server_init.bb_skip_handshake
+
+        if client_type == "suip":
+            self.log_fname_const = "log\\log_suip.txt"
+            self.log_level = server_init.suip_log_level
+            self.pipe_recv = server_init.pipe_suip_recv
+            self.pipe_send = server_init.pipe_suip_send
 
 
-class server_mode:
+class ServerMode:
     """Server mode object. Stores attributes used to control the state of the server."""
 
     def __init__(self):
@@ -137,7 +152,60 @@ class server_mode:
         self.check_bb = False
 
 
-def iterate_active_part_db(server: server_init):
+def start_clients(server_init: ServerInit):
+    """ starts the clients
+
+    :return = List of client processes """
+
+    # we need this for sub-processing.
+    if __name__ == '__main__':
+
+        import taxidermist.taxidermist as taxi
+        import shape_sifter_clients.shape_sifter_clients as client_lib
+        import belt_buckle_client.belt_buckle_client as bb
+
+        # list of client processes
+        clients = []
+
+        # start taxidermist
+        taxi_params = ClientParams(server_init, "taxi")
+        taxi = multiprocessing.Process(target=taxi.main_client, args=(taxi_params,))
+        clients.append(taxi)
+        taxi.start()
+        server_init.logger.info('taxidermist started')
+
+        # Start mtmind simulator
+        mtmind_params = ClientParams(server_init, "mtmind")
+        mtmind = multiprocessing.Process(target=client_lib.mt_mind_sim, args=(mtmind_params,))
+        clients.append(mtmind)
+        mtmind.start()
+        server_init.logger.info('mtmind started')
+
+        # start classifist
+        classifist_params = ClientParams(server_init, "classifist")
+        classifist = multiprocessing.Process(target=client_lib.classifist, args=(classifist_params,))
+        clients.append(classifist)
+        classifist.start()
+        server_init.logger.info('classifist started')
+
+        # start belt buckle
+        belt_buckle_params = ClientParams(server_init, "belt_buckle")
+        belt_buckle = multiprocessing.Process(target=bb, args=(belt_buckle_params,))
+        clients.append(belt_buckle)
+        belt_buckle.start()
+        server_init.logger.info('belt_buckle started')
+
+        # start the SUIP
+        suip_params = ClientParams(server_init, "suip")
+        suip = multiprocessing.Process(target=client_lib.suip, args=(suip_params,))
+        clients.append(suip)
+        suip.start()
+        server_init.logger.info('suip started')
+
+        return clients
+
+
+def iterate_active_part_db(server: ServerInit):
     """
     Iterate active part db. Once per main server loop we check for actionable statuses on all current parts.
     Actions are taken where necessary. Each If statement below represents and actionable status.
@@ -153,14 +221,13 @@ def iterate_active_part_db(server: server_init):
     row[11] = serial_string
     row[12] = bb_timeout
 
-    :param primary_curr: sql cursor
-    :param secondary_curr: sql cursor
+    :param server: server init object
     :return: none
     """
 
     for row in server.primary_curr.execute("SELECT * FROM active_part_db"):
 
-        # row_part: ss.part_instance = creat_obj_from_sql_row(row)
+        # row_part: ss.part_instance = create_obj_from_sql_row(row)
 
         # server status = new; the part was just received from the taxidermist. Send it to the MTM
         if row[9] == 'new':
@@ -261,7 +328,7 @@ def check_suip(server, mode):
 def check_taxi(server):
     """Checks the taxidermist for parts"""
     # checks if the taxidermist has anything for us. Sends the part to the MTM and the BB
-    if server.pipe_server_recv_taxi.poll(0) == True:
+    if server.pipe_server_recv_taxi.poll(0):
         taxi_read_part = server.pipe_server_recv_taxi.recv()
         taxi_read_part_tuple = ss.create_sql_part_tuple(taxi_read_part)
         server.primary_curr.execute('INSERT INTO active_part_db VALUES (NULL,?,?,?,?,?,?,?,?,?,?,?,?)', taxi_read_part_tuple)
@@ -271,7 +338,7 @@ def check_taxi(server):
 def check_mtm(server):
     """Checks the MT mind for parts"""
     # checks if the mtm pipe has something yet, if so, read that shit and do stuff
-    if server.pipe_server_recv_mtm.poll(0) == True:
+    if server.pipe_server_recv_mtm.poll(0):
         mtm_read_part = server.pipe_server_recv_mtm.recv()
         # mtm_read_part_tuple = ss.create_sql_part_tuple(mtm_read_part)
         mtm_read_part_tuple = ('{0}'.format(mtm_read_part.part_number),
@@ -287,7 +354,7 @@ def check_mtm(server):
 def check_cf(server):
     """Checks the classifist for parts"""
     # checks if the classifist pipe has something yet, if so, read that shit and do stuff
-    if server.pipe_server_recv_cf.poll(0) == True:
+    if server.pipe_server_recv_cf.poll(0):
         cf_read_part: ss.part_instance = server.pipe_server_recv_cf.recv()
         cf_read_part_tuple = (cf_read_part.bin_assignment, cf_read_part.server_status, cf_read_part.instance_id)
         server.primary_curr.execute("UPDATE active_part_db SET bin_assignment=?, server_status=? WHERE instance_id=?", cf_read_part_tuple)
@@ -396,7 +463,7 @@ def setup_active_part_table(db_fname, db_template_fname, logger):
     active_part_db.commit()
     return active_part_db
 
-
+# Where the fuck did this come from?
 def adapt_np_array_for_sql(image_array):
     """
     http://stackoverflow.com/a/31312102/190597 (SoulNibbler)
@@ -408,7 +475,7 @@ def adapt_np_array_for_sql(image_array):
     out.seek(0)
     return sqlite3.Binary(out.read())
 
-
+# Jamie or me probalby left them here thinking they'd be useful.
 def convert_sql_text_to_array(text):
     """
     http://stackoverflow.com/a/31312102/190597 (SoulNibbler)
@@ -418,3 +485,25 @@ def convert_sql_text_to_array(text):
     out = io.BytesIO(text)
     out.seek(0)
     return np.load(out)
+
+
+def get_google_drive_path():
+    """
+    Get Google Drive path on windows machines.
+    :return: str
+    """
+    # this code written by /u/Vassilis Papanikolaou from this post:
+    # https://stackoverflow.com/a/53430229/10236951
+
+    import sqlite3
+    import os
+
+    db_path = (os.getenv('LOCALAPPDATA')+'\\Google\\Drive\\user_default\\sync_config.db')
+    db = sqlite3.connect(db_path)
+    cursor = db.cursor()
+    cursor.execute("SELECT * from data where entry_key = 'local_sync_root_path'")
+    res = cursor.fetchone()
+    path = res[2][4:]
+    db.close()
+
+    return path

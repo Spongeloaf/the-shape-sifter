@@ -1,17 +1,26 @@
+# 3rd party imports
 import cv2
 import time
 import math
-from shape_sifter_tools import part_instance
+
 from typing import List     # add support for list type hints
 from sys import exit
 from datetime import datetime
+
+# 1st party imports
+from shape_sifter_tools.shape_sifter_tools import part_instance, create_logger
+from ss_server_lib import ClientParams
+
 # Todo: Add color detection via opencv
 
 
 class TaxiParams:
     """ Parameters for configuring the taxidermist"""
-    def __init__(self, mode="1", feed="1", vid_file="video\\multi.flv", mask="newmask.bmp"):
+    def __init__(self, init_params: ClientParams, mode="1", feed="1", vid_file="video\\multi.flv", mask="newmask.bmp"):
         # adjustable parameters
+        self.logger = create_logger(init_params.log_fname_const, init_params.log_level)
+        self.pipe_recv = init_params.pipe_recv
+        self.pipe_send = init_params.pipe_send
         self.mode = mode
         self.min_contour_size = 700  # the minimum contour size that will be included in the crop
         self.fg_bg = cv2.createBackgroundSubtractorMOG2()  # setup the background subtractor.
@@ -22,7 +31,6 @@ class TaxiParams:
         self.feed = feed
         self.vid_file = vid_file
         self.count = 0
-        self.pipe_to_bb = ""
 
 
 class PartParams:
@@ -210,8 +218,7 @@ def update_part_list(new_parts_list: List[PartParams], old_parts_list: List[Part
 
                 # Dispatch to server and BB, but not when running stand alone.
                 if __name__ != '__main__':
-                    dispatch_part(new_part, params.pipe_to_bb)
-                    print("Part dispatched to BB")
+                    dispatch_part(new_part)
 
             # decrement i, so we move backwards through the list
             i -= 1
@@ -342,30 +349,26 @@ def make_new_part(cropped_part_image):
     return part
 
 
-def dispatch_part(part_instance: part_instance):
+def dispatch_part(params: TaxiParams, part: part_instance):
     # TODO: make it work!
+    params.logger.info("Part dispatched to BB")
     pass
 
 
-def main_client(mode, feed, vid_file=""):
+def main_client(init_params: ClientParams):
 
-    # initialize
-    params = TaxiParams(mode, feed, vid_file)
-
-    if params.mode is "1":
-        video, video_shape = configure_webcam()
-
-    elif params.mode is "2":
-        video, video_shape = configure_video_file(params.vid_file)
-    else:
-        exit(2)
-
+    # initialize. Combine the server params with the taxi-specific params into one object.
+    params = TaxiParams(init_params)
+    video, video_shape = configure_webcam()
     old_list, new_list = [], []
-
+    params.logger.info("taxidermist started")
 
     while video.isOpened:
 
         t_start = time.perf_counter()
+
+        # TODO: add capability to receive control signals from the server
+        # init_params.pipe_recv()
 
         # grab a frame and render it
         ret, frame = video.read()
@@ -407,6 +410,8 @@ def main_client(mode, feed, vid_file=""):
 def main_standalone():
     """ Runs the taxidermist without the server. Will not attempt to dispatch parts to the server or belt buckle """
 
+    init_params = ClientParams("taxi")
+
     mode_str = input("Choose your operating mode (default = camera:\ncamera = 1\nvideo file = 2\n")
     if mode_str is not ("2" or "1"):
         mode_str = "1"
@@ -416,7 +421,7 @@ def main_standalone():
         cam_str = "1"
 
     # initialize
-    params = TaxiParams(mode_str, cam_str)
+    params = TaxiParams(init_params, mode_str, cam_str)
 
     if params.mode is "1":
         video, video_shape = configure_webcam()

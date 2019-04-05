@@ -27,37 +27,35 @@ import time
 # first party imports. Safe to use from x import *
 import ss_server_lib as slib    # slib contains all of our server loop and control functions
 
-# we need this for sub-processing. Not sure why.
-if __name__ == '__main__':
+server = slib.ServerInit()
+mode = slib.ServerMode()
+clients = slib.start_clients()
 
-    server = slib.server_init()
-    mode = slib.server_mode()
+# main loop
+while True:
 
-    # main loop
-    while True:
+    # our main loop timer. Keeps the server ticking at 60hz. See t_stop at the end of the loop.
+    t_start = time.perf_counter()
+    slib.check_suip(server, mode)
 
-        # our main loop timer. Keeps the server ticking at 60hz. See t_stop at the end of the loop.
-        t_start = time.perf_counter()
-        slib.check_suip(server, mode)
+    if mode.check_taxi:
+        slib.check_taxi(server)
+        # taxi.taxidermist_sim(server)
 
-        if mode.check_taxi:
-            slib.check_taxi(server)
-            # taxi.taxidermist_sim(server)
+    if mode.iterate_active_part_db:
+        slib.iterate_active_part_db(server)
 
-        if mode.iterate_active_part_db:
-            slib.iterate_active_part_db(server)
+    if mode.check_mtm:
+        slib.check_mtm(server)
 
-        if mode.check_mtm:
-            slib.check_mtm(server)
+    if mode.check_cf:
+        slib.check_cf(server)
 
-        if mode.check_cf:
-            slib.check_cf(server)
+    if mode.check_bb:
+        slib.check_bb(server)
 
-        if mode.check_bb:
-            slib.check_bb(server)
-
-        # keeps the server ticking at 60hz. Measures the duration from the start of the loop (t_start) and waits until 17ms have passed.
-        t_stop = time.perf_counter()
-        t_duration = t_stop - t_start
-        if t_duration < 0.017:
-            time.sleep(0.017 - t_duration)
+    # keeps the server ticking at 60hz. Measures the duration from the start of the loop (t_start) and waits until 17ms have passed.
+    t_stop = time.perf_counter()
+    t_duration = t_stop - t_start
+    if t_duration < 0.017:
+        time.sleep(0.017 - t_duration)
