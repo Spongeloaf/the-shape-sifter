@@ -11,7 +11,7 @@ So I am making the following TO DO conditional upon the software being released 
 # TODO: Build a framework for handling ACKs from the belt buckle
 # TODO: Add a part log
 # TODO: Make sure as few lines of code as possible are between taxidermist and belt buckle
-# TODO: make the part instance attributes into enumerators. -> Why? I don't remember wanting this!
+# TODO: make the part instance attributes into enumerators. -> Why? -> because somewhere there is a function that doesn't pull them automagically.
 
 # ------- Post-Alpha to do's: ------- #
 # TODO: Build client watchdogs. Get PIDs when a client starts and try to spin up a new one if it hangs/crashes

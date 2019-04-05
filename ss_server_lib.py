@@ -506,4 +506,6 @@ def get_google_drive_path():
     path = res[2][4:]
     db.close()
 
-    return path
+    full_path = path + "\\software_dev\\the_shape_sifter\\shape_sifter_server\\"
+
+    return full_path
