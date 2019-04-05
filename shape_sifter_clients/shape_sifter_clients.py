@@ -1,23 +1,27 @@
-import random
+# 3rd party imports
 import time
 from cv2 import Stitcher
-import shape_sifter_tools as ss
-import shape_sifter_gui_v2 as gui
 import sys
 import sqlite3
 
+# 1st party imports
+import shape_sifter_tools.shape_sifter_tools as ss
+import shape_sifter_gui.shape_sifter_gui as gui
+from ss_server_lib import ClientParams
 
-def mt_mind_sim(pipe_me_recv, pipe_me_send, log_level):
+
+def mt_mind_sim(client_params: ClientParams):
     """Simulates behavior of the MTMind by adding a random part number and category to a part instance"""
 
-    logger = ss.create_logger('log\\log_part_instance_sim.txt',log_level, 'mt_mind')
+    logger = ss.create_logger('log\\log_part_instance_sim.txt',client_params.log_level, 'mt_mind')
     logger.info('part sim running!')
+    import random
 
     while True:
         t_start = time.perf_counter()
-        if pipe_me_recv.poll(0) == True:
+        if client_params.pipe_recv.poll(0):
 
-            part = pipe_me_recv.recv()
+            part = client_params.pipe_recv.recv()
             part.part_number = random.randint(3001, 3002)
 
             category = random.randint(1, 4)
@@ -43,7 +47,7 @@ def mt_mind_sim(pipe_me_recv, pipe_me_send, log_level):
             part.category_name = category_name
             part.part_color = str(random.randint(1, 20))
             part.server_status = 'mtm_done'
-            pipe_me_send.send(part)
+            client_params.pipe_send.send(part)
             # print("mtm sim just ident'd part {0}".format(part.instance_id))
 
         t_stop = time.perf_counter()
@@ -52,7 +56,7 @@ def mt_mind_sim(pipe_me_recv, pipe_me_send, log_level):
             time.sleep(0.017 - t_duration)
 
 
-def classifist(pipe_me_recv, pipe_me_send, db_fname_const, log_level):
+def classifist(client_params: ClientParams):
     """Classi-FIST me baby!"""
 
     # working_part_obj is read from the MM and compared to the last part, and dropped if it is different
@@ -60,18 +64,18 @@ def classifist(pipe_me_recv, pipe_me_send, db_fname_const, log_level):
     # If we dont use timestamps, consecutive parts of the same number will be dropped.
     # print("part number:{0}\n".format(working_part_obj))
 
-    logger = ss.create_logger('log\\log_classifist.txt', log_level, 'classifist')
-    logger.info('classifist running! Log level set to {}'.format(log_level))
+    logger = ss.create_logger('log\\log_classifist.txt', client_params.log_level, 'classifist')
+    logger.info('classifist running! Log level set to {}'.format(client_params.log_level))
     while True:
         t_start = time.perf_counter()
 
-        if pipe_me_recv.poll(0) == True:
+        if client_params.pipe_recv.poll(0):
 
-            read_part: ss.part_instance = pipe_me_recv.recv()
+            read_part: ss.part_instance = client_params.pipe_recv.recv()
 
             # time to write a whole new loop using THE POWER OF SQLITE
             # open connection to SQL
-            sqconn = sqlite3.connect(db_fname_const)
+            sqconn = sqlite3.connect(client_params.server_db_fname_const)
             sqcur = sqconn.cursor()
 
             # TODO: Fix this to call fetchone() instead of calling an iterator on cursor.execute!    <------ why tho?
@@ -82,19 +86,19 @@ def classifist(pipe_me_recv, pipe_me_send, db_fname_const, log_level):
                     if bin[2] == str(read_part.part_number):  # assume all values are strings, just to be safe!
                         read_part.bin_assignment = bin[0]
                         read_part.server_status = 'cf_done'
-                        pipe_me_send.send(read_part)  # return results to server
+                        client_params.pipe_send.send(read_part)  # return results to server
                         break
 
                 if bin[1] == 'cat':
                     if bin[2] == str(read_part.category_number):  # assume all values are strings, just to be safe!
                         read_part.bin_assignment = bin[0]
                         read_part.server_status = 'cf_done'
-                        pipe_me_send.send(read_part)  # return results to server
+                        client_params.pipe_send.send(read_part)  # return results to server
                         break
             else:
                 read_part.bin_assignment = 0
                 read_part.server_status = 'cf_done'
-                pipe_me_send.send(read_part)  # return results to server
+                client_params.pipe_send.send(read_part)  # return results to server
 
             sqconn.close()                # close SQL
 
@@ -133,7 +137,7 @@ def dev_mule(pipe_me_recv, pipe_me_send):
             time.sleep(0.017 - t_duration)
 
 
-def suip(pipe_me_recv, pipe_me_send, active_part_db_fname_const):
+def suip(client_params: ClientParams):
     """ The sorting machine UI
         All fucntion defs are in shape_sifter_gui.py
         The GUI consists of a pyQT gui connected to the active part DB and the part log DB,
@@ -143,7 +147,7 @@ def suip(pipe_me_recv, pipe_me_send, active_part_db_fname_const):
 
     suip_app = gui.QApplication(sys.argv)
     gui.set_dark_theme(suip_app)
-    suip_window = gui.suip_window_class(active_part_db_fname_const, pipe_me_recv, pipe_me_send,)
+    suip_window = gui.suip_window_class(client_params.server_db_fname_const, client_params.pipe_recv, client_params.pipe_send,)
     suip_window.show()
     suip_window.raise_()
     suip_app.exec_()

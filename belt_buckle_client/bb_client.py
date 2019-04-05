@@ -1,9 +1,13 @@
-import shape_sifter_tools as ss
+# 1st party imports
+import shape_sifter_tools.shape_sifter_tools as ss
+from ss_server_lib import ClientParams
+
+# 3rd party imports
 import serial
 import time
 
 
-def belt_buckle_client(pipe_me_recv, pipe_me_send, pipe_from_taxi, com_port, baud_rate, log_level, skip_handshake='False'):
+def belt_buckle_client(client_params: ClientParams):
     """This is the software interface for the conveyor belt controller.
     We differentiate the hardware belt buckle from this piece of software
     by calling the hardware the 'belt buckle', and this software 'belt buckle client'
@@ -19,13 +23,21 @@ def belt_buckle_client(pipe_me_recv, pipe_me_send, pipe_from_taxi, com_port, bau
     # BB init
     bb_status = False
     serial_read_str = ''
-    logger = ss.create_logger('log\\log_belt_buckle.txt', log_level, 'belt_buckle_client')
-    ser = serial.Serial(com_port, baud_rate, writeTimeout=0, timeout=0.001, inter_byte_timeout=0.0007)
+    logger = ss.create_logger('log\\log_belt_buckle.txt', client_params.log_level, 'belt_buckle_client')
+
+    # start serial port
+    ser = serial.Serial(client_params.com_port,
+                        client_params.baud_rate,
+                        writeTimeout=0,
+                        timeout=0.001,
+                        inter_byte_timeout=0.0007)
+
+    # Allow Arduino to boot
     time.sleep(1)
 
     # when skip_handshake is true we skip waiting for the BB to report that it's online.
-    if skip_handshake != 'True':
-        logger.info('Belt Buckle is up on {0} with log level {1}. Waiting for BB handshake'.format(ser.name, log_level))
+    if client_params.skip_handshake != 'True':
+        logger.info('Belt Buckle is up on {0} with log level {1}. Waiting for BB handshake'.format(ser.name, client_params.log_level))
         while not bb_status:
             t_start = time.perf_counter()
 
@@ -49,9 +61,10 @@ def belt_buckle_client(pipe_me_recv, pipe_me_send, pipe_from_taxi, com_port, bau
 
         # TODO: Make the TRY/Except sections below into a function and call it once per pipe.
 
+        # TODO: remove this block so the server handles all BB packets. We are not having the taxi send things directly
         # check taxi #
-        if pipe_from_taxi.poll(0):
-            taxi_command_received: ss.bb_packet = pipe_from_taxi.recv()
+        if client_params.pipe_recv.poll(0):
+            taxi_command_received: ss.bb_packet = client_params.pipe_recv.recv()
             try:
                 if taxi_command_received.type == 'BBC':  # the part is fresh from the taxidermist, send the 'A' command.
                     if taxi_command_received.status_code == '200':
@@ -67,8 +80,8 @@ def belt_buckle_client(pipe_me_recv, pipe_me_send, pipe_from_taxi, com_port, bau
                 logger.critical(vars(taxi_command_received))
 
         # check server #
-        if pipe_me_recv.poll(0):
-            server_command_received: ss.bb_packet = pipe_me_recv.recv()
+        if client_params.pipe_recv.poll(0):
+            server_command_received: ss.bb_packet = client_params.pipe_recv.recv()
             try:
                 if server_command_received.type == 'BBC':  # the part has been assigned a to a bin. Send the B command.
                     if server_command_received.status_code == '200':
@@ -96,7 +109,7 @@ def belt_buckle_client(pipe_me_recv, pipe_me_send, pipe_from_taxi, com_port, bau
             logger.debug("serial_string_split[-1]: {}".format(serial_read_str))
             bb_command_receive = ss.bb_packet(serial_string=serial_read_str)
             if bb_command_receive.status_code == '200':
-                pipe_me_send.send(bb_command_receive)
+                client_params.pipe_send.send(bb_command_receive)
             else:
                 logger.debug('malformed packet received from belt buckle: {}'.format(vars(bb_command_receive)))
             serial_read_str = ''

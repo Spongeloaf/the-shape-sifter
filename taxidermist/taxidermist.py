@@ -355,10 +355,10 @@ def dispatch_part(params: TaxiParams, part: part_instance):
     pass
 
 
-def main_client(init_params: ClientParams):
+def main_client(client_params: ClientParams):
 
     # initialize. Combine the server params with the taxi-specific params into one object.
-    params = TaxiParams(init_params)
+    params = TaxiParams(client_params)
     video, video_shape = configure_webcam()
     old_list, new_list = [], []
     params.logger.info("taxidermist started")
@@ -368,7 +368,7 @@ def main_client(init_params: ClientParams):
         t_start = time.perf_counter()
 
         # TODO: add capability to receive control signals from the server
-        # init_params.pipe_recv()
+        # client_params.pipe_recv()
 
         # grab a frame and render it
         ret, frame = video.read()
