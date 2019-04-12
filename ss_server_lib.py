@@ -49,7 +49,9 @@ class ServerInit:
         self.server_log_level = self.server_config['server']['log_level']
         self.server_bb_ack_timeout = self.server_config['server']['bb_ack_timeout']
 
-        self.taxi_log_level = self.server_config['cf']['log_level']
+        self.taxi_log_level = self.server_config['taxi']['log_level']
+        self.taxi_belt_mask = self.server_config['taxi']['mask']
+
         self.mtm_log_level = self.server_config['mtm']['log_level']
         self.cf_log_level = self.server_config['cf']['log_level']
         self.suip_log_level = self.server_config['suip']['log_level']
@@ -107,25 +109,26 @@ class ClientParams:
         self.log_level = server_init.server_log_level                   # uses server log level if unspecified
 
         if client_type == "taxi":
-            self.log_fname_const = "log\\log_taxi.txt"
+            self.log_fname_const = self.google_path + "log\\log_taxi.txt"
             self.log_level = server_init.taxi_log_level
             self.pipe_recv = server_init.pipe_taxi_recv_server
             self.pipe_send = server_init.pipe_taxi_send_server
+            self.belt_mask = server_init.taxi_belt_mask
 
         if client_type == "mtmind":
-            self.log_fname_const = "log\\log_mtmind.txt"
+            self.log_fname_const = self.google_path + "log\\log_mtmind.txt"
             self.log_level = server_init.mtm_log_level
             self.pipe_recv = server_init.pipe_mtm_recv_server
             self.pipe_send = server_init.pipe_mtm_send_server
 
         if client_type == "classifist":
-            self.log_fname_const = "log\\log_classifist.txt"
+            self.log_fname_const = self.google_path + "log\\log_classifist.txt"
             self.log_level = server_init.cf_log_level
             self.pipe_recv = server_init.pipe_classifist_recv
             self.pipe_send = server_init.pipe_classifist_send
 
         if client_type == "bb":
-            self.log_fname_const = "log\\log_bb.txt"
+            self.log_fname_const = self.google_path + "log\\log_bb.txt"
             self.log_level = server_init.bb_log_level
             self.pipe_recv = server_init.pipe_bb_recv
             self.pipe_send = server_init.pipe_bb_send
@@ -135,7 +138,7 @@ class ClientParams:
             self.skip_handshake = server_init.bb_skip_handshake
 
         if client_type == "suip":
-            self.log_fname_const = "log\\log_suip.txt"
+            self.log_fname_const = self.google_path + "log\\log_suip.txt"
             self.log_level = server_init.suip_log_level
             self.pipe_recv = server_init.pipe_suip_recv
             self.pipe_send = server_init.pipe_suip_send
@@ -157,52 +160,51 @@ def start_clients(server_init: ServerInit):
 
     :return = List of client processes """
 
-    # we need this for sub-processing.
-    if __name__ == '__main__':
+    from taxidermist.taxidermist import main_client as taxi
+    from shape_sifter_clients.shape_sifter_clients import mt_mind_sim
+    from shape_sifter_clients.shape_sifter_clients import classifist
+    from belt_buckle_client.belt_buckle_client import main as bb
+    from shape_sifter_gui.shape_sifter_gui import main as gui
 
-        import taxidermist.taxidermist as taxi
-        import shape_sifter_clients.shape_sifter_clients as client_lib
-        import belt_buckle_client.belt_buckle_client as bb
+    # list of client processes
+    clients = []
 
-        # list of client processes
-        clients = []
+    # start taxidermist
+    taxi_params = ClientParams(server_init, "taxi")
+    taxi = multiprocessing.Process(target=taxi, args=(taxi_params,))
+    clients.append(taxi)
+    taxi.start()
+    server_init.logger.info('taxidermist started')
 
-        # start taxidermist
-        taxi_params = ClientParams(server_init, "taxi")
-        taxi = multiprocessing.Process(target=taxi.main_client, args=(taxi_params,))
-        clients.append(taxi)
-        taxi.start()
-        server_init.logger.info('taxidermist started')
+    # Start mtmind simulator
+    mtmind_params = ClientParams(server_init, "mtmind")
+    mtmind = multiprocessing.Process(target=mt_mind_sim, args=(mtmind_params,))
+    clients.append(mtmind)
+    mtmind.start()
+    server_init.logger.info('mtmind started')
 
-        # Start mtmind simulator
-        mtmind_params = ClientParams(server_init, "mtmind")
-        mtmind = multiprocessing.Process(target=client_lib.mt_mind_sim, args=(mtmind_params,))
-        clients.append(mtmind)
-        mtmind.start()
-        server_init.logger.info('mtmind started')
+    # start classifist
+    classifist_params = ClientParams(server_init, "classifist")
+    classifist = multiprocessing.Process(target=classifist, args=(classifist_params,))
+    clients.append(classifist)
+    classifist.start()
+    server_init.logger.info('classifist started')
 
-        # start classifist
-        classifist_params = ClientParams(server_init, "classifist")
-        classifist = multiprocessing.Process(target=client_lib.classifist, args=(classifist_params,))
-        clients.append(classifist)
-        classifist.start()
-        server_init.logger.info('classifist started')
+    # start belt buckle
+    belt_buckle_params = ClientParams(server_init, "bb")
+    belt_buckle = multiprocessing.Process(target=bb, args=(belt_buckle_params,))
+    clients.append(belt_buckle)
+    belt_buckle.start()
+    server_init.logger.info('belt_buckle started')
 
-        # start belt buckle
-        belt_buckle_params = ClientParams(server_init, "belt_buckle")
-        belt_buckle = multiprocessing.Process(target=bb, args=(belt_buckle_params,))
-        clients.append(belt_buckle)
-        belt_buckle.start()
-        server_init.logger.info('belt_buckle started')
+    # start the SUIP
+    suip_params = ClientParams(server_init, "suip")
+    suip = multiprocessing.Process(target=gui, args=(suip_params,))
+    clients.append(suip)
+    suip.start()
+    server_init.logger.info('suip started')
 
-        # start the SUIP
-        suip_params = ClientParams(server_init, "suip")
-        suip = multiprocessing.Process(target=client_lib.suip, args=(suip_params,))
-        clients.append(suip)
-        suip.start()
-        server_init.logger.info('suip started')
-
-        return clients
+    return clients
 
 
 def iterate_active_part_db(server: ServerInit):
@@ -424,11 +426,13 @@ def setup_active_part_table(db_fname, db_template_fname, logger):
         logger.info("{0} not found. Creating a new one.....".format(db_fname))
         copyfile(db_template_fname, db_fname)
 
+    logger.info("Found old DB. Using it.")
+
     # Converts np.array to TEXT when inserting
-    sqlite3.register_adapter(np.ndarray, adapt_np_array_for_sql)
+    #sqlite3.register_adapter(np.ndarray, adapt_np_array_for_sql)
 
     # Converts TEXT to np.array when selecting
-    sqlite3.register_converter("array", convert_sql_text_to_array)
+    #sqlite3.register_converter("array", convert_sql_text_to_array)
 
     # create the new active part table in the db, using list comprehension to create column names from attributes in the part class.
     active_part_db = sqlite3.connect(db_fname)
@@ -463,6 +467,7 @@ def setup_active_part_table(db_fname, db_template_fname, logger):
     active_part_db.commit()
     return active_part_db
 
+
 # Where the fuck did this come from?
 def adapt_np_array_for_sql(image_array):
     """
@@ -474,6 +479,7 @@ def adapt_np_array_for_sql(image_array):
     np.save(out, image_array)
     out.seek(0)
     return sqlite3.Binary(out.read())
+
 
 # Jamie or me probalby left them here thinking they'd be useful.
 def convert_sql_text_to_array(text):
@@ -506,6 +512,6 @@ def get_google_drive_path():
     path = res[2][4:]
     db.close()
 
-    full_path = path + "\\software_dev\\the_shape_sifter\\shape_sifter_server\\"
+    full_path = path + "\\software_dev\\the_shape_sifter\\"
 
     return full_path

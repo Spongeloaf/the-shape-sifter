@@ -14,11 +14,25 @@ from ss_server_lib import ClientParams
 # Todo: Add color detection via opencv
 
 
+def log_dump(obj):
+   for attr in dir(obj):
+       if hasattr( obj, attr ):
+           print( "obj.%s = %s" % (attr, getattr(obj, attr)))
+
+
 class TaxiParams:
     """ Parameters for configuring the taxidermist"""
-    def __init__(self, init_params: ClientParams, mode="1", feed="1", vid_file="video\\multi.flv", mask="newmask.bmp"):
+    def __init__(self, init_params: ClientParams,
+                 mode="1",
+                 feed="1",
+                 vid_file="video\\multi.flv"):
+
         # adjustable parameters
         self.logger = create_logger(init_params.log_fname_const, init_params.log_level)
+
+        self.logger.debug("Creating Taxiparams:")
+        log_dump(ClientParams)
+
         self.pipe_recv = init_params.pipe_recv
         self.pipe_send = init_params.pipe_send
         self.mode = mode
@@ -26,7 +40,7 @@ class TaxiParams:
         self.fg_bg = cv2.createBackgroundSubtractorMOG2()  # setup the background subtractor.
         self.font = cv2.FONT_HERSHEY_SIMPLEX
         self.dilate_kernel = cv2.getStructuringElement(2, (8, 8))
-        self.belt_mask = cv2.imread(mask)
+        self.belt_mask = cv2.imread(ClientParams.belt_mask)
         self.belt_mask = cv2.cvtColor(self.belt_mask, cv2.COLOR_BGR2GRAY)  # gray scale the image
         self.feed = feed
         self.vid_file = vid_file
@@ -356,55 +370,55 @@ def dispatch_part(params: TaxiParams, part: part_instance):
 
 
 def main_client(client_params: ClientParams):
+    if __name__ == "__main__":
+        # initialize. Combine the server params with the taxi-specific params into one object.
+        params = TaxiParams(client_params)
+        video, video_shape = configure_webcam()
+        old_list, new_list = [], []
+        params.logger.info("taxidermist started")
 
-    # initialize. Combine the server params with the taxi-specific params into one object.
-    params = TaxiParams(client_params)
-    video, video_shape = configure_webcam()
-    old_list, new_list = [], []
-    params.logger.info("taxidermist started")
+        while video.isOpened:
 
-    while video.isOpened:
+            t_start = time.perf_counter()
 
-        t_start = time.perf_counter()
+            # TODO: add capability to receive control signals from the server
+            # client_params.pipe_recv()
 
-        # TODO: add capability to receive control signals from the server
-        # client_params.pipe_recv()
+            # grab a frame and render it
+            ret, frame = video.read()
+            t_frame_start = time.perf_counter()
 
-        # grab a frame and render it
-        ret, frame = video.read()
-        t_frame_start = time.perf_counter()
+            fg_mask = get_fg_mask(frame, params)
+            fg_mask = cv2.bitwise_and(fg_mask, fg_mask, mask=params.belt_mask)     # Applies a bitmask to the image which removes
+            fg_dilated = dilate_image(fg_mask, params.dilate_kernel)
+            contours = find_contours(fg_dilated, params)
 
-        fg_mask = get_fg_mask(frame, params)
-        fg_mask = cv2.bitwise_and(fg_mask, fg_mask, mask=params.belt_mask)     # Applies a bitmask to the image which removes
-        fg_dilated = dilate_image(fg_mask, params.dilate_kernel)
-        contours = find_contours(fg_dilated, params)
+            new_list = get_rects_and_centers(frame, contours)
+            map_centers(old_list, new_list, video_shape)
+            update_part_list(new_list, old_list, frame)
 
-        new_list = get_rects_and_centers(frame, contours)
-        map_centers(old_list, new_list, video_shape)
-        update_part_list(new_list, old_list, frame)
+            if params.feed == "1":
+                draw_rects_and_centers(frame, old_list, params)
 
-        if params.feed == "1":
-            draw_rects_and_centers(frame, old_list, params)
+                t_frame_stop = time.perf_counter()
+                t_frame_time = t_frame_stop - t_frame_start
 
-            t_frame_stop = time.perf_counter()
-            t_frame_time = t_frame_stop - t_frame_start
+                cv2.putText(frame, 'process time: {0:3.3f}'.format(t_frame_time), (10, 700), params.font, 1, (255, 255, 255), 2, cv2.LINE_AA)
+                cv2.imshow('raw_frame', frame)
+                cv2.imshow('fg_mask', fg_mask)
 
-            cv2.putText(frame, 'process time: {0:3.3f}'.format(t_frame_time), (10, 700), params.font, 1, (255, 255, 255), 2, cv2.LINE_AA)
-            cv2.imshow('raw_frame', frame)
-            cv2.imshow('fg_mask', fg_mask)
+                # create a window for live viewing of frames
+                if cv2.waitKey(1) & 0xFF == ord('q'):
+                    break
 
-            # create a window for live viewing of frames
-            if cv2.waitKey(1) & 0xFF == ord('q'):
-                break
+            # keeps the taxidermist ticking at 30hz. Measures the duration from the start of the loop (t_start) and waits until 17ms have passed.
+            t_stop = time.perf_counter()
+            t_duration = t_stop - t_start
+            if t_duration < 0.032:
+                time.sleep(0.032 - t_duration)
 
-        # keeps the taxidermist ticking at 30hz. Measures the duration from the start of the loop (t_start) and waits until 17ms have passed.
-        t_stop = time.perf_counter()
-        t_duration = t_stop - t_start
-        if t_duration < 0.032:
-            time.sleep(0.032 - t_duration)
-
-    video.release()
-    cv2.destroyAllWindows()
+        video.release()
+        cv2.destroyAllWindows()
 
 
 def main_standalone():

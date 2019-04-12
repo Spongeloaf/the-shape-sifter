@@ -13,7 +13,7 @@ from ss_server_lib import ClientParams
 def mt_mind_sim(client_params: ClientParams):
     """Simulates behavior of the MTMind by adding a random part number and category to a part instance"""
 
-    logger = ss.create_logger('log\\log_part_instance_sim.txt',client_params.log_level, 'mt_mind')
+    logger = ss.create_logger(client_params.log_fname_const, client_params.log_level, 'mt_mind')
     logger.info('part sim running!')
     import random
 
@@ -64,7 +64,7 @@ def classifist(client_params: ClientParams):
     # If we dont use timestamps, consecutive parts of the same number will be dropped.
     # print("part number:{0}\n".format(working_part_obj))
 
-    logger = ss.create_logger('log\\log_classifist.txt', client_params.log_level, 'classifist')
+    logger = ss.create_logger(client_params.log_fname_const, client_params.log_level, 'classifist')
     logger.info('classifist running! Log level set to {}'.format(client_params.log_level))
     while True:
         t_start = time.perf_counter()
@@ -111,12 +111,6 @@ def classifist(client_params: ClientParams):
             time.sleep(0.017 - t_duration)
 
 
-def stitcher(image_list, self=None):
-    # TODO: the fuck is this? can it be removed?
-    pass
-    Stitcher.stitch(self, image_list)
-
-
 def dev_mule(pipe_me_recv, pipe_me_send):
     """Simulates behavior of the MTMind by adding a random part number and category to a part instance"""
 
@@ -137,17 +131,3 @@ def dev_mule(pipe_me_recv, pipe_me_send):
             time.sleep(0.017 - t_duration)
 
 
-def suip(client_params: ClientParams):
-    """ The sorting machine UI
-        All fucntion defs are in shape_sifter_gui.py
-        The GUI consists of a pyQT gui connected to the active part DB and the part log DB,
-        with a pipe to the server for command/control signaling. This signaling is handled by
-        a class of objects called ladles. The ladle definition is shape_sifter_tools.py
-    """
-
-    suip_app = gui.QApplication(sys.argv)
-    gui.set_dark_theme(suip_app)
-    suip_window = gui.suip_window_class(client_params.server_db_fname_const, client_params.pipe_recv, client_params.pipe_send,)
-    suip_window.show()
-    suip_window.raise_()
-    suip_app.exec_()

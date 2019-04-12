@@ -1,14 +1,14 @@
 from typing import List, Any
-
+from sys import argv
 import shape_sifter_tools as ss
-import ss_server_lib as slib
 import sqlite3
 from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtWidgets import QMainWindow, QTableWidget, QTableWidgetItem, QApplication
 from PyQt5.QtCore import QTimer
 from PyQt5.QtGui import QPalette,QColor
 
-class suip_window_class(QMainWindow,):
+
+class SuipWindow(QMainWindow, ):
 
     #constructor
     def __init__(self, active_part_db_fname_const, pipe_me_recv, pipe_me_send,):
@@ -195,6 +195,7 @@ class suip_window_class(QMainWindow,):
         ladle = ss.suip_ladle("server_control_run","")
         self.pipe_me_send.send(ladle)
 
+
 def set_dark_theme(qApp):
     WHITE = QColor(255, 255, 255)
     BLACK = QColor(0, 0, 0)
@@ -224,3 +225,19 @@ def set_dark_theme(qApp):
     qApp.setPalette(dark_palette)
 
     qApp.setStyleSheet("QToolTip { color: #ffffff; background-color: #2a82da; border: 1px solid white; }")
+
+
+def main(client_params):
+    """ The sorting machine UI
+        All fucntion defs are in shape_sifter_gui.py
+        The GUI consists of a pyQT gui connected to the active part DB and the part log DB,
+        with a pipe to the server for command/control signaling. This signaling is handled by
+        a class of objects called ladles. The ladle definition is shape_sifter_tools.py
+    """
+
+    suip_app = QApplication(argv)
+    set_dark_theme(suip_app)
+    suip_window = SuipWindow(client_params.server_db_fname_const, client_params.pipe_recv, client_params.pipe_send, )
+    suip_window.show()
+    suip_window.raise_()
+    suip_app.exec_()

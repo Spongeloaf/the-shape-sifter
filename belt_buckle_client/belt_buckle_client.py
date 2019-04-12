@@ -7,7 +7,7 @@ import serial
 import time
 
 
-def belt_buckle_client(client_params: ClientParams):
+def main(client_params: ClientParams):
     """This is the software interface for the conveyor belt controller.
     We differentiate the hardware belt buckle from this piece of software
     by calling the hardware the 'belt buckle', and this software 'belt buckle client'
@@ -23,7 +23,7 @@ def belt_buckle_client(client_params: ClientParams):
     # BB init
     bb_status = False
     serial_read_str = ''
-    logger = ss.create_logger('log\\log_belt_buckle.txt', client_params.log_level, 'belt_buckle_client')
+    logger = ss.create_logger(client_params.log_fname_const, client_params.log_level, 'belt_buckle_client')
 
     # start serial port
     ser = serial.Serial(client_params.com_port,
