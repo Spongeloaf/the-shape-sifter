@@ -22,7 +22,7 @@ void flush_part_array(int);
 void feeder_speed_up();
 void feeder_speed_down();
 void feeder_toggle_mode();
-
+void belt_toggle_mode();
 
 
 
@@ -36,7 +36,6 @@ const int payload_length = 13;                                       // used by 
 const int part_index_length = 10;                                    // the number of parts we can keep track of - global
 const int print_size = 32;                                           // this is used by the print array function, sets the max size to print. Increasing it will consume more memory, so set only what you need
 const int number_of_inputs = 8;                                      // self explanatory, I hope - global
-const int belt_pwm_pin = 2;                                          // output PWM pin for belt control - global
 const int distance_length = 5;                                       // length in bytes of distance; unsinged int is 4 + 1 for \0
 const unsigned long rollover_distance = 4294967295;									 // max int value to rollover from when checking distances
 const unsigned long bin_tolerance = 1500;														 // width in dist units of the air jet to blow the part off the belt
@@ -66,6 +65,9 @@ int pwm_timer = 0;
 int feeder_speed_selector = 0;																			 // selects the current feeder speed from the feeder_speed_array 
 bool feeder_mode = false;																						 // bool to control the current speed of the belt, so we can turn it off wihtout changing speed.
 const int feeder_num_speeds = 12;																		 // The number of speeds the feeder has. Used to unsure speed_selector doesn't go out of bounds. 
+const int belt_control_pin = 52;																		 // conveyor belt on/off control HIGH is ON.
+bool belt_mode = false;
+
 
 enum input_enum {                                                    //  input name enum for readability
   stick_up,
@@ -143,6 +145,8 @@ void setup() {
 	bin_distance_config[1] = 17508;
 	bin_distance_config[2] = 20295;
 
+	pinMode(belt_control_pin, OUTPUT);
+	digitalWrite(belt_control_pin, LOW);
 			
 	Wire.begin();																																								//  join i2c bus (address optional for master)
 	
@@ -421,8 +425,10 @@ void check_inputs(){                                                            
                   break;
   
                 case stick_left:
-                  Serial.println("stick_left");                         // replace this with a usable action at some point
-                  break;
+									belt_toggle_mode();
+                  Serial.print("belt is: ");                         // replace this with a usable action at some point
+                  Serial.println(belt_mode);
+									break;
   
                 case stick_right:
 									feeder_toggle_mode();
@@ -734,5 +740,19 @@ void feeder_toggle_mode()
 	{
 		feeder_mode = true;
 		analogWrite(hopper_pwm_pin, feeder_speed_array[feeder_speed_selector]);
+	}
+}
+
+void belt_toggle_mode()
+{
+	if (belt_mode)
+	{
+		belt_mode = false;
+		digitalWrite(belt_control_pin, LOW);
+	}
+	else
+	{
+		belt_mode = true;
+		digitalWrite(belt_control_pin, HIGH);
 	}
 }

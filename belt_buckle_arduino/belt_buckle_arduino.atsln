@@ -1,0 +1,22 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Atmel Studio Solution File, Format Version 11.00
+VisualStudioVersion = 14.0.23107.0
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{E66E83B9-2572-4076-B26E-6BE79FF3018A}") = "belt_buckle_arduino", "belt_buckle_arduino.cppproj", "{D3B78A77-96B7-4009-A7CD-F4FA57334EEA}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|AVR = Debug|AVR
+		Release|AVR = Release|AVR
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{D3B78A77-96B7-4009-A7CD-F4FA57334EEA}.Debug|AVR.ActiveCfg = Debug|AVR
+		{D3B78A77-96B7-4009-A7CD-F4FA57334EEA}.Debug|AVR.Build.0 = Debug|AVR
+		{D3B78A77-96B7-4009-A7CD-F4FA57334EEA}.Release|AVR.ActiveCfg = Release|AVR
+		{D3B78A77-96B7-4009-A7CD-F4FA57334EEA}.Release|AVR.Build.0 = Release|AVR
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
