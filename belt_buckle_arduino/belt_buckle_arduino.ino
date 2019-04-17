@@ -19,9 +19,7 @@ void check_part_distances(void);
 void turn_off_airjets(void);
 void test_outputs(int t);
 void flush_part_array(int);
-void feeder_speed_up();
-void feeder_speed_down();
-void feeder_toggle_mode();
+
 void belt_toggle_mode();
 
 
@@ -62,12 +60,9 @@ int  serial_read_string_index = 0;                                   // the curr
 char serial_read_string[packet_length + 1];                          // stores the read chars
 
 int pwm_timer = 0;
-int feeder_speed_selector = 0;																			 // selects the current feeder speed from the feeder_speed_array 
-bool feeder_mode = false;																						 // bool to control the current speed of the belt, so we can turn it off wihtout changing speed.
-const int feeder_num_speeds = 12;																		 // The number of speeds the feeder has. Used to unsure speed_selector doesn't go out of bounds. 
+
 const int belt_control_pin = 52;																		 // conveyor belt on/off control HIGH is ON.
 bool belt_mode = false;
-
 
 enum input_enum {                                                    //  input name enum for readability
   stick_up,
@@ -111,21 +106,178 @@ const int bins[number_of_bins + 1] = {                                    // sto
 	37,
 };
 
-const int feeder_speed_array [feeder_num_speeds + 1] = {
-20,
-30,
-40,
-50,
-60,
-75,
-100,
-125,
-150,
-175,
-200,
-225,
-255
+
+class PartFeeder{
+// This object provides a control interface to the part feeder. 
+// This class ensures that the motor operates safely. 
+// The motor cannot be switched from stationary to full power, due to the immense current drawn by a stationary motor.
+// When the motor starts, it is only allowed a minimal duty cycle for the first [startup_delay] milliseconds. 
+// Afterwards, the speed will be increased to the user's desired amount. 
+// In the main loop, event_tick() will update the motor speed once the startup cycle is complete.
+
+public:
+	PartFeeder(int p) : pin{p};
+	
+	// please see function definitions for documentation.
+	void speed_up();
+	void speed_down();
+	void toggle();
+	void start();
+	void stop();
+	bool get_mode();
+	bool get_startup;
+
+private:
+	int pin;
+	int speed_selector = 0;																				// selects the current feeder speed from the speed_array
+	bool mode = false;																						// bool to control the current speed of the belt, so we can turn it off without changing speed.
+	bool startup = true;																					// true during speed limited startup phase.
+	unsigned long startup_t = 0;																	// tracks when the motor began to spin. Used by start() to limit current draw of stationary motor.
+	unsigned long startup_delay = 4000;														// delay in milliseconds to keep the motor in the startup phase.
+	const int num_speeds = 12;																		// The number of speeds the feeder has. Used to unsure speed_selector doesn't go out of bounds.
+	const int speed_array [num_speeds + 1] = {										// hold the PWM output speeds for the feeder.
+		20,
+		30,
+		40,
+		50,
+		60,
+		75,
+		100,
+		125,
+		150,
+		175,
+		200,
+		225,
+		255
+	};
+	
 };
+
+
+void PartFeeder::speed_up()
+{
+	// raises feeder speed unless already maxed. Does not turn on feeder.
+	// TODO: Add packet notification to the server of current feed speed.
+
+	speed_selector++;
+
+	// true at max speed, prevents accessing speed array out of range
+	if (speed_selector > num_speeds)
+	{
+		speed_selector = num_speeds;
+	}
+
+	// only writes to analog output if the feeder is currently running, and not currently spinning up.
+	if (mode && (!(startup)))
+	{
+		analogWrite(hopper_pwm_pin, speed_array[speed_selector]);
+	}
+}
+
+
+void PartFeeder::speed_down()
+{
+	// raises feeder speed unless already maxed. Does not turn on feeder.
+	// TODO: Add packet notification to the server of current feed speed.
+
+	speed_selector--;
+
+	// true at max speed, prevents accessing speed array out of range
+	if (speed_selector < 0)
+	{
+		speed_selector = 0;
+	}
+
+	// only writes to analog output if the feeder is currently running
+	if (mode && (!(startup)))
+	{
+		analogWrite(hopper_pwm_pin, speed_array[speed_selector]);
+	}
+
+}
+
+
+void PartFeeder::toggle()
+{
+	// turns on/off the feeder. Does not modify current speed setting.
+
+	if (mode)
+	{
+		mode = false;
+		stop();
+		return;
+	}
+	else
+	{
+		mode = true;
+
+		start();
+	}
+}
+
+
+bool PartFeeder::get_mode()
+{
+	return mode;
+}
+
+
+bool PartFeeder::get_startup()
+{
+	return startup;
+}
+
+
+void PartFeeder::start()
+{
+	// limits startup speed of the motor. Because we need to wait for startup_delay for the motor to spin up,
+	// we call this repeatedly to check the time and update the speed as required.
+
+
+	// error handling. mode should never be false while startup is true.
+	if (startup)
+	{
+		if (!mode)
+		{
+			mode = true;
+		}
+	}
+
+
+	// the motor is currently in a startup phase.
+	if (startup)
+	{
+			// check if we've past startup_delay.
+			unsigned long now_t = millis();
+			if ((now_t - startup_t) > startup_delay)
+			{
+				startup = false;
+				analogWrite(pin, speed_array[speed_selector])
+				Serial.println("full speed");
+			}
+			return;
+	}	
+	
+
+	if (mode)
+	{
+		return;		// startup must be false if we got here. abort the call; the motor is spinning as it should be.
+	}
+		
+	// startup and mode are false. Begin startup phase.
+	startup_t = millis();
+	startup = true;
+	mode = true;
+	analogWrite(pin, 20);
+
+	Serial.println("startup");
+	return;
+}
+	
+
+
+
+
 
 void setup() {
 
@@ -165,7 +317,9 @@ void loop() {
 
 	check_part_distances();
 
-	turn_off_airjets();
+	//turn_off_airjets();
+
+	event_tick();
 
 }
 
@@ -607,6 +761,11 @@ void check_part_distances(void)																																//  NOT FINISHED 
 	previous_distance = current_distance;
 }
 
+void event_tick()
+{
+	TODO add this function! ;
+}
+
 void turn_off_airjets()
 {
 	for (int i = 0; i < number_of_bins; i++ )
@@ -684,64 +843,6 @@ void flush_part_array(int index)
 			}
 		Serial.println("Error: Flush index out of range!");		// nothing is zeroed if index is out of range!
 	}
-
-void feeder_speed_up() 
-{
-	// raises feeder speed unless already maxed. Does not turn on feeder.
-	// TODO: Add packet notification to the server of current feed speed.
-
-	feeder_speed_selector++;
-
-	// true at max speed, prevents accessing speed array out of range
-	if (feeder_speed_selector > feeder_num_speeds)
-	{
-		feeder_speed_selector = feeder_num_speeds;
-	}
-
-	// only writes to analog output if the feeder is currently running
-	if (feeder_mode)
-	{
-		analogWrite(hopper_pwm_pin, feeder_speed_array[feeder_speed_selector]);
-	}
-}
-
-void feeder_speed_down()
-{
-	// raises feeder speed unless already maxed. Does not turn on feeder.
-	// TODO: Add packet notification to the server of current feed speed.
-
-	feeder_speed_selector--;
-
-	// true at max speed, prevents accessing speed array out of range
-	if (feeder_speed_selector < 0)
-	{
-		feeder_speed_selector = 0;
-	}
-
-	// only writes to analog output if the feeder is currently running
-	if (feeder_mode)
-	{
-		analogWrite(hopper_pwm_pin, feeder_speed_array[feeder_speed_selector]);
-	}
-
-}
-
-void feeder_toggle_mode()
-{
-	// turns on/off the feeder. Does not modify current speed setting.
-
-	if (feeder_mode)
-	{
-		feeder_mode = false;
-		analogWrite(hopper_pwm_pin, 0);
-		return;
-	}
-	else
-	{
-		feeder_mode = true;
-		analogWrite(hopper_pwm_pin, feeder_speed_array[feeder_speed_selector]);
-	}
-}
 
 void belt_toggle_mode()
 {
