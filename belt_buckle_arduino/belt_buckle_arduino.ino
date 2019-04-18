@@ -19,12 +19,16 @@ void check_part_distances(void);
 void turn_off_airjets(void);
 void test_outputs(int t);
 void flush_part_array(int);
-
+void event_tick();
 void belt_toggle_mode();
 
 
+// These globals are used for setting up pin numbers, and size parameters.
+const uint8_t belt_control_pin = 52;
+const uint8_t hopper_pwm_pin = 3;																		 // PWM pin number of the hopper. Should be 3.
 
 
+// ---- ALL GLOBALS IN THIS LIST MUST BE FACTORED OUT! --------- //
 // We inititialize all of our local vars at the start of their functions; never in-line. It's much easier to track them. the only exceptions are vars used in for loops.
 // Vars for loops or short term use vars may have single letter names like i. All other vars need verbose names.
 const int packet_length = 23;                                        // length in bytes of each command packet
@@ -39,7 +43,6 @@ const unsigned long rollover_distance = 4294967295;									 // max int value to
 const unsigned long bin_tolerance = 1500;														 // width in dist units of the air jet to blow the part off the belt
 const int number_of_bins = 16;																			 // max number of bins we can put on one belt
 const unsigned long bin_airjet_time = 200;													 // time in milliseconds that the air jet stays on
-const uint8_t hopper_pwm_pin = 3;																		 // PWM pin number of the hopper. Should be 3.
 
 unsigned int part_index_working = 0;                                 // the next available index for storing a part
 unsigned long bin_distance_config[number_of_bins + 1];							 // array that stores distance ints for each bin location
@@ -61,7 +64,6 @@ char serial_read_string[packet_length + 1];                          // stores t
 
 int pwm_timer = 0;
 
-const int belt_control_pin = 52;																		 // conveyor belt on/off control HIGH is ON.
 bool belt_mode = false;
 
 enum input_enum {                                                    //  input name enum for readability
@@ -114,9 +116,8 @@ class PartFeeder{
 // When the motor starts, it is only allowed a minimal duty cycle for the first [startup_delay] milliseconds. 
 // Afterwards, the speed will be increased to the user's desired amount. 
 // In the main loop, event_tick() will update the motor speed once the startup cycle is complete.
-
 public:
-	PartFeeder(int p) : pin{p};
+	PartFeeder(int p) : pin(p) {};
 	
 	// please see function definitions for documentation.
 	void speed_up();
@@ -125,17 +126,18 @@ public:
 	void start();
 	void stop();
 	bool get_mode();
-	bool get_startup;
+	bool get_startup();
+	int get_speed();
 
 private:
 	int pin;
 	int speed_selector = 0;																				// selects the current feeder speed from the speed_array
 	bool mode = false;																						// bool to control the current speed of the belt, so we can turn it off without changing speed.
-	bool startup = true;																					// true during speed limited startup phase.
+	bool startup = false;																					// true during speed limited startup phase.
 	unsigned long startup_t = 0;																	// tracks when the motor began to spin. Used by start() to limit current draw of stationary motor.
-	unsigned long startup_delay = 4000;														// delay in milliseconds to keep the motor in the startup phase.
+	unsigned long startup_delay = 2000;														// delay in milliseconds to keep the motor in the startup phase.
 	const int num_speeds = 12;																		// The number of speeds the feeder has. Used to unsure speed_selector doesn't go out of bounds.
-	const int speed_array [num_speeds + 1] = {										// hold the PWM output speeds for the feeder.
+	const int speed_array[13] = {										// hold the PWM output speeds for the feeder.
 		20,
 		30,
 		40,
@@ -170,7 +172,7 @@ void PartFeeder::speed_up()
 	// only writes to analog output if the feeder is currently running, and not currently spinning up.
 	if (mode && (!(startup)))
 	{
-		analogWrite(hopper_pwm_pin, speed_array[speed_selector]);
+		analogWrite(pin, speed_array[speed_selector]);
 	}
 }
 
@@ -191,7 +193,7 @@ void PartFeeder::speed_down()
 	// only writes to analog output if the feeder is currently running
 	if (mode && (!(startup)))
 	{
-		analogWrite(hopper_pwm_pin, speed_array[speed_selector]);
+		analogWrite(pin, speed_array[speed_selector]);
 	}
 
 }
@@ -203,28 +205,13 @@ void PartFeeder::toggle()
 
 	if (mode)
 	{
-		mode = false;
 		stop();
 		return;
 	}
 	else
 	{
-		mode = true;
-
 		start();
 	}
-}
-
-
-bool PartFeeder::get_mode()
-{
-	return mode;
-}
-
-
-bool PartFeeder::get_startup()
-{
-	return startup;
 }
 
 
@@ -247,23 +234,23 @@ void PartFeeder::start()
 	// the motor is currently in a startup phase.
 	if (startup)
 	{
-			// check if we've past startup_delay.
-			unsigned long now_t = millis();
-			if ((now_t - startup_t) > startup_delay)
-			{
-				startup = false;
-				analogWrite(pin, speed_array[speed_selector])
-				Serial.println("full speed");
-			}
-			return;
-	}	
+		// check if we've past startup_delay.
+		unsigned long now_t = millis();
+		if ((now_t - startup_t) > startup_delay)
+		{
+			startup = false;
+			analogWrite(pin, speed_array[speed_selector]);
+			Serial.println("full speed");
+		}
+		return;
+	}
 	
 
 	if (mode)
 	{
 		return;		// startup must be false if we got here. abort the call; the motor is spinning as it should be.
 	}
-		
+	
 	// startup and mode are false. Begin startup phase.
 	startup_t = millis();
 	startup = true;
@@ -273,9 +260,37 @@ void PartFeeder::start()
 	Serial.println("startup");
 	return;
 }
+
+
+void PartFeeder::stop()
+{
+	mode = false;
+	startup = false;
+	analogWrite(pin, 0);
+}
+
+
+bool PartFeeder::get_mode()
+{
+	return mode;
+}
+
+
+bool PartFeeder::get_startup()
+{
+	return startup;
+}
 	
 
+int PartFeeder::get_speed()
+{
+	return speed_selector;
+}
 
+
+// declare these objects in global scope so everyone can use them.
+// It's unconventional, but makes sense given the embedded environment we're using.
+PartFeeder feeder{hopper_pwm_pin};
 
 
 
@@ -301,12 +316,12 @@ void setup() {
 	digitalWrite(belt_control_pin, LOW);
 			
 	Wire.begin();																																								//  join i2c bus (address optional for master)
-	
+
 	//  TODO: add version number transmission as a separate bytes array. Also add version number to handshake command
 	Serial.begin(57600);
 	Serial.print("[BB_ONLINE]");
 	delay(100);															  // This delay is to allow our serial read to timeout on the server.
-	Serial.print("[Belt Buckle v0.5.6]");																											//  display program name on boot
+	Serial.print("[Belt Buckle v0.5.7]");																											//  display program name on boot
 }
 
 void loop() {
@@ -567,15 +582,15 @@ void check_inputs(){                                                            
               switch (i)                                                // take action if a input is pressed.
               {
                 case stick_up:
-									feeder_speed_up();
+									feeder.speed_up();
 									Serial.print("speed: ");
-                  Serial.println(feeder_speed_selector);                           // replace this with a usable action at some point
+                  Serial.println(feeder.get_speed());                           
                   break;
   
                 case stick_down:
-									feeder_speed_down();
+									feeder.speed_down();
 									Serial.print("speed: ");
-                  Serial.println(feeder_speed_selector);                         // replace this with a usable action at some point
+									Serial.println(feeder.get_speed());                      
                   break;
   
                 case stick_left:
@@ -585,11 +600,11 @@ void check_inputs(){                                                            
 									break;
   
                 case stick_right:
-									feeder_toggle_mode();
+									feeder.toggle();
 									Serial.print("Mode: ");
-									Serial.print(feeder_mode);
+									Serial.print(feeder.get_mode());
 									Serial.print(" Speed: ");
-                  Serial.println(feeder_speed_selector);                         // replace this with a usable action at some point
+                  Serial.println(feeder.get_speed());                         // replace this with a usable action at some point
 									break;
 
                 case button_run:
@@ -606,7 +621,6 @@ void check_inputs(){                                                            
 
 								case button_feeder:
 									Serial.println("button_feeder");                         // replace this with a usable action at some point
-									feeder_toggle_mode();
 									break;
 
 
@@ -763,7 +777,17 @@ void check_part_distances(void)																																//  NOT FINISHED 
 
 void event_tick()
 {
-	TODO add this function! ;
+	// There's a bit of non-conventionality in here. 
+	// Because we are working with meat-space machinery, we need to wait and continually check on certain procedures.
+	// this includes things like turning airjets off after a few milliseconds, and waiting for feeder startup phases.
+
+	turn_off_airjets();
+
+	if (feeder.get_startup())
+	{
+		feeder.start();
+	}
+	
 }
 
 void turn_off_airjets()
