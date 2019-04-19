@@ -19,9 +19,6 @@ int add_part(char (*));
 int assign_bin(int, char (*));
 int add_part_and_assign_bin(char (*), int, char (*));
 unsigned long get_distance_from_encoder(void);
-void check_part_distances(void);
-void turn_off_airjets(void);
-void test_outputs(int t);
 void flush_part_array(int);
 void event_tick();
 void belt_toggle_mode();
@@ -51,27 +48,17 @@ const int print_size = 32;                                           // this is 
 const int number_of_inputs = 8;                                      // self explanatory, I hope - global
 const int distance_length = 5;                                       // length in bytes of distance; unsinged int is 4 + 1 for \0
 const unsigned long rollover_distance = 4294967295;									 // max int value to rollover from when checking distances
-
-
 unsigned int part_index_working = 0;                                 // the next available index for storing a part
-
 unsigned long part_index_distance[part_index_length];                // the main distance index - global
-
 int part_index_bin[part_index_length];                               // the main bin index - global
 char part_index_payload[part_index_length][payload_length];          // the main part index - global
-
 const unsigned long debounceDelay = 210;                             // the debounce time; increase if the output flickers 
-unsigned long lastDebounceTime = 0;                                  // for debouncing
+unsigned long lastDebounceTime = 0;                                  // for de-bouncing
 bool input_active[number_of_inputs];                                 // stores the current state of each input - global
 bool input_previous_state = true;                                    // default to true because pull up resistors invert our logic
-
 unsigned long belt_total_distance = 0;                               // distance traveled by the belt - global
-
 int  serial_read_string_index = 0;                                   // the current index number of the read string
 char serial_read_string[packet_length + 1];                          // stores the read chars
-
-int pwm_timer = 0;
-
 bool belt_mode = false;
 
 enum input_enum {                                                    //  input name enum for readability
@@ -104,7 +91,7 @@ void setup() {
 	for (int i = 0; i < number_of_inputs; i++)	// setup our pins using a loop, makes it easier to add new pins
 	{
 		pinMode (input_pins[i], INPUT_PULLUP);
-		input_active[i] = true;						// Remember that using internal pullup resistors causes our true/false to be inverted!
+		input_active[i] = true;						// Remember that using internal pull-up resistors causes our true/false to be inverted!
 	}
 
 	pinMode(belt_control_pin, OUTPUT);
@@ -119,16 +106,18 @@ void setup() {
 	Serial.print("[Belt Buckle v0.5.8]");																											//  display program name on boot
 }
 
+
 void loop() {
 
 	read_serial_port();
 	
 	check_inputs();
 
-	check_part_distances();
+	bins.check_part_distances();
 
 	event_tick();
 }
+
 
 void read_serial_port(){
 
@@ -137,7 +126,7 @@ void read_serial_port(){
   if (Serial.available() > 0)
     {
     serial_char = Serial.read();                                        //  Read a character
-    // print_array(serial_read_string);                                  // for debuggin'
+    // print_array(serial_read_string);                                  // for debugging
 
     switch (serial_char) 
       {
@@ -147,8 +136,8 @@ void read_serial_port(){
         serial_read_string[0] = serial_char;                            // place our '<' character at the beginning of the array
         serial_read_string_index = serial_read_string_index + 1;        // increment array index number
         
-        // print_array(serial_read_string);                              // for debuggin'
-        // Serial.println("packet initiator found");                     // for debuggin'
+        // print_array(serial_read_string);                              // for debugging
+        // Serial.println("packet initiator found");                     // for debugging
       break;
       
       case '>':                                                         // '>' is the packet terminator.
@@ -157,9 +146,9 @@ void read_serial_port(){
         memset(&serial_read_string[0], 0, sizeof(serial_read_string));  // clear the array every time we get a new initiator.
         serial_read_string_index = 0;                                   // reset the packet array index to 0
         
-        // Serial.println(strlen(serial_read_string));                   // for debuggin'
-        // print_array(serial_read_string);                              // for debuggin'
-        // Serial.println("packet terminator found");                    // for debuggin'        
+        // Serial.println(strlen(serial_read_string));                   // for debugging
+        // print_array(serial_read_string);                              // for debugging
+        // Serial.println("packet terminator found");                    // for debugging       
       break;
       
       default:
@@ -168,7 +157,7 @@ void read_serial_port(){
             serial_read_string[serial_read_string_index] = serial_char;     // append the read character to the array
             serial_read_string_index = serial_read_string_index + 1;        // increment the array index number 
           }
-        else                                                            // should we recieve more than 22 characters before a temrinator, something is wrong, dump the string.
+        else                                                            // should we receive more than 22 characters before a terminator, something is wrong, dump the string.
         {
         memset(&serial_read_string[0], 0, sizeof(serial_read_string));  // clear the array every time we get a new initiator.
         serial_read_string_index = 0;                                   // reset the array index because we're starting a new command.
@@ -177,6 +166,7 @@ void read_serial_port(){
       
     }
 }
+
 
 void print_array(char to_be_printed[print_size]){                    // prints an array of characters
   for (int i = 0; i <= print_size; i++)
@@ -189,6 +179,7 @@ void print_array(char to_be_printed[print_size]){                    // prints a
     Serial.print(to_be_printed[i]);
   }
 }
+
 
 void print_array(unsigned long to_be_printed[print_size]){                    // prints an array of characters
 	for (int i = 0; i <= print_size; i++)
@@ -203,6 +194,7 @@ void print_array(unsigned long to_be_printed[print_size]){                    //
 	}
 }
 
+
 void print_array_2d( const char a[][ payload_length ] ) {
    
    for ( int i = 0; i < part_index_length; ++i ) {               //  loop through array's rows
@@ -215,6 +207,7 @@ void print_array_2d( const char a[][ payload_length ] ) {
     } 
    
 } 
+
 
 void print_part_index_full() {
    
@@ -235,6 +228,7 @@ void print_part_index_full() {
       } 
 } 
 
+
 void print_part_index_single(int i) {
    
    Serial.println("  Payload    :  Dist. : Bin") ;    
@@ -253,6 +247,7 @@ void print_part_index_single(int i) {
    
 } 
 
+
 void parse_packet(char packet[]){																					// parses the command and then passes the relevant data off to wherever it needs to go. 
 
 unsigned int parse_packet_argument_int = 0;                               // int to store the packet argument
@@ -262,32 +257,32 @@ int parse_command_result = 0;																							// Error messages are a lett
 
   // ------------TODO: Needs to have CSUM installed HERE------------
   
-  // Serial.print("Packet length:");                                       // for debuggin'
-  // Serial.println(strlen(packet));                                       // for debuggin'
+  // Serial.print("Packet length:");                                       // for debugging
+  // Serial.println(strlen(packet));                                       // for debugging
   
   if (strlen(packet) == packet_length)																		// this is a really basic packet check. We need a better one.
     {
       
-      // Serial.println("Parsing packet : Length OK");											// for debuggin'
+      // Serial.println("Parsing packet : Length OK");											// for debugging
      
       //  this loop sets up the argument array
       for (int i = 0; i <= argument_length - 2; i++)                      // argument length -2, because the last character is \0 and we are zero indexed 
         {
-          parse_packet_argument_arr[i] = packet[i + 2];                   //  the arguemnt begines on the [2] char
+          parse_packet_argument_arr[i] = packet[i + 2];                   //  the argument begins on the [2] char
         }
-      parse_packet_argument_arr[4] = '\0';                                // dont forget the terminator on the array!
+      parse_packet_argument_arr[4] = '\0';                                // don't forget the terminator on the array!
       parse_packet_argument_int = atoi(parse_packet_argument_arr);        // the bin number is more useful as an int than an array. But now we have both.
 
       //  this loop sets up the payload array
       for (int i = 0; i <= payload_length - 2; i++)                       // payload length -2, because the last character is \0 and we are zero indexed
         {
-          parse_packet_payload[i] = packet[i + 6];                        //  the arguemnt begines on the [2] char
+          parse_packet_payload[i] = packet[i + 6];                        //  the argument begins on the [2] char
         }
       parse_packet_payload[payload_length - 1] = '\0';   
 			
 
           
-      // switch case for all the differrent command types.
+      // switch case for all the different command types.
       // see trello for a list of commands
       switch (packet[1])
       {
@@ -312,7 +307,7 @@ int parse_command_result = 0;																							// Error messages are a lett
           // handshake
           Serial.print("Command ");
           Serial.print(packet[1]);
-          Serial.println(" Recieved");
+          Serial.println(" Received");
         break;
 
         case 'O':
@@ -351,11 +346,12 @@ int parse_command_result = 0;																							// Error messages are a lett
     {
       Serial.print("Parsing packet : Bad Packet Length. Expected ");
       Serial.print(packet_length);
-      Serial.print(" but recieved ");
+      Serial.print(" but received ");
       Serial.println(strlen(packet));                   
     }
 
 }
+
  
 void check_inputs(){                                                                // check the state of all inputs
 
@@ -364,7 +360,7 @@ void check_inputs(){                                                            
       input_previous_state = input_active[i];                           // take the value from the previous loop and store it here
       input_active[i] = digitalRead(input_pins[i]);                           // read the current input state
   
-      if (input_active[i] == false) {                                   // false here means input is active because of pullup resistors!
+      if (input_active[i] == false) {                                   // false here means input is active because of pull-up resistors!
         {
           if (input_active[i] != input_previous_state)                  // checks if the state changed from our last trip through the loop
           {
@@ -374,46 +370,46 @@ void check_inputs(){                                                            
               switch (i)                                                // take action if a input is pressed.
               {
                 case stick_up:
-									feeder.speed_up();
-									Serial.print("speed: ");
-                  Serial.println(feeder.get_speed());                           
-                  break;
+					feeder.speed_up();
+					Serial.print("speed: ");
+					Serial.println(feeder.get_speed());                           
+					break;
   
                 case stick_down:
-									feeder.speed_down();
-									Serial.print("speed: ");
-									Serial.println(feeder.get_speed());                      
-                  break;
+					feeder.speed_down();
+					Serial.print("speed: ");
+					Serial.println(feeder.get_speed());                      
+					break;
   
                 case stick_left:
-									belt_toggle_mode();
-                  Serial.print("belt is: ");                         // replace this with a usable action at some point
-                  Serial.println(belt_mode);
-									break;
+					belt_toggle_mode();
+					Serial.print("belt is: ");                         // replace this with a usable action at some point
+					Serial.println(belt_mode);
+					break;
   
                 case stick_right:
-									feeder.toggle();
-									Serial.print("Mode: ");
-									Serial.print(feeder.get_mode());
-									Serial.print(" Speed: ");
-                  Serial.println(feeder.get_speed());                         // replace this with a usable action at some point
-									break;
+					feeder.toggle();
+					Serial.print("Mode: ");
+					Serial.print(feeder.get_mode());
+					Serial.print(" Speed: ");
+					Serial.println(feeder.get_speed());                         // replace this with a usable action at some point
+					break;
 
-                case button_run:
-									Serial.println("button_run");                         // replace this with a usable action at some point
-									break;
+				case button_run:
+					Serial.println("button_run");                         // replace this with a usable action at some point
+					break;
 
-								case button_stop:
-                  Serial.println("button_stop");                         // replace this with a usable action at some point
-                  break;
+				case button_stop:
+					Serial.println("button_stop");                        // replace this with a usable action at some point
+					break;
 
-								case button_belt:
-									Serial.println("button_belt");                         // replace this with a usable action at some point
-									break;
+				case button_belt:
+					Serial.println("button_belt");                         // replace this with a usable action at some point
+					break;
 
-								case button_feeder:
-									Serial.println("button_feeder");                         // replace this with a usable action at some point
-									break;
+				case button_feeder:
+					Serial.println("button_feeder");                         // replace this with a usable action at some point
+					break;
 
 
               }
@@ -423,6 +419,7 @@ void check_inputs(){                                                            
       }
     }
   }
+
 
 int add_part(char packet_payload[]){                                                      // Adds a new part instance to the part index array
 	
@@ -437,7 +434,7 @@ int add_part(char packet_payload[]){                                            
 		}
 	}	
 	
-  for (int i = 0; i < payload_length; i++)                                          // Stores the recieved part index in the DB
+  for (int i = 0; i < payload_length; i++)                                          // Stores the received part index in the DB
   {                          
     part_index_payload[part_index_working][i] = packet_payload[i];
   }
@@ -453,7 +450,8 @@ int add_part(char packet_payload[]){                                            
   return 200;
 }
 
-int assign_bin(int packet_argument, char packet_payload[]){             // assign a part to a bin. loops through the payload array, returns 404 if the part isnt found
+
+int assign_bin(int packet_argument, char packet_payload[]){             // assign a part to a bin. loops through the payload array, returns 404 if the part isn't found
 
     for (unsigned int i = 0; i < part_index_length; i++)
     {
@@ -466,6 +464,7 @@ int assign_bin(int packet_argument, char packet_payload[]){             // assig
 		return 404;																														
 
 }
+
 
 int add_part_and_assign_bin(char packet_payload[], int assign_argument, char assign_payload[])
 	{
@@ -497,6 +496,7 @@ int add_part_and_assign_bin(char packet_payload[], int assign_argument, char ass
 			return 200;
 	}
 
+
 unsigned long get_distance_from_encoder()																											// get the distance from the encoder. Credit: https:// thewanderingengineer.com/2015/05/06/sending-16-bit-and-32-bit-numbers-with-arduino-i2c/
 {																																	
 	unsigned long distance;		
@@ -519,6 +519,7 @@ unsigned long get_distance_from_encoder()																											// get the d
 		}
 return 1;
 }
+
 
 void send_ack(char send_command, int send_command_result, char send_packet_payload[]){
 	Serial.print("[ACK-");
@@ -599,6 +600,7 @@ void flush_part_array(int index)
 			}
 		Serial.println("Error: Flush index out of range!");		// nothing is zeroed if index is out of range!
 	}
+
 
 void belt_toggle_mode()
 {
