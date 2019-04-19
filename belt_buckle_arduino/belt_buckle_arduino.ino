@@ -1,5 +1,9 @@
 #include <Wire.h>
 #include "PartFeeder.h"
+#include "BinController.h"
+
+
+
 
 // function prototypes
 void send_ack(char, int, char (*));
@@ -23,31 +27,36 @@ void event_tick();
 void belt_toggle_mode();
 
 
+// declare all primary control interfaces in the global scope so everyone can use them.
+PartFeeder feeder{hopper_pwm_pin};
+BinController bins{};
+
+
 // These globals are used for setting up pin numbers, and size parameters.
+// Bin pin numbers are in bins.h
 const uint8_t belt_control_pin = 52;
 const uint8_t hopper_pwm_pin = 3;																		 // PWM pin number of the hopper. Should be 3.
+
 
 
 // ---- ALL GLOBALS IN THIS LIST MUST BE FACTORED OUT! --------- //
 // We inititialize all of our local vars at the start of their functions; never in-line. It's much easier to track them. the only exceptions are vars used in for loops.
 // Vars for loops or short term use vars may have single letter names like i. All other vars need verbose names.
 const int packet_length = 23;                                        // length in bytes of each command packet
-const int csum_length = 5;                                           // length in bytes of of the csum +1 for terminator
-const int argument_length = 5;                                       // used by the parser to get the number of bytes in the packet arguement
+const int csum_length = 5;                                           // length in bytes of of the CSUM +1 for terminator
+const int argument_length = 5;                                       // used by the parser to get the number of bytes in the packet argument
 const int payload_length = 13;                                       // used by the parser to get the number of bytes in the packet payload
 const int part_index_length = 10;                                    // the number of parts we can keep track of - global
 const int print_size = 32;                                           // this is used by the print array function, sets the max size to print. Increasing it will consume more memory, so set only what you need
 const int number_of_inputs = 8;                                      // self explanatory, I hope - global
 const int distance_length = 5;                                       // length in bytes of distance; unsinged int is 4 + 1 for \0
 const unsigned long rollover_distance = 4294967295;									 // max int value to rollover from when checking distances
-const unsigned long bin_tolerance = 1500;														 // width in dist units of the air jet to blow the part off the belt
-const int number_of_bins = 16;																			 // max number of bins we can put on one belt
-const unsigned long bin_airjet_time = 200;													 // time in milliseconds that the air jet stays on
+
 
 unsigned int part_index_working = 0;                                 // the next available index for storing a part
-unsigned long bin_distance_config[number_of_bins + 1];							 // array that stores distance ints for each bin location
+
 unsigned long part_index_distance[part_index_length];                // the main distance index - global
-unsigned long bin_airjet_array[number_of_bins];											 // for timing air blasts
+
 int part_index_bin[part_index_length];                               // the main bin index - global
 char part_index_payload[part_index_length][payload_length];          // the main part index - global
 
@@ -57,7 +66,6 @@ bool input_active[number_of_inputs];                                 // stores t
 bool input_previous_state = true;                                    // default to true because pull up resistors invert our logic
 
 unsigned long belt_total_distance = 0;                               // distance traveled by the belt - global
-int bin_count;																											 // number of bins currently stored
 
 int  serial_read_string_index = 0;                                   // the current index number of the read string
 char serial_read_string[packet_length + 1];                          // stores the read chars
@@ -77,7 +85,7 @@ enum input_enum {                                                    //  input n
 	button_feeder
 };
 
-const int pins[number_of_inputs] = {                                 // storing the pin numbers in an array is clever.
+const int input_pins[number_of_inputs] = {                                 // storing the pin numbers in an array is clever.
 	4,					//  stick_up
 	5,					//  stick_down           
   6,					//  stick_left           
@@ -88,51 +96,16 @@ const int pins[number_of_inputs] = {                                 // storing 
 	11					//  button_feeder,					 
 };						 
 
-const int bins[number_of_bins + 1] = {                                    // storing the bin output pin numbers in an array is clever.
-	0,
-	22,
-	23,
-	24,
-	25,
-	26,
-	27,
-	28,
-	29,
-	30,
-	31,
-	32,
-	33,
-	34,
-	35,
-	36,
-	37,
-};
 
-
-
-
-// declare these objects in global scope so everyone can use them.
-// It's unconventional, but makes sense given the embedded environment we're using.
-PartFeeder feeder{hopper_pwm_pin};
 
 
 void setup() {
-
-	for (int i = 1; i <= number_of_bins; i++ )																	// setting up our bin outputs and writing values to LOW.
-		{
-			pinMode(bins[i], OUTPUT);
-			digitalWrite(bins[i], LOW);
-		}
-																						
-  for (int i = 0; i < number_of_inputs; i++)																	// setup our pins using a loop, makes it easier to add new pins
-  {
-    pinMode (pins[i], INPUT_PULLUP);
-    input_active[i] = true;																									  // Remember that using internal pullup resistors causes our true/false to be inverted!
-  }
-	
-	bin_distance_config[0] = 0;
-	bin_distance_config[1] = 17508;
-	bin_distance_config[2] = 20295;
+																			
+	for (int i = 0; i < number_of_inputs; i++)	// setup our pins using a loop, makes it easier to add new pins
+	{
+		pinMode (input_pins[i], INPUT_PULLUP);
+		input_active[i] = true;						// Remember that using internal pullup resistors causes our true/false to be inverted!
+	}
 
 	pinMode(belt_control_pin, OUTPUT);
 	digitalWrite(belt_control_pin, LOW);
@@ -143,21 +116,18 @@ void setup() {
 	Serial.begin(57600);
 	Serial.print("[BB_ONLINE]");
 	delay(100);															  // This delay is to allow our serial read to timeout on the server.
-	Serial.print("[Belt Buckle v0.5.7]");																											//  display program name on boot
+	Serial.print("[Belt Buckle v0.5.8]");																											//  display program name on boot
 }
 
 void loop() {
 
-  read_serial_port();
+	read_serial_port();
 	
-  check_inputs();
+	check_inputs();
 
 	check_part_distances();
 
-	//turn_off_airjets();
-
 	event_tick();
-
 }
 
 void read_serial_port(){
@@ -392,7 +362,7 @@ void check_inputs(){                                                            
   for (int i = 0; i < number_of_inputs; i++)                         // loop through the array of inputs
     {
       input_previous_state = input_active[i];                           // take the value from the previous loop and store it here
-      input_active[i] = digitalRead(pins[i]);                           // read the current input state
+      input_active[i] = digitalRead(input_pins[i]);                           // read the current input state
   
       if (input_active[i] == false) {                                   // false here means input is active because of pullup resistors!
         {
@@ -562,40 +532,6 @@ void send_ack(char send_command, int send_command_result, char send_packet_paylo
 	Serial.print("]");
 }
 
-void check_part_distances(void)																																//  NOT FINISHED YET!!!!!   something is borken!
-{
-	unsigned long current_distance;
-	unsigned long travelled_distance;
-	unsigned long previous_distance;
-	int b;
-	
-	current_distance = get_distance_from_encoder();
-	if (current_distance == previous_distance)
-		{
-			//  Serial.println("Warning: distance variables == 0. Belt may not be moving");
-		}
-	
-	for (unsigned int i = 0; i < part_index_length; i++)																										// loop through the main part array and determine if the 
-		{		
-			if (part_index_bin[i] > 0)																																					// checks to prevent sorting unassigned parts
-				{
-					travelled_distance = current_distance - part_index_distance[i];																	// gets the distance travelled since we last checked
-					if (travelled_distance < 0)																																			// evaluates true when the distance int rolls over, UNTESTED!
-						{
-							travelled_distance = rollover_distance - current_distance + part_index_distance[i];
-						}
-					b = part_index_bin[i];																																					// gets the bin number we are using right now
-					
-					if (travelled_distance >= bin_distance_config[b] && travelled_distance <= (bin_distance_config[b] + bin_tolerance))
-						{
-							bin_airjet_array[b] = millis();																															// stash the time that the airjet was turned on, we'll turn it off later in the airjet 
-							digitalWrite(bins[b], HIGH);																																	
-							flush_part_array(i);
-						}
-				}
-		}
-	previous_distance = current_distance;
-}
 
 void event_tick()
 {
@@ -612,32 +548,6 @@ void event_tick()
 	
 }
 
-void turn_off_airjets()
-{
-	for (int i = 0; i < number_of_bins; i++ )
-		{
-			if (millis() > (bin_airjet_array[i] + bin_airjet_time))
-				{
-					digitalWrite(bins[i], LOW);
-					bin_airjet_array[i] = 0;
-				}
-		}	
-}
-
-void test_outputs(int t)
-{
-		Serial.println("Testing outputs...");
-		for (int i = 1; i <= number_of_bins; i++ )							// setting up our bin outputs and writing values to HIGH.
-		{
-			digitalWrite(bins[i], HIGH);
-			delay(t);
-			digitalWrite(bins[i], LOW);
-			delay(t);
-			Serial.print("output: ");
-			Serial.println(bins[i]);
-		} 
-		Serial.println("Test complete");
-}
 
 void flush_part_array(int index)
 {
