@@ -18,8 +18,7 @@
     <ToolchainFlavour>Native</ToolchainFlavour>
     <KeepTimersRunning>true</KeepTimersRunning>
     <OverrideVtor>false</OverrideVtor>
-    <OverrideVtorValue>
-    </OverrideVtorValue>
+    <OverrideVtorValue>exception_table</OverrideVtorValue>
     <eraseonlaunchrule>0</eraseonlaunchrule>
     <ProgFlashFromRam>true</ProgFlashFromRam>
     <RamSnippetAddress>0x20000000</RamSnippetAddress>
@@ -224,6 +223,12 @@
     <Folder Include="__vm\" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="IncFile2.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="PartFeeder.h">
+      <SubType>compile</SubType>
+    </Compile>
     <Compile Include="__vm\.belt_buckle_arduino.vsarduino.h">
       <SubType>compile</SubType>
     </Compile>
