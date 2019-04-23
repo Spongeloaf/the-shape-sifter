@@ -1,4 +1,4 @@
-class PartFeeder{
+class FeederController{
 	// This object provides a control interface to the part feeder.
 	// This class ensures that the motor operates safely.
 	// The motor cannot be switched from stationary to full power, due to the immense current drawn by a stationary motor.
@@ -6,7 +6,7 @@ class PartFeeder{
 	// Afterwards, the speed will be increased to the user's desired amount.
 	// In the main loop, event_tick() will update the motor speed once the startup cycle is complete.
 	public:
-	PartFeeder(int p) : pin(p) {};
+	FeederController(int p) : pin(p) {};
 	
 	// please see function definitions for documentation.
 	void speed_up();
@@ -45,7 +45,7 @@ class PartFeeder{
 };
 
 
-void PartFeeder::speed_up()
+void FeederController::speed_up()
 {
 	// raises feeder speed unless already maxed. Does not turn on feeder.
 	// TODO: Add packet notification to the server of current feed speed.
@@ -66,7 +66,7 @@ void PartFeeder::speed_up()
 }
 
 
-void PartFeeder::speed_down()
+void FeederController::speed_down()
 {
 	// raises feeder speed unless already maxed. Does not turn on feeder.
 	// TODO: Add packet notification to the server of current feed speed.
@@ -88,7 +88,7 @@ void PartFeeder::speed_down()
 }
 
 
-void PartFeeder::toggle()
+void FeederController::toggle()
 {
 	// turns on/off the feeder. Does not modify current speed setting.
 
@@ -104,7 +104,7 @@ void PartFeeder::toggle()
 }
 
 
-void PartFeeder::start()
+void FeederController::start()
 {
 	// limits startup speed of the motor. Because we need to wait for startup_delay for the motor to spin up,
 	// we call this repeatedly to check the time and update the speed as required.
@@ -151,7 +151,7 @@ void PartFeeder::start()
 }
 
 
-void PartFeeder::stop()
+void FeederController::stop()
 {
 	mode = false;
 	startup = false;
@@ -159,19 +159,19 @@ void PartFeeder::stop()
 }
 
 
-bool PartFeeder::get_mode()
+bool FeederController::get_mode()
 {
 	return mode;
 }
 
 
-bool PartFeeder::get_startup()
+bool FeederController::get_startup()
 {
 	return startup;
 }
 
 
-int PartFeeder::get_speed()
+int FeederController::get_speed()
 {
 	return speed_selector;
 }

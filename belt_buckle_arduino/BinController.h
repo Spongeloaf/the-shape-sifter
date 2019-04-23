@@ -20,7 +20,7 @@ public:
 
 	void on_airjet(int);
 	void off_airjets();
-	void check_part_distances();
+	void check_distances();
 	void test_outputs(int);
 	unsigned long get_din_dist(int bin);
 	void set_bin_dist(int bin, unsigned long dist);
@@ -90,13 +90,11 @@ void BinController::off_airjets()
 }
 
 
-void BinController::check_part_distances() //  needs to be tested.
+void BinController::check_distances(unsigned long current_distance) //  needs to be tested.
 {
 
 	int bin;
-	
-	current_distance = get_distance_from_encoder();
-	
+		
 	/*
 	if (current_distance == previous_distance)
 	{
