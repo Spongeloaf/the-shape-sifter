@@ -103,7 +103,7 @@ void BinController::check_distances(unsigned long current_distance) //  needs to
 	}
 	*/
 	
-	for (unsigned int i = 0; i < part_index_length; i++)																										// loop through the main part array and determine if the
+	for (unsigned int i = 0; i < index_length; i++)																										// loop through the main part array and determine if the
 	{
 		// prevents sorting unassigned parts
 		if (part_index_bin[i] > 0)				

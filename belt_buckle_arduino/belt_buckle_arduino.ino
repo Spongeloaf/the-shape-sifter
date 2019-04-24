@@ -1,6 +1,8 @@
 #include "FeederController.h"
 #include "BinController.h"
 #include "BeltController.h"
+#include "ArrayPrint.h"
+#include "PartTracker.h"
 
 
 
@@ -9,10 +11,6 @@ void send_ack(char, int, char (*));
 void read_serial_port(void);
 void parse_packet(char (*));
 void check_inputs(void);
-int add_part(char (*));
-int assign_bin(int, char (*));
-int add_part_and_assign_bin(char (*), int, char (*));
-void flush_part_array(int);
 void event_tick();
 
 
@@ -22,14 +20,20 @@ void event_tick();
 const uint8_t hopper_pwm_pin = 3;						// PWM pin number of the hopper. Should be 3.
 const uint8_t belt_control_pin = 52;					// Pin connected to belt drive relay.
 const uint8_t wire_address = 2;							// I2C address of the belt encoder.
+const uint8_t index_length = 48;                        // the number of parts we can keep track of - global
+const uint8_t packet_length = 23;						// length in bytes of each command packet
+const uint8_t csum_length = 5;							// length in bytes of of the CSUM +1 for terminator
+const uint8_t argument_length = 5;						// number of bytes in the packet argument
+const uint8_t payload_length = 13;						// number of bytes in the packet payload
 
 
 
 // declare all primary control interfaces in the global scope so everyone can use them.
+PartTracker parts{index_length, payload_length};
 FeederController feeder{hopper_pwm_pin};
-BinController bins{};
 BeltController belt{belt_control_pin};
 EncoderController encoder{wire_address};
+BinController bins{};
 ArrayPrint aprint{};
 
 
@@ -37,27 +41,15 @@ ArrayPrint aprint{};
 // ---- ALL GLOBALS IN THIS LIST MUST BE FACTORED OUT! --------- //
 // We inititialize all of our local vars at the start of their functions; never in-line. It's much easier to track them. the only exceptions are vars used in for loops.
 // Vars for loops or short term use vars may have single letter names like i. All other vars need verbose names.
-const int packet_length = 23;                                        // length in bytes of each command packet
-const int csum_length = 5;                                           // length in bytes of of the CSUM +1 for terminator
-const int argument_length = 5;                                       // used by the parser to get the number of bytes in the packet argument
-const int payload_length = 13;                                       // used by the parser to get the number of bytes in the packet payload
-const int part_index_length = 48;                                    // the number of parts we can keep track of - global
-const int print_size = 32;                                           // this is used by the print array function, sets the max size to print. Increasing it will consume more memory, so set only what you need
 const int number_of_inputs = 8;                                      // self explanatory, I hope - global
-const int distance_length = 5;                                       // length in bytes of distance; unsinged int is 4 + 1 for \0
 const unsigned long rollover_distance = 4294967295;									 // max int value to rollover from when checking distances
-unsigned int part_index_working = 0;                                 // the next available index for storing a part
-unsigned long part_index_distance[part_index_length];                // the main distance index - global
-int part_index_bin[part_index_length];                               // the main bin index - global
-char part_index_payload[part_index_length][payload_length];          // the main part index - global
 const unsigned long debounceDelay = 210;                             // the debounce time; increase if the output flickers 
 unsigned long lastDebounceTime = 0;                                  // for de-bouncing
 bool input_active[number_of_inputs];                                 // stores the current state of each input - global
 bool input_previous_state = true;                                    // default to true because pull up resistors invert our logic
-unsigned long belt_total_distance = 0;                               // distance traveled by the belt - global
 int  serial_read_string_index = 0;                                   // the current index number of the read string
 char serial_read_string[packet_length + 1];                          // stores the read chars
-bool belt_mode = false;
+
 
 enum input_enum {                                                    //  input name enum for readability
   stick_up,
@@ -90,11 +82,6 @@ void setup() {
 		input_active[i] = true;						// Remember that using internal pull-up resistors causes our true/false to be inverted!
 	}
 
-	pinMode(belt_control_pin, OUTPUT);
-	digitalWrite(belt_control_pin, LOW);
-			
-																																								//  join i2c bus (address optional for master)
-
 	//  TODO: add version number transmission as a separate bytes array. Also add version number to handshake command
 	Serial.begin(57600);
 	Serial.print("[BB_ONLINE]");
@@ -108,8 +95,6 @@ void loop() {
 	read_serial_port();
 	
 	check_inputs();
-
-	bins.check_part_distances();
 
 	event_tick();
 }
@@ -234,7 +219,7 @@ int parse_command_result = 0;																							// Error messages are a lett
 
         case 'X':
 			// print part index
-			aprint.array_2d(part_index_payload);
+			aprint.array_2d(index_payload);
 			break;
 
         case 'P':
@@ -337,82 +322,6 @@ void check_inputs(){                                                            
   }
 
 
-int add_part(char packet_payload[]){                                                      // Adds a new part instance to the part index array
-	
-	bool valid_part = true;
-
-  // first check to see if this part number exists already
-    for (unsigned int i = 0; i < part_index_length; i++)
-    {
-	    if (memcmp(part_index_payload[i], packet_payload, payload_length) == 0)
-	    {
-			return 409;
-		}
-	}	
-	
-  for (int i = 0; i < payload_length; i++)                                          // Stores the received part index in the DB
-  {                          
-    part_index_payload[part_index_working][i] = packet_payload[i];
-  }
-
-  part_index_distance[part_index_working] = encoder.get_dist();                    // set the belt distance
-  part_index_bin[part_index_working] = 0;                                           // bin is always 0 until the sort command
-  part_index_working++;
-  
-  if (part_index_working >= part_index_length)                          
-  {
-    part_index_working = 0;
-  }
-  return 200;
-}
-
-
-int assign_bin(int packet_argument, char packet_payload[]){             // assign a part to a bin. loops through the payload array, returns 404 if the part isn't found
-
-    for (unsigned int i = 0; i < part_index_length; i++)
-    {
-      if (memcmp(part_index_payload[i], packet_payload, payload_length) == 0)   // Reminder: memcmp returns 0 when it finds a match. 
-        {            
-            part_index_bin[i] = packet_argument;
-            return 200;
-        }
-    }
-		return 404;																														
-
-}
-
-
-int add_part_and_assign_bin(char packet_payload[], int assign_argument, char assign_payload[])
-	{
-			//  TODO: figure out what in gods name is wrong with the arguments here. l_payload? WTF. And is assign_payload even used?
-			bool valid_part = true;
-
-			// first check to see if this part number exists already
-			for (unsigned int i = 0; i < part_index_length; i++)
-			{
-				if (memcmp(part_index_payload[i], packet_payload, payload_length) == 0)
-				{
-					return 409;
-				}
-			}
-			
-			for (int i = 0; i < payload_length; i++)                                          // Stores the received part index in the DB
-			{
-				part_index_payload[part_index_working][i] = packet_payload[i];
-			}
-
-			part_index_distance[part_index_working] = encoder.get_dist();                    // set the belt distance
-			part_index_bin[part_index_working] = assign_argument;                                     // set the bin number
-			part_index_working++;
-			
-			if (part_index_working >= part_index_length)
-			{
-				part_index_working = 0;
-			}
-			return 200;
-	}
-
-
 void send_ack(char send_command, int send_command_result, char send_packet_payload[]){
 	Serial.print("[ACK-");
 	Serial.print(send_command);
@@ -430,7 +339,7 @@ void event_tick()
 {
 	// There's a bit of non-conventionality in here. 
 	// Because we are working with meat-space machinery, we need to wait and continually check on certain procedures.
-	// this includes things like turning airjets off after a few milliseconds, and waiting for feeder startup phases.
+	// this includes things like turning air jets off after a few milliseconds, and waiting for feeder startup phases.
 	
 	unsigned long dist = encoder.get_dist();
 	bins.check_distances(dist);
@@ -441,57 +350,4 @@ void event_tick()
 	}
 	
 }
-
-
-void flush_part_array(int index)
-{
-		// this function zeroes the part index array. 
-		// If the index number passed is out of bounds, an error is printed.
-		// If the index number passed is -1, the whole array is flushed.
-			
-
-		if ((-1 < index) && (index < part_index_length))	// zeroes one index of the array
-			{
-					part_index_bin[index] = 0;																																			
-					part_index_distance[index] = 0;
-					part_index_payload[index][0] = '0';																															
-					part_index_payload[index][1] = '0';
-					part_index_payload[index][2] = '0';
-					part_index_payload[index][3] = '0';
-					part_index_payload[index][4] = '0';
-					part_index_payload[index][5] = '0';
-					part_index_payload[index][6] = '0';
-					part_index_payload[index][7] = '0';
-					part_index_payload[index][8] = '0';
-					part_index_payload[index][9] = '0';
-					part_index_payload[index][10] = '0';
-					part_index_payload[index][11] = '0';
-					part_index_payload[index][12] = '\0';
-					return;
-			}
-			if (index == -1)   // zeroes the whole array
-				{
-					for (int i=0; i < part_index_length; i++)
-						{
-							part_index_bin[i] = 0;
-							part_index_distance[i] = 0;
-							part_index_payload[i][0] = '0';
-							part_index_payload[i][1] = '0';
-							part_index_payload[i][2] = '0';
-							part_index_payload[i][3] = '0';
-							part_index_payload[i][4] = '0';
-							part_index_payload[i][5] = '0';
-							part_index_payload[i][6] = '0';
-							part_index_payload[i][7] = '0';
-							part_index_payload[i][8] = '0';
-							part_index_payload[i][9] = '0';
-							part_index_payload[i][10] = '0';
-							part_index_payload[i][11] = '0';
-							part_index_payload[i][12] = '\0';
-						}
-				return;
-			}
-		Serial.println("Error: Flush index out of range!");		// nothing is zeroed if index is out of range!
-	}
-
 

@@ -13,12 +13,19 @@
 class ArrayPrint{
 public:
 	
-	ArrayPrint() : {}
+	ArrayPrint() : print_size{128} {}
 	
 	void array();
 	void array_2d();
 	void part_index_full();
 	void part_index_single();
+
+private:
+
+ // sets the max size to print. 
+ // Increasing it will consume more memory, so set only what you need
+	const int print_size;    
+
 };
 
 
@@ -51,11 +58,11 @@ void ArrayPrint::array(unsigned long to_be_printed[print_size]){                
 
 void ArrayPrint::array_2d( const char a[][ payload_length ] ) {
 	
-	for ( int i = 0; i < part_index_length; ++i ) {               //  loop through array's rows
+	for ( int i = 0; i < index_length; ++i ) {               //  loop through array's rows
 		
 		for ( int j = 0; j < payload_length; ++j )
 		{                //  loop through columns of current row
-			Serial.print (part_index_payload[ i ][ j ] );
+			Serial.print (index_payload[ i ][ j ] );
 		}
 		Serial.print ("\n") ; //  start new line of output
 	}
@@ -65,12 +72,12 @@ void ArrayPrint::array_2d( const char a[][ payload_length ] ) {
 void ArrayPrint::part_index_full() {
 	
 	Serial.println("  Payload    :  Dist. : Bin") ;
-	for ( int i = 0; i < part_index_length; ++i )                     //  loop through array's rows
+	for ( int i = 0; i < index_length; ++i )                     //  loop through array's rows
 	{
 		
 		for ( int j = 0; j < payload_length; ++j )
 		{                //  loop through columns of current row
-			Serial.print (part_index_payload[ i ][ j ] );
+			Serial.print (index_payload[ i ][ j ] );
 		}
 		
 		Serial.print(" : ") ;
@@ -88,7 +95,7 @@ void ArrayPrint::part_index_single(int i) {
 	
 	for ( int j = 0; j < payload_length; ++j )
 	{                //  loop through columns of current row
-		Serial.print (part_index_payload[ i ][ j ] );
+		Serial.print (index_payload[ i ][ j ] );
 	}
 	
 	Serial.print(" : ") ;

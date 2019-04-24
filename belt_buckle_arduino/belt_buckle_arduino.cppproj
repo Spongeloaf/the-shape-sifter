@@ -234,6 +234,9 @@
     <Compile Include="FeederController.h">
       <SubType>compile</SubType>
     </Compile>
+    <Compile Include="PartTracker.h">
+      <SubType>compile</SubType>
+    </Compile>
     <Compile Include="__vm\.belt_buckle_arduino.vsarduino.h">
       <SubType>compile</SubType>
     </Compile>
