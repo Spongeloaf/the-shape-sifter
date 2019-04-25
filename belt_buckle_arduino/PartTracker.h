@@ -26,7 +26,9 @@ public:
 	int assign_bin(int, char (*));
 	int add_part_and_assign_bin(char (*), int, char (*));
 	void flush_part_array(int);
-
+	bool get_bin(int);
+	unsigned long  get_dist(int);
+	
 
 private:
 	
@@ -167,7 +169,16 @@ void PartTracker::flush_part_array(int index)
 }
 
 
+int PartTracker::get_bin(int bin)
+{
+	return index_bin[bin];
+}
 
+
+unsigned long  PartTracker::get_dist(int bin)
+{
+	return index_distance[bin];
+}
 
 
 #endif /* PARTTRACKER_H_ */

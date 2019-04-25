@@ -231,6 +231,9 @@
     <Compile Include="EncoderController.h">
       <SubType>compile</SubType>
     </Compile>
+    <Compile Include="EventDriver.h">
+      <SubType>compile</SubType>
+    </Compile>
     <Compile Include="FeederController.h">
       <SubType>compile</SubType>
     </Compile>

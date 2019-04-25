@@ -10,21 +10,22 @@
 void send_ack(char, int, char (*));
 void read_serial_port(void);
 void parse_packet(char (*));
-void check_inputs(void);
-void event_tick();
+
 
 
 
 // These globals are used for setting up pin numbers, and size parameters.
 // Bin pin numbers are in bins.h, for readability and because they are the least likely to change.
-const uint8_t hopper_pwm_pin = 3;						// PWM pin number of the hopper. Should be 3.
-const uint8_t belt_control_pin = 52;					// Pin connected to belt drive relay.
-const uint8_t wire_address = 2;							// I2C address of the belt encoder.
-const uint8_t index_length = 48;                        // the number of parts we can keep track of - global
-const uint8_t packet_length = 23;						// length in bytes of each command packet
-const uint8_t csum_length = 5;							// length in bytes of of the CSUM +1 for terminator
-const uint8_t argument_length = 5;						// number of bytes in the packet argument
-const uint8_t payload_length = 13;						// number of bytes in the packet payload
+const int hopper_pwm_pin = 3;						// PWM pin number of the hopper. Should be 3.
+const int belt_control_pin = 52;					// Pin connected to belt drive relay.
+const int wire_address = 2;							// I2C address of the belt encoder.
+const int index_length = 48;                        // the number of parts we can keep track of - global
+const int packet_length = 23;						// length in bytes of each command packet
+const int csum_length = 5;							// length in bytes of of the CSUM +1 for terminator
+const int argument_length = 5;						// number of bytes in the packet argument
+const int payload_length = 13;						// number of bytes in the packet payload
+const int number_of_inputs = 8;                     // self explanatory, I hope
+const unsigned long debounce_delay = 210;            // the input debounce time
 
 
 
@@ -35,58 +36,26 @@ BeltController belt{belt_control_pin};
 EncoderController encoder{wire_address};
 BinController bins{};
 ArrayPrint aprint{};
+EventDriver events{number_of_inputs, debounce_delay};
 
 
 
 // ---- ALL GLOBALS IN THIS LIST MUST BE FACTORED OUT! --------- //
 // We inititialize all of our local vars at the start of their functions; never in-line. It's much easier to track them. the only exceptions are vars used in for loops.
 // Vars for loops or short term use vars may have single letter names like i. All other vars need verbose names.
-const int number_of_inputs = 8;                                      // self explanatory, I hope - global
 const unsigned long rollover_distance = 4294967295;									 // max int value to rollover from when checking distances
-const unsigned long debounceDelay = 210;                             // the debounce time; increase if the output flickers 
-unsigned long lastDebounceTime = 0;                                  // for de-bouncing
-bool input_active[number_of_inputs];                                 // stores the current state of each input - global
-bool input_previous_state = true;                                    // default to true because pull up resistors invert our logic
 int  serial_read_string_index = 0;                                   // the current index number of the read string
 char serial_read_string[packet_length + 1];                          // stores the read chars
 
 
-enum input_enum {                                                    //  input name enum for readability
-  stick_up,
-  stick_down,
-  stick_left,
-  stick_right,
-	button_run,
-	button_stop,
-	button_belt,
-	button_feeder
-};
-
-const int input_pins[number_of_inputs] = {                                 // storing the pin numbers in an array is clever.
-	4,					//  stick_up
-	5,					//  stick_down           
-  6,					//  stick_left           
-  7,					//  stick_right           
-  8,					//  button_run           
-  9,					//  button_stop 					 
-	10,					//  button_belt,					 
-	11					//  button_feeder,					 
-};						 
-
 
 void setup() {
 																			
-	for (int i = 0; i < number_of_inputs; i++)	// setup our pins using a loop, makes it easier to add new pins
-	{
-		pinMode (input_pins[i], INPUT_PULLUP);
-		input_active[i] = true;						// Remember that using internal pull-up resistors causes our true/false to be inverted!
-	}
-
 	//  TODO: add version number transmission as a separate bytes array. Also add version number to handshake command
 	Serial.begin(57600);
 	Serial.print("[BB_ONLINE]");
-	delay(100);															  // This delay is to allow our serial read to timeout on the server.
-	Serial.print("[Belt Buckle v0.5.8]");																											//  display program name on boot
+	delay(100);										// This delay is to allow our serial read to timeout on the server.
+	Serial.print("[Belt Buckle v0.5.8]");			//  display program name on boot
 }
 
 
@@ -94,9 +63,11 @@ void loop() {
 
 	read_serial_port();
 	
-	check_inputs();
+	events.check_inputs();
 
-	event_tick();
+	events.check_distances();
+	
+	events.check_encoder();
 }
 
 
@@ -253,74 +224,6 @@ int parse_command_result = 0;																							// Error messages are a lett
 
 }
 
- 
-void check_inputs(){                                                                // check the state of all inputs
-
-  for (int i = 0; i < number_of_inputs; i++)                         // loop through the array of inputs
-    {
-      input_previous_state = input_active[i];                           // take the value from the previous loop and store it here
-      input_active[i] = digitalRead(input_pins[i]);                           // read the current input state
-  
-      if (input_active[i] == false) {                                   // false here means input is active because of pull-up resistors!
-        {
-          if (input_active[i] != input_previous_state)                  // checks if the state changed from our last trip through the loop
-          {
-            if ((millis() - lastDebounceTime) > debounceDelay)          // We use the number of milliseconds the arduino has been running for to see if it's been more than X number of millis since we last pressed a input It doesn't necessarily stop all input bouncing, but it helps. 
-            {
-              lastDebounceTime = millis();                              // reset the debounce timer.
-              switch (i)                                                // take action if a input is pressed.
-              {
-                case stick_up:
-					feeder.speed_up();
-					Serial.print("speed: ");
-					Serial.println(feeder.get_speed());                           
-					break;
-  
-                case stick_down:
-					feeder.speed_down();
-					Serial.print("speed: ");
-					Serial.println(feeder.get_speed());                      
-					break;
-  
-                case stick_left:
-					belt.toggle_mode();
-					Serial.print("belt is: ");                         // replace this with a usable action at some point
-					Serial.println(belt.get_mode());
-					break;
-  
-                case stick_right:
-					feeder.toggle();
-					Serial.print("Mode: ");
-					Serial.print(feeder.get_mode());
-					Serial.print(" Speed: ");
-					Serial.println(feeder.get_speed());                         // replace this with a usable action at some point
-					break;
-
-				case button_run:
-					Serial.println("button_run");                         // replace this with a usable action at some point
-					break;
-
-				case button_stop:
-					Serial.println("button_stop");                        // replace this with a usable action at some point
-					break;
-
-				case button_belt:
-					Serial.println("button_belt");                         // replace this with a usable action at some point
-					break;
-
-				case button_feeder:
-					Serial.println("button_feeder");                         // replace this with a usable action at some point
-					break;
-
-
-              }
-            }
-          }
-        }
-      }
-    }
-  }
-
 
 void send_ack(char send_command, int send_command_result, char send_packet_payload[]){
 	Serial.print("[ACK-");
@@ -332,22 +235,5 @@ void send_ack(char send_command, int send_command_result, char send_packet_paylo
 	Serial.print("-");
 	Serial.print("CSUM");
 	Serial.print("]");
-}
-
-
-void event_tick()
-{
-	// There's a bit of non-conventionality in here. 
-	// Because we are working with meat-space machinery, we need to wait and continually check on certain procedures.
-	// this includes things like turning air jets off after a few milliseconds, and waiting for feeder startup phases.
-	
-	unsigned long dist = encoder.get_dist();
-	bins.check_distances(dist);
-
-	if (feeder.get_startup())
-	{
-		feeder.start();
-	}
-	
 }
 

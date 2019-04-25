@@ -7,7 +7,9 @@ public:
 	void set_mode(bool set);
 	void toggle_mode();
 
+
 private:
+
 	bool mode;
 	int control_pin;
 };
@@ -26,3 +28,4 @@ void BeltController::belt_toggle_mode()
 		digitalWrite(control_pin, HIGH);
 	}
 }
+

@@ -20,16 +20,18 @@ public:
 
 	void on_airjet(int);
 	void off_airjets();
-	void check_distances();
 	void test_outputs(int);
 	unsigned long get_din_dist(int bin);
 	void set_bin_dist(int bin, unsigned long dist);
 	void set_bin_defaults();
 	void init_pins();
+	int check_past_bin(int bin, unsigned long dist);
+
+
 
 private:
 	
-	int bin_width;
+	unsigned long bin_width;
 	
 	// this magic number is limited by hardware. It's not likely to ever change.
 	int number_of_bins = 16;
@@ -87,40 +89,6 @@ void BinController::off_airjets()
 			airjet_timers[i] = 0;
 		}
 	}
-}
-
-
-void BinController::check_distances(unsigned long current_distance) //  needs to be tested.
-{
-
-	int bin;
-		
-	/*
-	if (current_distance == previous_distance)
-	{
-		//  Serial.println("Warning: Belt does not seem to be moving");
-		// TODO: Send a command to the server about this error and have a flag set, so we don't bother repeating the message.
-	}
-	*/
-	
-	for (unsigned int i = 0; i < index_length; i++)																										// loop through the main part array and determine if the
-	{
-		// prevents sorting unassigned parts
-		if (part_index_bin[i] > 0)				
-		{
-			travelled_distance = current_distance - part_index_distance[i];			
-			
-			// gets the bin number we are using right now
-			bin = part_index_bin[i];
-			
-			if (travelled_distance >= bin_distances[bin] && travelled_distance <= (bin_distances[bin] + bin_width))
-			{
-				on_airjet(bin);
-				flush_part_array(i);
-			}
-		}
-	}
-	previous_distance = current_distance;
 }
 
 
@@ -188,4 +156,19 @@ void BinController::init_pins()
 		pinMode(bin_pindex[i], OUTPUT);
 		digitalWrite(bin_pindex[i], LOW);
 	}
+}
+
+
+int BinController::check_past_bin(int bin, unsigned long part_dist)
+{
+	// returns an int indicating where a part is relative to a bin.
+	
+	// past the bin
+	if (part_dist > bin_distances[bin] + bin_width) return -1;
+	
+	// in front of the bin, ready for airjet
+	if (part_dist > bin_distances[bin]) return 1;
+	
+	// not in front of bin yet.
+	return 0;
 }

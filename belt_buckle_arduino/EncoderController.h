@@ -9,13 +9,18 @@ public:
 		Wire.begin();
 		address = adr;
 		bytes_len = 4;
+		status = true;
 	}
 	
 	unsigned long get_dist();
+	bool is_running();
 	
 private:
 	int address;
 	int bytes_len;
+	bool status;
+	bool old_status;
+	unsigned long old_dist = 0;
 };
 
 
@@ -42,4 +47,16 @@ unsigned long EncoderController::get_dist()
 		return distance;
 	}
 	return 1;
+}
+
+
+bool EncoderController::is_running()
+{
+	unsigned long new_dist = get_dist();
+	
+	if (old_dist == new_dist) return false;
+	
+	old_dist = new_dist;
+	
+	return true;
 }
