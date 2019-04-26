@@ -61,7 +61,7 @@ void setup() {
 
 void loop() {
 
-	read_serial_port();
+	server.read_serial_port();
 	
 	events.check_inputs();
 

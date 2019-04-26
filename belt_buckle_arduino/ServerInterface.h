@@ -29,8 +29,10 @@ public:
 	void parse_packet(SerialPacket& packet);
 	void throw_error(SerialPacket& packet);
 	
+	
 private:
 	
+	char serial_char;							// The latest char received from the serial port
 	const int packet_len;						// length in bytes of each command packet
 	const int csum_len;							// length in bytes of of the CSUM +1 for terminator
 	const int argument_len;						// number of bytes in the packet argument
@@ -43,68 +45,157 @@ private:
 
 void ServerInterface::read_serial_port(){
 
-	// We inititialize all of our local vars here; never in-line. It's much easier to track them. the only exceptions are vars used in for loops.
-	char serial_char;
-	if (Serial.available() > 0)
+	// abort if there's nothing to read.
+	if (Serial.available() == 0)
 	{
-		serial_char = Serial.read();                                        //  Read a character
-		// print_array(serial_read_string);                                  // for debugging
-
-		switch (serial_char)
+		return;
+	}
+	
+	serial_char = Serial.read();                                        //  Read a character
+	
+	switch (serial_char)
+	{
+		case '<':                                                       // '<' is the packet initiator.
+		memset(&serial_read_string[0], 0, sizeof(serial_read_string));  // clear the array every time we get a new initiator.
+		serial_read_string_index = 0;                                   // reset the array index because we're starting a new command.
+		serial_read_string[0] = serial_char;                            // place our '<' character at the beginning of the array
+		serial_read_string_index = serial_read_string_index + 1;        // increment array index number
+			
+		// print_array(serial_read_string);                              // for debugging
+		// Serial.println("packet initiator found");                     // for debugging
+		break;
+			
+		case '>':                                                         // '>' is the packet terminator.
+		serial_read_string[serial_read_string_index] = serial_char;     // add the terminator to the string before we begin
+		parse_packet(serial_read_string);                               // executes the received packet
+		memset(&serial_read_string[0], 0, sizeof(serial_read_string));  // clear the array every time we get a new initiator.
+		serial_read_string_index = 0;                                   // reset the packet array index to 0
+			
+		// Serial.println(strlen(serial_read_string));                   // for debugging
+		// print_array(serial_read_string);                              // for debugging
+		// Serial.println("packet terminator found");                    // for debugging
+		break;
+			
+		default:
+		if (serial_read_string_index < (sizeof(serial_read_string) - 2))          // if the serial read string get too long, we stop adding to it to prevent overruns.
 		{
-			case '<':                                                         // '<' is the packet initiator.
+			serial_read_string[serial_read_string_index] = serial_char;     // append the read character to the array
+			serial_read_string_index = serial_read_string_index + 1;        // increment the array index number
+		}
+		else                                                            // should we receive more than 22 characters before a terminator, something is wrong, dump the string.
+		{
 			memset(&serial_read_string[0], 0, sizeof(serial_read_string));  // clear the array every time we get a new initiator.
 			serial_read_string_index = 0;                                   // reset the array index because we're starting a new command.
-			serial_read_string[0] = serial_char;                            // place our '<' character at the beginning of the array
-			serial_read_string_index = serial_read_string_index + 1;        // increment array index number
-			
-			// print_array(serial_read_string);                              // for debugging
-			// Serial.println("packet initiator found");                     // for debugging
-			break;
-			
-			case '>':                                                         // '>' is the packet terminator.
-			serial_read_string[serial_read_string_index] = serial_char;     // add the terminator to the string before we begin
-			parse_packet(serial_read_string);                               // executes the received packet
-			memset(&serial_read_string[0], 0, sizeof(serial_read_string));  // clear the array every time we get a new initiator.
-			serial_read_string_index = 0;                                   // reset the packet array index to 0
-			
-			// Serial.println(strlen(serial_read_string));                   // for debugging
-			// print_array(serial_read_string);                              // for debugging
-			// Serial.println("packet terminator found");                    // for debugging
-			break;
-			
-			default:
-			if (serial_read_string_index < (sizeof(serial_read_string) - 2))          // if the serial read string get too long, we stop adding to it to prevent overruns.
-			{
-				serial_read_string[serial_read_string_index] = serial_char;     // append the read character to the array
-				serial_read_string_index = serial_read_string_index + 1;        // increment the array index number
-			}
-			else                                                            // should we receive more than 22 characters before a terminator, something is wrong, dump the string.
-			{
-				memset(&serial_read_string[0], 0, sizeof(serial_read_string));  // clear the array every time we get a new initiator.
-				serial_read_string_index = 0;                                   // reset the array index because we're starting a new command.
-			}
 		}
-		
 	}
 }
 
 
-void ServerInterface::send_ack(char send_command, int send_command_result, char send_packet_payload[]){
+void ServerInterface::send_ack(SerialPacket& packet){
 	Serial.print("[ACK-");
-	Serial.print(send_command);
+	Serial.print(packet.command);
 	Serial.print("-");
-	Serial.print(send_command_result);
+	Serial.print(packet.result);
 	Serial.print("-");
-	Serial.print(send_packet_payload);
+	Serial.print(packet.payload);
 	Serial.print("-");
 	Serial.print("CSUM");
-	Serial.print("]");
+	Serial.println("]");
 }
 
 
-void ServerInterface::validate_packet(SerialPacket& packet)
+void ServerInterface::parse_packet(char& packet_string[]){					// parses the command and then passes the relevant data off to wherever it needs to go.
+
+	extern SerialPacket packet;
+	
+	server.construct_packet(packet_string);
+	
+	if (packet.result != 200)
+	{
+		server.send_ack(packet);
+		server.construct_packet(packet.raw_default)							// If a packet is malformed, reset all values to default.
+		return;
+	}
+
+	
+	// switch case for all the different command types.
+	// see trello for a list of commands
+	switch (packet.command)
+	{
+		case 'A':
+		// Add a new part instance
+		parts.add_part(packet);
+		server.send_ack(packet);
+		break;
+		
+		case 'B':
+		// assign a bin number
+		parts.assign_bin(packet);
+		server.send_ack(packet);
+		break;
+		
+		case 'G':
+		// print current distance
+		Serial.println(encoder.get_dist());
+		break;
+		
+		case 'H':
+		// handshake
+		Serial.print("Command ");
+		Serial.print(packet.command);
+		Serial.println(" Received");
+		break;
+
+		case 'O':
+		// flush index
+		parts.flush_part_array(packet.argument_int);
+		server.send_ack(packet);
+		break;
+
+		case 'X':
+		// print part index
+		// TODO
+		Serial.println("TODO X");
+		break;
+
+		case 'P':
+		// TODO: Most likely broken
+		// print part index with bins and distance
+		aprint.part_index_full();
+		break;
+
+		case 'S':
+		// print part index
+		// TODO
+		Serial.println("TODO S");
+		break;
+		
+		case 'T':
+		// test cycle the outputs, argument is time in ms for each pulse
+		bins.test_outputs(packet.argument_int);
+		break;
+		
+		case 'W':
+		//  TODO
+		// Set feeder speed
+		Serial.println("TODO W");
+		break;
+		
+		default:
+			Serial.print("Unknown command: ");
+			Serial.println(packet.command);
+		break;
+		
+		// We're finished with the packet, reset all values to default.
+		server.construct_packet(packet.raw_default)							
+	}
+}
+
+
+void ServerInterface::construct_packet(SerialPacket& packet)
 {
+	// If a packet string is syntactically correct, this function copies it into the correct parts of a packet struct.
+	
 	// ------------TODO: Needs to have CSUM installed HERE------------
 	
 	// Serial.print("Packet length:");                                       // for debugging
@@ -141,6 +232,7 @@ void ServerInterface::throw_error(SerialPacket& packet)
 {
 	// TODO
 }
+
 
 
 #endif /* SERVERINTERFACE_H_ */

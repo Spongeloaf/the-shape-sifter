@@ -6,6 +6,9 @@
  */ 
 
 
+#include "PacketStruct.h"
+
+
 #ifndef PARTTRACKER_H_
 #define PARTTRACKER_H_
 
@@ -41,79 +44,47 @@ private:
 };
 
 
-int PartTracker::add_part(char& packet_payload[]){                                                      
-	// Adds a new part instance to the part index array
-	bool valid_part = true;
+int PartTracker::add_part(SerialPacket& packet){                                                      
 
 	// first check to see if this part number exists already
 	for (unsigned int i = 0; i < index_length; i++)
 	{
-		if (memcmp(index_payload[i], packet_payload, payload_length) == 0)
+		if (memcmp(index_payload[i], packet.payload, payload_length) == 0)
 		{
-			return 409;
+			packet.result = 409;
+			return;
 		}
 	}
 	
 	for (int i = 0; i < payload_length; i++)                                          // Stores the received part index in the DB
 	{
-		index_payload[index_selector][i] = packet_payload[i];
+		index_payload[index_selector][i] = packet.payload[i];
 	}
 
 	index_distance[index_selector] = encoder.get_dist();                    // set the belt distance
-	index_bin[index_selector] = 0;                                           // bin is always 0 until the sort command
+	index_bin[index_selector] = 0;                                           // bin is always 0 until the assign command
 	index_selector++;
 	
 	if (index_selector >= index_length)
 	{
 		index_selector = 0;
 	}
-	return 200;
+	packet.result = 200;
 }
 
 
-int PartTracker::assign_bin(int packet_argument, char packet_payload[]){             // assign a part to a bin. loops through the payload array, returns 404 if the part isn't found
+int PartTracker::assign_bin(SerialPacket& packet){             // assign a part to a bin. loops through the payload array, returns 404 if the part isn't found
 
 	for (unsigned int i = 0; i < index_length; i++)
 	{
-		if (memcmp(index_payload[i], packet_payload, payload_length) == 0)   // Reminder: memcmp returns 0 when it finds a match.
+		if (memcmp(index_payload[i], packet.payload, payload_length) == 0)   // Reminder: memcmp returns 0 when it finds a match.
 		{
-			index_bin[i] = packet_argument;
-			return 200;
+			index_bin[i] = packet.argument_int;
+			packet.result = 200;
+			return;
 		}
 	}
-	return 404;
-
-}
-
-
-int PartTracker::add_part_and_assign_bin(char packet_payload[], int assign_argument, char assign_payload[])
-{
-	//  TODO: figure out what in gods name is wrong with the arguments here. l_payload? WTF. And is assign_payload even used?
-	bool valid_part = true;
-
-	// first check to see if this part number exists already
-	for (unsigned int i = 0; i < index_length; i++)
-	{
-		if (memcmp(index_payload[i], packet_payload, payload_length) == 0)
-		{
-			return 409;
-		}
-	}
-	
-	for (int i = 0; i < payload_length; i++)                                          // Stores the received part index in the DB
-	{
-		index_payload[index_selector][i] = packet_payload[i];
-	}
-
-	index_distance[index_selector] = encoder.get_dist();                    // set the belt distance
-	index_bin[index_selector] = assign_argument;                                     // set the bin number
-	index_selector++;
-	
-	if (index_selector >= index_length)
-	{
-		index_selector = 0;
-	}
-	return 200;
+	packet.result = 404;
 }
 
 

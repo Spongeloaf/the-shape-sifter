@@ -22,7 +22,8 @@ const int payload_length = 13;						// number of bytes in the packet payload
 
 // a struct to hold packet data
 struct SerialPacket{
-	char raw_packet[packet_length] = 'z';
+	const char raw_default[packet_length] =  {'<','z','z','z','z','z','z','z','z','z','z','z','z','z','z','z','z','z','C','S','U','M','>'};
+	char raw_packet[packet_length] = {'<','z','z','z','z','z','z','z','z','z','z','z','z','z','z','z','z','z','C','S','U','M','>'};
 	char command = 'z';
 	unsigned int argument_int = 0;                               // int to store the packet argument
 	char argument_arr[argument_length] = {'z'};                  // char array for parsing packet arguments
