@@ -6,8 +6,16 @@
  */ 
 
 
+
+#include "PacketStruct.h"
+
+
+
 #ifndef EVENTDRIVER_H_
 #define EVENTDRIVER_H_
+
+
+struct SerialPacket{};
 
 
 // This controls our real time events and handles interaction between primary control interfaces.
@@ -20,28 +28,7 @@ class EventDriver {
 
 public:
 	
-	EventDriver(int num, int delay) 
-	{
-		encoder_stall = false;
-		debounce_delay = delay;
-		lastDebounceTime = 0;
-		input_active[num];
-		input_previous_state = true;
-		num_inputs = num;
-		
-		input_pins[num_inputs] = {                                 // storing the pin numbers in an array is clever.
-			4,					//  stick_up
-			5,					//  stick_down
-			6,					//  stick_left
-			7,					//  stick_right
-			8,					//  button_run
-			9,					//  button_stop
-			10,					//  button_belt,
-			11					//  button_feeder,
-		};
-		
-		init_inputs();
-	}
+	EventDriver(int num, int delay);
 	
 	void init_inputs();
 	void check_inputs();
@@ -62,16 +49,27 @@ private:
 };
 
 
-enum input_enum {                                                    //  input name enum for readability
-	stick_up,
-	stick_down,
-	stick_left,
-	stick_right,
-	button_run,
-	button_stop,
-	button_belt,
-	button_feeder
-};
+EventDriver::EventDriver(int num, int delay)
+	{
+		encoder_stall = false;
+		debounce_delay = delay;
+		lastDebounceTime = 0;
+		input_active[num];
+		input_previous_state = true;
+		num_inputs = num;
+		
+		input_pins[num_inputs] = {			// storing the pin numbers in an array is clever.
+			4,								//  stick_up
+			5,								//  stick_down
+			6,								//  stick_left
+			7,								//  stick_right
+			8,								//  button_run
+			9,								//  button_stop
+			10,								//  button_belt,
+			11								//  button_feeder,
+		};
+		init_inputs();
+	}
 
 
 void EventDriver::init_inputs()
@@ -220,6 +218,85 @@ void EventDriver::check_encoder()
 	encoder_stall = true;
 	// TODO: send server a warning message
 }
+
+
+void EventDriver::parse_packet(SerialPacket& packet){																					// parses the command and then passes the relevant data off to wherever it needs to go.
+
+	
+	server.validate_packet(packet);
+	
+	if (packet.result != 200)
+	{
+		server.throw_error(packet)
+	}	
+
+		
+	// switch case for all the different command types.
+	// see trello for a list of commands
+	switch (packet.command)
+	{
+		case 'A':
+			// Add a new part instance
+			parts.add_part(packet);
+			server.send_ack(packet);
+		break;
+			
+		case 'B':
+			// assign a bin number
+			parts.assign_bin(packet);
+			server.send_ack(packet);
+		break;
+		
+		case 'G':
+			// print current distance
+			Serial.println(encoder.get_dist());
+		break;
+			
+		case 'H':
+			// handshake
+			Serial.print("Command ");
+			Serial.print(packet.command);
+			Serial.println(" Received");
+		break;
+
+		case 'O':
+			// flush index
+			parts.flush_part_array(packet.argument_int);
+			server.send_ack(packet);
+		break;
+
+		case 'X':
+			// print part index
+			// TODO
+			Serial.println("TODO X");
+		break;
+
+		case 'P':
+			// TODO: Most likely broken
+			// print part index with bins and distance
+			aprint.part_index_full();
+		break;
+
+		case 'S':
+			// print part index
+			// TODO
+			Serial.println("TODO S");
+		break;
+			
+		case 'T':
+			// test cycle the outputs, argument is time in ms for each pulse
+			bins.test_outputs(packet.argument_int);
+		break;
+			
+		case 'W':
+			//  TODO
+			// Set feeder speed
+			Serial.println("TODO W");
+		break;
+	}
+}
+
+
 
 
 

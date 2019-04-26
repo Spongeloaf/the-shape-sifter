@@ -22,9 +22,9 @@ public:
 		index_payload{'z'}
 		{}
 
-	int add_part(char (*));
-	int assign_bin(int, char (*));
-	int add_part_and_assign_bin(char (*), int, char (*));
+	int add_part(SerialPacket&);
+	int assign_bin(SerialPacket&);
+	int add_part_and_assign_bin(SerialPacket&);
 	void flush_part_array(int);
 	bool get_bin(int);
 	unsigned long  get_dist(int);
