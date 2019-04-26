@@ -6,11 +6,6 @@
  */ 
 
 
-
-#include "bb_parameters.h"
-
-
-
 #ifndef ARRAYPRINT_H_
 #define ARRAYPRINT_H_
 

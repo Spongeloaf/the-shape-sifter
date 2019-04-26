@@ -6,9 +6,7 @@
  */ 
 
 
-
-#include "bb_parameters.h"
-
+#include "PacketStruct.h"
 
 
 #ifndef PARTTRACKER_H_
@@ -19,7 +17,9 @@
 class PartTracker{
 public:
 
-	PartTracker() : 
+	PartTracker(int idx_len, int pyld_len) : 
+		index_length{idx_len}, 
+		payload_length{pyld_len},
 		index_distance{0},
 		index_bin{0},
 		index_payload{'z'}
@@ -27,13 +27,16 @@ public:
 
 	int add_part(SerialPacket&);
 	int assign_bin(SerialPacket&);
+	int add_part_and_assign_bin(SerialPacket&);
 	void flush_part_array(int);
-	int get_bin(int);
+	bool get_bin(int);
 	unsigned long  get_dist(int);
 	
 
 private:
 	
+	int index_length;
+	int payload_length;
 	unsigned int index_selector = 0;                                 // the next available index for storing a part
 	unsigned long index_distance[index_length];                // the main distance index - global
 	int index_bin[index_length];                               // the main bin index - global
@@ -137,9 +140,9 @@ void PartTracker::flush_part_array(int index)
 }
 
 
-int PartTracker::get_bin(int index)
+int PartTracker::get_bin(int bin)
 {
-	return index_bin[index];
+	return index_bin[bin];
 }
 
 

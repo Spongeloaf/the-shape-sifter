@@ -1,20 +1,3 @@
-/*
- * FeederController.h
- *
- * Created: 4/23/2019 3:30:43 PM
- *  Author: spongeloaf
- */
-
-
-
-#include "bb_parameters.h"
-
-
-
-#ifndef FEEDERCONTROLLER_H_
-#define FEEDERCONTROLLER_H_
-
-
 class FeederController{
 	// This object provides a control interface to the part feeder.
 	// This class ensures that the motor operates safely.
@@ -192,6 +175,3 @@ int FeederController::get_speed()
 {
 	return speed_selector;
 }
-
-
-#endif /* FEEDERCONTROLLER_H_ */

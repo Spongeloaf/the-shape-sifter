@@ -1,20 +1,3 @@
-/*
- * BeltController.h
- *
- * Created: 4/26/2019 2:02:19 PM
- *  Author: spongeloaf
- */
-
-
-
-#include "bb_parameters.h"
-
-
-
-#ifndef BELTCONTROLLER_H_
-#define BELTCONTROLLER_H_
-
-
 class BeltController{
 public:
 
@@ -46,6 +29,3 @@ void BeltController::belt_toggle_mode()
 	}
 }
 
-
-
-#endif /* BELTCONTROLLER_H_ */

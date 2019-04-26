@@ -7,13 +7,15 @@
 
 
 
-#include "bb_parameters.h"
+#include "PacketStruct.h"
 
 
 
 #ifndef EVENTDRIVER_H_
 #define EVENTDRIVER_H_
 
+
+struct SerialPacket{};
 
 
 // This controls our real time events and handles interaction between primary control interfaces.
