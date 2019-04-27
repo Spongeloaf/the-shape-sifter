@@ -20,19 +20,19 @@ constexpr int hopper_pwm_pin = 3;						// PWM pin number of the hopper. Should b
 constexpr int belt_control_pin = 52;					// Pin connected to belt drive relay.
 constexpr int wire_address = 2;							// I2C address of the belt encoder.
 constexpr int index_length = 48;                        // the number of parts we can keep track of - global
-constexpr int num_inputs = 8;							// self explanatory, I hope
-constexpr unsigned long debounce_delay = 210;           // the input debounce time
-constexpr int number_of_bins = 16;
-constexpr int print_size;								// max array size to print. Increasing it will consume more memory.
+constexpr int number_of_inputs = 8;                     // self explanatory, I hope
+constexpr unsigned long debounce_delay = 210;            // the input debounce time
 
-// These cannot be changed without modifying the Server Interface class.
+
+
+// These cannot be changed without modifying the ServerInterface class.
 // They are used in the parsing of packets.
 // DO NOT CHANGE THEM UNLESS YOU KNOW EXACTLY WHAT YOU ARE DOING!
 constexpr int packet_length = 23;						// length in bytes of each command packet
 constexpr int csum_length = 5;							// length in bytes of of the CSUM +1 for terminator
 constexpr int argument_length = 5;						// number of bytes in the packet argument
 constexpr int payload_length = 13;						// number of bytes in the packet payload
-constexpr int serial_str_len = 24;				// length in bytes of a packet string plus null terminator.
+constexpr int serial_read_string_len = 24;				// length in bytes of a packet string plus null terminator.
 
 
 
@@ -45,33 +45,6 @@ struct SerialPacket{
 	char argument_arr[argument_length] = {'z'};                  // char array for parsing packet arguments
 	char payload[payload_length] = {'z'};                        // char array for parsing packet payload
 	int result = 0;												 // Error messages are a letter designator matching the command, followed by a three digit number
-};
-
-
-
-// needs to be moved into event driver or input controller.
-//  input name enum for readability
-enum input_enum {
-	stick_up,
-	stick_down,
-	stick_left,
-	stick_right,
-	button_run,
-	button_stop,
-	button_belt,
-	button_feeder
-};
-
-
-constexpr int input_pins[num_inputs] = {			// storing the pin numbers in an array is clever.
-	4,								//  stick_up
-	5,								//  stick_down
-	6,								//  stick_left
-	7,								//  stick_right
-	8,								//  button_run
-	9,								//  button_stop
-	10,								//  button_belt,
-	11								//  button_feeder,
 };
 
 

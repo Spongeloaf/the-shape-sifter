@@ -18,23 +18,18 @@
 class ArrayPrint{
 public:
 	
-	ArrayPrint() : print_size{128} {}
+	ArrayPrint() {}
 	
-	void array();
-	void array_2d();
-	void part_index_full();
-	void part_index_single();
-
-private:
-
- // sets the max size to print. 
- // Increasing it will consume more memory, so set only what you need
-	const int print_size;    
+	void array(char*);
+	void array(unsigned long*);
+	// void array_2d();			Broke as fuck
+	//void part_index_full();
+	//void part_index_single();
 
 };
 
 
-void ArrayPrint::array(char to_be_printed[print_size]){                    // prints an array of characters
+void ArrayPrint::array(char* to_be_printed){                    // prints an array of characters
 	for (int i = 0; i <= print_size; i++)
 	{
 		if (to_be_printed[i] == '\0')
@@ -47,7 +42,7 @@ void ArrayPrint::array(char to_be_printed[print_size]){                    // pr
 }
 
 
-void ArrayPrint::array(unsigned long to_be_printed[print_size]){                    // prints an array of characters
+void ArrayPrint::array(unsigned long* to_be_printed){                    // prints an array of characters
 	for (int i = 0; i <= print_size; i++)
 	{
 		if (to_be_printed[i] == '\0')
@@ -60,8 +55,8 @@ void ArrayPrint::array(unsigned long to_be_printed[print_size]){                
 	}
 }
 
-
-void ArrayPrint::array_2d( const char a[][ payload_length ] ) {
+/*
+void ArrayPrint::array_2d() {
 	
 	for ( int i = 0; i < index_length; ++i ) {               //  loop through array's rows
 		
@@ -72,8 +67,9 @@ void ArrayPrint::array_2d( const char a[][ payload_length ] ) {
 		Serial.print ("\n") ; //  start new line of output
 	}
 }
+*/
 
-
+/*
 void ArrayPrint::part_index_full() {
 	
 	Serial.println("  Payload    :  Dist. : Bin") ;
@@ -92,8 +88,9 @@ void ArrayPrint::part_index_full() {
 		Serial.print("\n") ; //  start new line of output
 	}
 }
+*/
 
-
+/*
 void ArrayPrint::part_index_single(int i) {
 	
 	Serial.println("  Payload    :  Dist. : Bin") ;
@@ -109,7 +106,7 @@ void ArrayPrint::part_index_single(int i) {
 	Serial.print(part_index_bin[i]);
 	Serial.print("\n") ; //  start new line of output
 }
-
+*/
 
 
 #endif /* ARRAYPRINT_H_ */

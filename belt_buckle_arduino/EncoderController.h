@@ -27,7 +27,7 @@ public:
 		address = adr;
 		bytes_len = 4;
 		status = true;
-	}
+	};
 	
 	unsigned long get_dist();
 	bool is_running();

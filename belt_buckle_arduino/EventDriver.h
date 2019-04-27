@@ -8,6 +8,12 @@
 
 
 #include "bb_parameters.h"
+#include "FeederController.h"
+#include "BinController.h"
+#include "BeltController.h"
+#include "ArrayPrint.h"
+#include "PartTracker.h"
+#include "EncoderController.h"
 
 
 
@@ -16,9 +22,18 @@
 
 
 
-// This controls our real time events and handles interaction between primary control interfaces.
-class EventDriver {
+extern BinController		bins;
+extern ArrayPrint			aprint;
+extern PartTracker			parts;
+extern FeederController		feeder;
+extern BeltController		belt;
+extern EncoderController	encoder;
+extern SerialPacket			serial_packet;
 
+
+// This controls our real time events and handles interaction between primary control interfaces.
+class EventDriver{
+	
 	// There's a bit of non-conventionality in here.
 	// Because we are working with meat-space machinery, we need to wait and continually check on certain procedures.
 	// this includes things like turning air jets off after a few milliseconds, and waiting for feeder startup phases.
@@ -26,48 +41,40 @@ class EventDriver {
 
 public:
 	
-	EventDriver(int num, int delay);
+	EventDriver()
+	{
+		encoder_stall = false;
+		debounce_delay = delay;
+		lastDebounceTime = 0;
+		input_active[num_inputs];
+		input_previous_state = true;
+		init_inputs();
+	}
 	
 	void init_inputs();
 	void check_inputs();
 	void check_feeder();
 	void check_distances();
 	void check_encoder();
+	void send_ack(SerialPacket&);
+	void parse_command(char*);
+	void construct_packet(char*);
+	void read_serial_port();
 
 
 private:
 	
-	int num_inputs;									// used to initialize input arrays.
-	bool encoder_stall;								// tracks status of encoder
-	int debounce_delay;								// delay to wait for input changes
-	unsigned long lastDebounceTime;					// for de-bouncing
-	bool input_active[num_inputs];                  // stores the current state of each input - global
-	bool input_previous_state;                      // default to true because pull up resistors invert our logic
-	const int input_pins[num_inputs];				// array of input pin numbers.
+	bool encoder_stall;							// tracks status of encoder
+	int debounce_delay;							// delay to wait for input changes
+	unsigned long lastDebounceTime;				// for de-bouncing
+	bool input_active[num_inputs];				// stores the current state of each input - global
+	bool input_previous_state;					// default to true because pull up resistors invert our logic
+	int input_pins[num_inputs];			// array of input pin numbers.
+	int  serial_str_index;						// the current index number of the read string
+	char serial_str[serial_str_len];			// stores the read chars.
+	char serial_char;							// the most recent char read from serial port
+
 };
-
-
-EventDriver::EventDriver(int num, int delay)
-	{
-		encoder_stall = false;
-		debounce_delay = delay;
-		lastDebounceTime = 0;
-		input_active[num];
-		input_previous_state = true;
-		num_inputs = num;
-		
-		input_pins[num_inputs] = {			// storing the pin numbers in an array is clever.
-			4,								//  stick_up
-			5,								//  stick_down
-			6,								//  stick_left
-			7,								//  stick_right
-			8,								//  button_run
-			9,								//  button_stop
-			10,								//  button_belt,
-			11								//  button_feeder,
-		};
-		init_inputs();
-	}
 
 
 void EventDriver::init_inputs()
@@ -179,19 +186,19 @@ void EventDriver::check_distances()
 		travel_dist = current_dist - parts.get_dist(part);
 		
 		// checks the distance of the part relative to the bin position.
-		check = bins.check_past_bin(bin, travel_dist)
+		check = bins.check_past_bin(bin, travel_dist);
 		
 		switch (check)
 		{
 			case 1:
-			// TODO: Add response to server of a successful sort.
+			// TODO: Add response to events of a successful sort.
 			bins.on_airjet(bin);
 			parts.flush_part_array(part);
 			break;
 			
 			case -1:
-			// TODO: Notify server that a part missed its' bin.
-			parts.flush_part_array(part)
+			// TODO: Notify events that a part missed its' bin.
+			parts.flush_part_array(part);
 			break;
 			
 			case 0:
@@ -199,7 +206,7 @@ void EventDriver::check_distances()
 				// Nothing to do, the part hasn't yet reached the bin.
 				// This case only included for explicitness.
 			}
-			break:
+			break;
 		}
 	}
 }
@@ -214,14 +221,199 @@ void EventDriver::check_encoder()
 	
 	// The encoder is not running, and we expect it to be.
 	encoder_stall = true;
-	// TODO: send server a warning message
+	// TODO: send events a warning message
 }
 
 
+void EventDriver::send_ack(SerialPacket& packet){
+	Serial.print("[ACK-");
+	Serial.print(packet.command);
+	Serial.print("-");
+	Serial.print(packet.result);
+	Serial.print("-");
+	Serial.print(packet.payload);
+	Serial.print("-");
+	Serial.print("CSUM");
+	Serial.println("]");
+}
 
 
+void EventDriver::parse_command(char* packet_string){					// parses the command and then passes the relevant data off to wherever it needs to go.
+
+	extern SerialPacket packet;
+	
+	construct_packet(packet_string);
+	
+	if (packet.result != 200)
+	{
+		send_ack(packet);
+		construct_packet(packet.raw_default);							// If a packet is malformed, reset all values to default.
+		return;
+	}
+
+	
+	// switch case for all the different command types.
+	// see trello for a list of commands
+	switch (packet.command)
+	{
+		case 'A':
+		// Add a new part instance
+		parts.add_part(packet, encoder.get_dist());
+		send_ack(packet);
+		break;
+		
+		case 'B':
+		// assign a bin number
+		parts.assign_bin(packet);
+		send_ack(packet);
+		break;
+		
+		case 'G':
+		// print current distance
+		Serial.println(encoder.get_dist());
+		break;
+		
+		case 'H':
+		// handshake
+		Serial.print("Command ");
+		Serial.print(packet.command);
+		Serial.println(" Received");
+		break;
+
+		case 'O':
+		// flush index
+		parts.flush_part_array(packet.argument_int);
+		send_ack(packet);
+		break;
+
+		case 'X':
+		// print part index
+		// TODO
+		Serial.println("TODO X");
+		break;
+
+		case 'P':
+		// TODO: Most likely broken
+		// print part index with bins and distance
+		//aprint.part_index_full();
+		break;
+
+		case 'S':
+		// print part index
+		// TODO
+		Serial.println("TODO S");
+		break;
+		
+		case 'T':
+		// test cycle the outputs, argument is time in ms for each pulse
+		bins.test_outputs(packet.argument_int);
+		break;
+		
+		case 'W':
+		//  TODO
+		// Set feeder speed
+		Serial.println("TODO W");
+		break;
+		
+		default:
+		Serial.print("Unknown command: ");
+		Serial.println(packet.command);
+		break;
+		
+		// We're finished with the packet, reset all values to default.
+		construct_packet(packet.raw_default);
+	}
+}
 
 
+void EventDriver::construct_packet(char* packet_str)
+{
+	// If a packet string is syntactically correct, this function copies it into the correct parts of a packet struct.
+	
+	// ------------TODO: Needs to have CSUM installed HERE------------
+	
+	// Serial.print("Packet length:");                                       // for debugging
+	// Serial.println(strlen(packet));                                       // for debugging
+	
+	extern SerialPacket packet;
+
+	if (strlen(packet_str) != packet_length)
+	{
+		packet.result = 401;
+		return;
+	}
+	
+	//  this loop sets up the argument array
+	for (int i = 0; i <= argument_length - 2; i++)                      // argument length -2, because the last character is \0 and we are zero indexed
+	{
+		packet.argument_arr[i] = packet.raw_packet[i + 2];                   //  the argument begins on the [2] char
+	}
+	packet.argument_arr[4] = '\0';                                // don't forget the terminator on the array!
+	packet.argument_int = atoi(packet.argument_arr);        // the bin number is more useful as an int than an array. But now we have both.
+
+	//  this loop sets up the payload array
+	for (int i = 0; i <= payload_length - 2; i++)                       // payload length -2, because the last character is \0 and we are zero indexed
+	{
+		packet.payload[i] = packet.raw_packet[i + 6];                        //  the argument begins on the [2] char
+	}
+	packet.payload[payload_length - 1] = '\0';
+	
+	// TODO: insert more thorough command and argument checking here
+	
+	packet.result = 200;
+}
+
+
+void EventDriver::read_serial_port(){
+
+	// abort if there's nothing to read.
+	if (Serial.available() == 0)
+	{
+		return;
+	}
+	
+	serial_char = Serial.read();                                        //  Read a character
+	
+	switch (serial_char)
+	{
+		case '<':												// '<' is the packet initiator.
+			memset(&serial_str[0], 0, sizeof(serial_str));		// clear the array every time we get a new initiator.
+			serial_str_index = 0;                               // reset the array index because we're starting a new command.
+			serial_str[0] = serial_char;                        // place our '<' character at the beginning of the array
+			serial_str_index = serial_str_index + 1;			// increment array index number
+		
+			// print_array(serial_read_string);                              // for debugging
+			// Serial.println("packet initiator found");                     // for debugging
+		break;
+				
+		case '>':								                // '>' is the packet terminator.
+			serial_str[serial_str_index] = serial_char;			// add the terminator to the string before we begin
+			parse_command(serial_str);                          // executes the received packet
+			memset(&serial_str[0], 0, sizeof(serial_str));		// clear the array every time we get a new initiator.
+			serial_str_index = 0;                               // reset the packet array index to 0
+		
+			// Serial.println(strlen(serial_read_string));                   // for debugging
+			// print_array(serial_read_string);                              // for debugging
+			// Serial.println("packet terminator found");                    // for debugging
+		break;
+		
+		default:
+			// check to make sure were not too long
+			if (serial_str_index < (sizeof(serial_str) - 2))    
+			{
+				serial_str[serial_str_index] = serial_char;     // append the read character to the array
+				serial_str_index = serial_str_index + 1;        // increment the array index number
+			}
+		
+			// should we receive more than 22 characters before a terminator, something is wrong, dump the string
+			else                                                
+			{
+				memset(&serial_str[0], 0, sizeof(serial_str));  
+				serial_str_index = 0;                           // reset the array index because we're starting a new command.
+			}
+		break;
+	}
+}
 
 
 

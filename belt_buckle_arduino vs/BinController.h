@@ -1,3 +1,21 @@
+/*
+ * BinController.h
+ *
+ * Created: 4/26/2019 1:12:89 PM
+ *  Author: spongeloaf
+ */
+
+
+
+#include "bb_parameters.h"
+
+
+
+#ifndef BINCONTROLLER_H_
+#define BINCONTROLLER_H_
+
+
+
 class BinController{
 
 /*
@@ -172,3 +190,7 @@ int BinController::check_past_bin(int bin, unsigned long part_dist)
 	// not in front of bin yet.
 	return 0;
 }
+
+
+
+#endif /* BINCONTROLLER_H_ */

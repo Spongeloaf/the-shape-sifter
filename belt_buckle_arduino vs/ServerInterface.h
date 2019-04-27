@@ -6,6 +6,11 @@
  */ 
 
 
+
+#include "bb_parameters.h"
+
+
+
 #ifndef SERVERINTERFACE_H_
 #define SERVERINTERFACE_H_
 
@@ -21,12 +26,13 @@ public:
 		payload_len{payload},
 		csum_len{csum},
 		argument_len{arg},
-		packet_len{packet},
+		packet_len{packet}
 		{};
 	
 	void send_ack(SerialPacket& packet);
 	void read_serial_port();
-	void parse_packet(SerialPacket& packet);
+	void parse_packet(char* packet_string);
+	void construct_packet(char* packet_str);
 	void throw_error(SerialPacket& packet);
 	
 	
@@ -38,7 +44,7 @@ private:
 	const int argument_len;						// number of bytes in the packet argument
 	const int payload_len;						// number of bytes in the packet payload
 	int  serial_read_string_index;				// the current index number of the read string
-	char serial_read_string[packet_len + 1];    // stores the read chars
+	char serial_read_string[serial_read_string_len];				// stores the read chars.
 
 };
 
@@ -104,7 +110,7 @@ void ServerInterface::send_ack(SerialPacket& packet){
 }
 
 
-void ServerInterface::parse_packet(char& packet_string[]){					// parses the command and then passes the relevant data off to wherever it needs to go.
+void ServerInterface::parse_packet(char* packet_string){					// parses the command and then passes the relevant data off to wherever it needs to go.
 
 	extern SerialPacket packet;
 	
@@ -113,7 +119,7 @@ void ServerInterface::parse_packet(char& packet_string[]){					// parses the com
 	if (packet.result != 200)
 	{
 		server.send_ack(packet);
-		server.construct_packet(packet.raw_default)							// If a packet is malformed, reset all values to default.
+		server.construct_packet(packet.raw_default);							// If a packet is malformed, reset all values to default.
 		return;
 	}
 
@@ -187,21 +193,23 @@ void ServerInterface::parse_packet(char& packet_string[]){					// parses the com
 		break;
 		
 		// We're finished with the packet, reset all values to default.
-		server.construct_packet(packet.raw_default)							
+		server.construct_packet(packet.raw_default);
 	}
 }
 
 
-void ServerInterface::construct_packet(SerialPacket& packet)
+void ServerInterface::construct_packet(char* packet_str)
 {
 	// If a packet string is syntactically correct, this function copies it into the correct parts of a packet struct.
-	
+		
 	// ------------TODO: Needs to have CSUM installed HERE------------
 	
 	// Serial.print("Packet length:");                                       // for debugging
 	// Serial.println(strlen(packet));                                       // for debugging
 	
-	if (strlen(packet.raw_packet) != packet_len)
+	extern SerialPacket packet;
+
+	if (strlen(packet_str) != packet_len)
 	{
 		packet.result = 401;
 		return;

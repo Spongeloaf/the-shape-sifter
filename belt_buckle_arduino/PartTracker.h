@@ -7,13 +7,13 @@
 
 
 
-#include "bb_parameters.h"
-
-
-
 #ifndef PARTTRACKER_H_
 #define PARTTRACKER_H_
 
+
+
+#include "bb_parameters.h"
+extern SerialPacket packet;
 
 
 class PartTracker{
@@ -25,7 +25,7 @@ public:
 		index_payload{'z'}
 		{}
 
-	int add_part(SerialPacket&);
+	int add_part(SerialPacket&, unsigned long);
 	int assign_bin(SerialPacket&);
 	void flush_part_array(int);
 	int get_bin(int);
@@ -33,7 +33,7 @@ public:
 	
 
 private:
-	
+
 	unsigned int index_selector = 0;                                 // the next available index for storing a part
 	unsigned long index_distance[index_length];                // the main distance index - global
 	int index_bin[index_length];                               // the main bin index - global
@@ -41,7 +41,7 @@ private:
 };
 
 
-int PartTracker::add_part(SerialPacket& packet){                                                      
+int PartTracker::add_part(SerialPacket& packet, unsigned long dist){                                                      
 
 	// first check to see if this part number exists already
 	for (unsigned int i = 0; i < index_length; i++)
@@ -58,7 +58,7 @@ int PartTracker::add_part(SerialPacket& packet){
 		index_payload[index_selector][i] = packet.payload[i];
 	}
 
-	index_distance[index_selector] = encoder.get_dist();                    // set the belt distance
+	index_distance[index_selector] = dist;                    // set the belt distance
 	index_bin[index_selector] = 0;                                           // bin is always 0 until the assign command
 	index_selector++;
 	

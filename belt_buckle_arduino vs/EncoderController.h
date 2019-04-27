@@ -1,3 +1,20 @@
+/*
+ * EncoderCOntroller.h
+ *
+ * Created: 4/23/2019 3:30:43 PM
+ *  Author: spongeloaf
+ */
+
+
+
+#include "bb_parameters.h"
+
+
+
+#ifndef ENCODERCONTROLLER_H_
+#define ENCODERCONTROLLER_H_
+
+
 #include <Wire.h>
 
 
@@ -60,3 +77,7 @@ bool EncoderController::is_running()
 	
 	return true;
 }
+
+
+
+#endif /* ENCODERCONTROLLER_H_ */

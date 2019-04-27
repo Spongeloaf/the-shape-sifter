@@ -35,7 +35,7 @@ public:
 		set_bin_defaults(); 
 		init_pins();
 	}
-
+	
 	void on_airjet(int);
 	void off_airjets();
 	void test_outputs(int);
@@ -51,14 +51,12 @@ private:
 	
 	unsigned long bin_width;
 	
-	// this magic number is limited by hardware. It's not likely to ever change.
-	int number_of_bins = 16;
 	
 	// stores the time that the airjet was turned on; used to turn them off after ::bin_airjet_time
 	unsigned long airjet_timers[number_of_bins + 1];
 	
 	// time in milliseconds that the air jet stays on
-	const unsigned long bin_airjet_time;													 
+	unsigned long bin_airjet_time;													 
 		
 	// stores distance ints for each bin location
 	unsigned long bin_distances[number_of_bins + 1];							 

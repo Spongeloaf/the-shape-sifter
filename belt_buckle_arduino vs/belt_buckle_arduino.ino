@@ -1,30 +1,19 @@
+#include "bb_parameters.h"
 #include "FeederController.h"
 #include "BinController.h"
 #include "BeltController.h"
 #include "ArrayPrint.h"
 #include "PartTracker.h"
-#include "PacketStruct.h"
 #include "EventDriver.h"
-
-
-
-// These globals are used for setting up pin numbers, and size parameters.
-// They are all magic constants that may change. All of them are used in constructing the main controller objects.
-// Magic constants which are unlikely to change exist within each class's constructor.
-const int hopper_pwm_pin = 3;						// PWM pin number of the hopper. Should be 3.
-const int belt_control_pin = 52;					// Pin connected to belt drive relay.
-const int wire_address = 2;							// I2C address of the belt encoder.
-const int index_length = 48;                        // the number of parts we can keep track of - global
-const int number_of_inputs = 8;                     // self explanatory, I hope
-const unsigned long debounce_delay = 210;            // the input debounce time
-
+#include "EncoderController.h"
+#include "ServerInterface.h"
 
 
 
 // declare all primary control interfaces in the global scope so everyone can use them.
 BinController bins{};
 ArrayPrint aprint{};
-PartTracker parts{index_length, payload_length};
+PartTracker parts{};
 FeederController feeder{hopper_pwm_pin};
 BeltController belt{belt_control_pin};
 EncoderController encoder{wire_address};

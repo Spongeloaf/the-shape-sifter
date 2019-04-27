@@ -18,34 +18,56 @@
 class BeltController{
 public:
 
-	BeltController(int pin) : control_pin{pin} mode{false} {}
+	BeltController()
+	{ 
+		mode = false;
+	}
 
 	bool get_mode();
-	void set_mode(bool set);
+	void set_mode(bool);
 	void toggle_mode();
 
 
 private:
 
 	bool mode;
-	int control_pin;
 };
 
 
-void BeltController::belt_toggle_mode()
+void BeltController::toggle_mode()
 {
 	if (mode)
 	{
 		mode = false;
-		digitalWrite(control_pin, LOW);
+		digitalWrite(belt_control_pin, LOW);
 	}
 	else
 	{
 		mode = true;
-		digitalWrite(control_pin, HIGH);
+		digitalWrite(belt_control_pin, HIGH);
 	}
 }
 
+
+bool BeltController::get_mode()
+{
+	return mode;
+}
+
+
+void BeltController::set_mode(bool set)
+{
+	if (set)
+	{
+		mode = true;
+		digitalWrite(belt_control_pin, HIGH);
+	}
+	else
+	{
+		mode = false;
+		digitalWrite(belt_control_pin, LOW);
+	}
+}
 
 
 #endif /* BELTCONTROLLER_H_ */

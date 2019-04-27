@@ -23,7 +23,7 @@ class FeederController{
 	// Afterwards, the speed will be increased to the user's desired amount.
 	// In the main loop, event_tick() will update the motor speed once the startup cycle is complete.
 	public:
-	FeederController(int p) : pin(p) {};
+	FeederController() {};
 	
 	// please see function definitions for documentation.
 	void speed_up();
@@ -36,7 +36,6 @@ class FeederController{
 	int get_speed();
 
 	private:
-	int pin;
 	int speed_selector = 0;																				// selects the current feeder speed from the speed_array
 	bool mode = false;																						// bool to control the current speed of the belt, so we can turn it off without changing speed.
 	bool startup = false;																					// true during speed limited startup phase.
@@ -78,7 +77,7 @@ void FeederController::speed_up()
 	// only writes to analog output if the feeder is currently running, and not currently spinning up.
 	if (mode && (!(startup)))
 	{
-		analogWrite(pin, speed_array[speed_selector]);
+		analogWrite(hopper_pwm_pin, speed_array[speed_selector]);
 	}
 }
 
@@ -99,7 +98,7 @@ void FeederController::speed_down()
 	// only writes to analog output if the feeder is currently running
 	if (mode && (!(startup)))
 	{
-		analogWrite(pin, speed_array[speed_selector]);
+		analogWrite(hopper_pwm_pin, speed_array[speed_selector]);
 	}
 
 }
@@ -145,7 +144,7 @@ void FeederController::start()
 		if ((now_t - startup_t) > startup_delay)
 		{
 			startup = false;
-			analogWrite(pin, speed_array[speed_selector]);
+			analogWrite(hopper_pwm_pin, speed_array[speed_selector]);
 			Serial.println("full speed");
 		}
 		return;
@@ -161,7 +160,7 @@ void FeederController::start()
 	startup_t = millis();
 	startup = true;
 	mode = true;
-	analogWrite(pin, 20);
+	analogWrite(hopper_pwm_pin, 20);
 
 	Serial.println("startup");
 	return;
@@ -172,7 +171,7 @@ void FeederController::stop()
 {
 	mode = false;
 	startup = false;
-	analogWrite(pin, 0);
+	analogWrite(hopper_pwm_pin, 0);
 }
 
 
