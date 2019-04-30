@@ -7,21 +7,21 @@
 
 
 
+#ifndef BELTCONTROLLER_H_
+#define BELTCONTROLLER_H_
 #include "bb_parameters.h"
 
 
 
-#ifndef BELTCONTROLLER_H_
-#define BELTCONTROLLER_H_
-
-
 class BeltController{
+
 public:
 
 	BeltController()
 	{ 
+		pinMode(belt_control_pin, OUTPUT);
 		mode = false;
-	}
+	};
 
 	bool get_mode();
 	void set_mode(bool);

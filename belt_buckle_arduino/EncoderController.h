@@ -7,25 +7,18 @@
 
 
 
-#include "bb_parameters.h"
-
-
-
 #ifndef ENCODERCONTROLLER_H_
 #define ENCODERCONTROLLER_H_
-
-
+#include "bb_parameters.h"
 #include <Wire.h>
 
 
 class EncoderController{
 public:
 	
-	EncoderController(int adr) 
+	EncoderController() 
 	{
 		Wire.begin();
-		address = adr;
-		bytes_len = 4;
 		status = true;
 	};
 	
@@ -33,8 +26,7 @@ public:
 	bool is_running();
 	
 private:
-	int address;
-	int bytes_len;
+
 	bool status;
 	bool old_status;
 	unsigned long old_dist = 0;
@@ -47,7 +39,7 @@ unsigned long EncoderController::get_dist()
 	unsigned long distance;
 	byte a,b,c,d;
 
-	Wire.requestFrom(address, bytes_len);																						
+	Wire.requestFrom(wire_address, 4);																						
 	if (Wire.available() > 0)
 	{
 		a = Wire.read();

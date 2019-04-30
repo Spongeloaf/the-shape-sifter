@@ -9,21 +9,14 @@
 
 #ifndef PARTTRACKER_H_
 #define PARTTRACKER_H_
-
-
-
 #include "bb_parameters.h"
-extern SerialPacket packet;
+
 
 
 class PartTracker{
 public:
 
-	PartTracker() : 
-		index_distance{0},
-		index_bin{0},
-		index_payload{'z'}
-		{}
+	PartTracker() {};
 
 	int add_part(SerialPacket&, unsigned long);
 	int assign_bin(SerialPacket&);
@@ -41,21 +34,21 @@ private:
 };
 
 
-int PartTracker::add_part(SerialPacket& packet, unsigned long dist){                                                      
+int PartTracker::add_part(SerialPacket& serial_packet, unsigned long dist){                                                      
 
 	// first check to see if this part number exists already
 	for (unsigned int i = 0; i < index_length; i++)
 	{
-		if (memcmp(index_payload[i], packet.payload, payload_length) == 0)
+		if (memcmp(index_payload[i], serial_packet.payload, payload_length) == 0)
 		{
-			packet.result = 409;
+			serial_packet.result = 409;
 			return;
 		}
 	}
 	
 	for (int i = 0; i < payload_length; i++)                                          // Stores the received part index in the DB
 	{
-		index_payload[index_selector][i] = packet.payload[i];
+		index_payload[index_selector][i] = serial_packet.payload[i];
 	}
 
 	index_distance[index_selector] = dist;                    // set the belt distance
@@ -66,7 +59,7 @@ int PartTracker::add_part(SerialPacket& packet, unsigned long dist){
 	{
 		index_selector = 0;
 	}
-	packet.result = 200;
+	serial_packet.result = 200;
 }
 
 

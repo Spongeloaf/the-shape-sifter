@@ -12,7 +12,6 @@
 
 
 
-
 // These globals are used for setting up pin numbers, and size parameters.
 // They are all magic constants that may change. All of them are used in constructing the main controller objects.
 // Magic constants which are unlikely to change exist within each class's constructor.
@@ -38,13 +37,13 @@ constexpr int serial_str_len = 24;				// length in bytes of a packet string plus
 
 // a struct to hold packet data
 struct SerialPacket{
-	char raw_default[packet_length] =  {'<','z','z','z','z','z','z','z','z','z','z','z','z','z','z','z','z','z','C','S','U','M','>'};
-	char raw_packet[packet_length] = {'<','z','z','z','z','z','z','z','z','z','z','z','z','z','z','z','z','z','C','S','U','M','>'};
+	char raw_default[packet_length + 1] =  {'<','z','z','z','z','z','z','z','z','z','z','z','z','z','z','z','z','z','C','S','U','M','>','\0'};
+	char raw_packet[packet_length + 1] = {'<','z','z','z','z','z','z','z','z','z','z','z','z','z','z','z','z','z','C','S','U','M','>','\0'};
 	char command = 'z';
 	unsigned int argument_int = 0;                               // int to store the packet argument
 	char argument_arr[argument_length] = {'z'};                  // char array for parsing packet arguments
 	char payload[payload_length] = {'z'};                        // char array for parsing packet payload
-	int result = 0;												 // Error messages are a letter designator matching the command, followed by a three digit number
+	int result = 408;											 // Error messages are a letter designator matching the command, followed by a three digit number. Default is 408 "Status not set"
 };
 
 
@@ -74,6 +73,8 @@ constexpr int input_pins[num_inputs] = {			// storing the pin numbers in an arra
 	11								//  button_feeder,
 };
 
+
+bool input_active[num_inputs];				// stores the current state of each input - global
 
 
 #endif /* BB_PARAMETERS */

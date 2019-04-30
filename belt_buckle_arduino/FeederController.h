@@ -7,13 +7,10 @@
 
 
 
-#include "bb_parameters.h"
-
-
 
 #ifndef FEEDERCONTROLLER_H_
 #define FEEDERCONTROLLER_H_
-
+#include "bb_parameters.h"
 
 class FeederController{
 	// This object provides a control interface to the part feeder.

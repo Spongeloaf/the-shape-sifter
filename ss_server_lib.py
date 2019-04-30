@@ -26,11 +26,11 @@ class ServerInit:
         self.google_path = get_google_drive_path()
 
         # declarations and initializations. All objects ending with _const are NOT to be modified at run time!
-        self.server_settings_file_const = self.google_path + 'settings.ini'
-        self.server_log_file_const = self.google_path + 'log\\log_server.txt'
-        self.server_db_fname_const = self.google_path + 'db\\shape_sifter.sqlite'
-        self.server_db_template_const = self.google_path + 'db\\shape_sifter_template.sqlite'
-        self.part_log_fname_const = self.google_path + 'log\\part_log.txt'
+        self.server_settings_file_const = self.google_path + '\\settings.ini'
+        self.server_log_file_const = self.google_path + '\\log\\log_server.txt'
+        self.server_db_fname_const = self.google_path + '\\db\\shape_sifter.sqlite'
+        self.server_db_template_const = self.google_path + '\\db\\shape_sifter_template.sqlite'
+        self.part_log_fname_const = self.google_path + '\\log\\part_log.txt'
         self.active_part_table_const = ('active_part_db',)   # the fuck is this for? I think it's the name of the DB?
         self.prev_id = ''
 
@@ -53,6 +53,9 @@ class ServerInit:
         self.taxi_belt_mask = self.server_config['taxi']['mask']
 
         self.mtm_log_level = self.server_config['mtm']['log_level']
+        self.mtm_model_path = self.server_config['mtm']['model_path']
+        self.mtm_model_fname = self.server_config['mtm']['model_fname']
+
         self.cf_log_level = self.server_config['cf']['log_level']
         self.suip_log_level = self.server_config['suip']['log_level']
 
@@ -109,26 +112,28 @@ class ClientParams:
         self.log_level = server_init.server_log_level                   # uses server log level if unspecified
 
         if client_type == "taxi":
-            self.log_fname_const = self.google_path + "log\\log_taxi.txt"
+            self.log_fname_const = self.google_path + "\\log\\log_taxi.txt"
             self.log_level = server_init.taxi_log_level
             self.pipe_recv = server_init.pipe_taxi_recv_server
             self.pipe_send = server_init.pipe_taxi_send_server
             self.belt_mask = server_init.taxi_belt_mask
 
         if client_type == "mtmind":
-            self.log_fname_const = self.google_path + "log\\log_mtmind.txt"
+            self.log_fname_const = self.google_path + "\\log\\log_mtmind.txt"
+            self.model_path = "{}{}".format(server_init.google_path, server_init.mtm_model_path)
+            self.model_fname = server_init.mtm_model_fname
             self.log_level = server_init.mtm_log_level
             self.pipe_recv = server_init.pipe_mtm_recv_server
             self.pipe_send = server_init.pipe_mtm_send_server
 
         if client_type == "classifist":
-            self.log_fname_const = self.google_path + "log\\log_classifist.txt"
+            self.log_fname_const = self.google_path + "\\log\\log_classifist.txt"
             self.log_level = server_init.cf_log_level
             self.pipe_recv = server_init.pipe_classifist_recv
             self.pipe_send = server_init.pipe_classifist_send
 
         if client_type == "bb":
-            self.log_fname_const = self.google_path + "log\\log_bb.txt"
+            self.log_fname_const = self.google_path + "\\log\\log_bb.txt"
             self.log_level = server_init.bb_log_level
             self.pipe_recv = server_init.pipe_bb_recv
             self.pipe_send = server_init.pipe_bb_send
@@ -138,7 +143,7 @@ class ClientParams:
             self.skip_handshake = server_init.bb_skip_handshake
 
         if client_type == "suip":
-            self.log_fname_const = self.google_path + "log\\log_suip.txt"
+            self.log_fname_const = self.google_path + "\\log\\log_suip.txt"
             self.log_level = server_init.suip_log_level
             self.pipe_recv = server_init.pipe_suip_recv
             self.pipe_send = server_init.pipe_suip_send
@@ -512,6 +517,6 @@ def get_google_drive_path():
     path = res[2][4:]
     db.close()
 
-    full_path = path + "\\software_dev\\the_shape_sifter\\"
+    full_path = path + '\\software_dev\\the_shape_sifter'
 
     return full_path

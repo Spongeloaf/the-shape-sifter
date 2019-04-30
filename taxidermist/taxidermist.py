@@ -2,10 +2,12 @@
 import cv2
 import time
 import math
-
+import numpy as np
+from fastai.vision import Image, pil2tensor
 from typing import List     # add support for list type hints
 from sys import exit
 from datetime import datetime
+
 
 # 1st party imports
 from shape_sifter_tools.shape_sifter_tools import part_instance, create_logger
@@ -226,7 +228,17 @@ def update_part_list(new_parts_list: List[PartParams], old_parts_list: List[Part
 
                 old_parts_list.append(new_parts_list[i])
                 cropped_part_image = crop_image(new_parts_list[i], frame)
-                new_part = make_new_part(cropped_part_image)
+
+                img_fastai = Image(pil2tensor(cropped_part_image, dtype=np.float32).div_(255))
+
+                # Hey,
+                #
+                # I think one more thing you have to be careful is that OpenCV imports image in BGR format instead of RGB format, so you have to use this additional step to convert imported images in RGB format-
+                # img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+                #
+                # This step is especially important if you are using a pre-trained model for transfer learning purpose. Hope this helps.
+
+                new_part = make_new_part(img_fastai)
                 save_image(new_part, params.count)
                 params.count += 1
 

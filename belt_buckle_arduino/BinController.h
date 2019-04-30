@@ -7,12 +7,10 @@
 
 
 
-#include "bb_parameters.h"
-
-
 
 #ifndef BINCONTROLLER_H_
 #define BINCONTROLLER_H_
+#include "bb_parameters.h"
 
 
 
@@ -28,13 +26,14 @@ TODO: trigger an alarm when a part runs off the belt and wasn't assigned to do s
 
 */
 
+
 public:
 	
 	BinController() 
 	{
 		set_bin_defaults(); 
 		init_pins();
-	}
+	};
 	
 	void on_airjet(int);
 	void off_airjets();
@@ -46,11 +45,9 @@ public:
 	int check_past_bin(int bin, unsigned long dist);
 
 
-
 private:
 	
 	unsigned long bin_width;
-	
 	
 	// stores the time that the airjet was turned on; used to turn them off after ::bin_airjet_time
 	unsigned long airjet_timers[number_of_bins + 1];

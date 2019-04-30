@@ -7,6 +7,9 @@
 
 
 
+
+#ifndef EVENTDRIVER_H_
+#define EVENTDRIVER_H_
 #include "bb_parameters.h"
 #include "FeederController.h"
 #include "BinController.h"
@@ -17,18 +20,14 @@
 
 
 
-#ifndef EVENTDRIVER_H_
-#define EVENTDRIVER_H_
-
-
-
 extern BinController		bins;
 extern ArrayPrint			aprint;
 extern PartTracker			parts;
 extern FeederController		feeder;
 extern BeltController		belt;
 extern EncoderController	encoder;
-extern SerialPacket			serial_packet;
+extern SerialPacket			packet;
+
 
 
 // This controls our real time events and handles interaction between primary control interfaces.
@@ -44,12 +43,11 @@ public:
 	EventDriver()
 	{
 		encoder_stall = false;
-		debounce_delay = delay;
 		lastDebounceTime = 0;
 		input_active[num_inputs];
 		input_previous_state = true;
 		init_inputs();
-	}
+	};
 	
 	void init_inputs();
 	void check_inputs();
@@ -65,11 +63,8 @@ public:
 private:
 	
 	bool encoder_stall;							// tracks status of encoder
-	int debounce_delay;							// delay to wait for input changes
 	unsigned long lastDebounceTime;				// for de-bouncing
-	bool input_active[num_inputs];				// stores the current state of each input - global
 	bool input_previous_state;					// default to true because pull up resistors invert our logic
-	int input_pins[num_inputs];			// array of input pin numbers.
 	int  serial_str_index;						// the current index number of the read string
 	char serial_str[serial_str_len];			// stores the read chars.
 	char serial_char;							// the most recent char read from serial port
@@ -244,6 +239,17 @@ void EventDriver::parse_command(char* packet_string){					// parses the command 
 	
 	construct_packet(packet_string);
 	
+	/*
+	// for debugging
+	Serial.println(packet.argument_arr);
+	Serial.println(packet.argument_int);
+	Serial.println(packet.command);
+	Serial.println(packet.payload);
+	Serial.println(packet.raw_default);
+	Serial.println(packet.raw_packet);
+	Serial.println(packet.result);
+	*/
+	
 	if (packet.result != 200)
 	{
 		send_ack(packet);
@@ -293,6 +299,7 @@ void EventDriver::parse_command(char* packet_string){					// parses the command 
 		break;
 
 		case 'P':
+		Serial.println("TODO P");
 		// TODO: Most likely broken
 		// print part index with bins and distance
 		//aprint.part_index_full();
@@ -316,13 +323,12 @@ void EventDriver::parse_command(char* packet_string){					// parses the command 
 		break;
 		
 		default:
-		Serial.print("Unknown command: ");
-		Serial.println(packet.command);
+			packet.result = 406;	// 406: bad command
+			send_ack(packet);
 		break;
-		
-		// We're finished with the packet, reset all values to default.
-		construct_packet(packet.raw_default);
 	}
+	// We're finished with the packet, reset all values to default.
+	construct_packet(packet.raw_default);
 }
 
 
@@ -332,35 +338,42 @@ void EventDriver::construct_packet(char* packet_str)
 	
 	// ------------TODO: Needs to have CSUM installed HERE------------
 	
-	// Serial.print("Packet length:");                                       // for debugging
-	// Serial.println(strlen(packet));                                       // for debugging
-	
 	extern SerialPacket packet;
-
+	
+	// check str len
 	if (strlen(packet_str) != packet_length)
 	{
-		packet.result = 401;
+		packet.result = 401;		// 401 = bad length
 		return;
 	}
 	
-	//  this loop sets up the argument array
-	for (int i = 0; i <= argument_length - 2; i++)                      // argument length -2, because the last character is \0 and we are zero indexed
+	for (int i = 0; i < strlen(packet_str); i++)
+	//for (int i : strlen(packet.raw_packet))
 	{
-		packet.argument_arr[i] = packet.raw_packet[i + 2];                   //  the argument begins on the [2] char
+		packet.raw_packet[i] = packet_str[i];
 	}
-	packet.argument_arr[4] = '\0';                                // don't forget the terminator on the array!
-	packet.argument_int = atoi(packet.argument_arr);        // the bin number is more useful as an int than an array. But now we have both.
-
-	//  this loop sets up the payload array
-	for (int i = 0; i <= payload_length - 2; i++)                       // payload length -2, because the last character is \0 and we are zero indexed
+	
+	// setup command
+	packet.command = packet_str[1];
+	
+	// sets up the argument array
+	for (int i = 0; i <= argument_length - 2; i++)              // argument length -2, because the last character is \0 and we are zero indexed
 	{
-		packet.payload[i] = packet.raw_packet[i + 6];                        //  the argument begins on the [2] char
+		packet.argument_arr[i] = packet_str[i + 2];             //  the argument begins on the [2] char
+	}
+	packet.argument_arr[4] = '\0';                              // don't forget the terminator on the array!
+	packet.argument_int = atoi(packet.argument_arr);			// the bin number is more useful as an int than an array. But now we have both.
+
+	// sets up the payload array
+	for (int i = 0; i <= payload_length - 2; i++)               // payload length -2, because the last character is \0 and we are zero indexed
+	{
+		packet.payload[i] = packet_str[i + 6];                  //  the argument begins on the [2] char
 	}
 	packet.payload[payload_length - 1] = '\0';
 	
 	// TODO: insert more thorough command and argument checking here
 	
-	packet.result = 200;
+	packet.result = 200;  // 200 packet syntax is OK.
 }
 
 

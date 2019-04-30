@@ -4,7 +4,7 @@
 
 import logging
 import configparser
-
+from fastai.vision import Image
 
 class part_instance:
     """A single part from the belt
@@ -15,7 +15,7 @@ class part_instance:
                  capture_time: float = 0.0,
                  part_number: str ='',
                  category_number: str ='',
-                 part_image: str ='',
+                 part_image: Image ='',
                  part_color: str ='',
                  category_name: str ='',
                  bin_assignment: int =0,

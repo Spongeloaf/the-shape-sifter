@@ -7,18 +7,17 @@
 
 
 
-#include "bb_parameters.h"
-
-
 
 #ifndef ARRAYPRINT_H_
 #define ARRAYPRINT_H_
+#include "bb_parameters.h"
+
 
 
 class ArrayPrint{
 public:
 	
-	ArrayPrint() {}
+	ArrayPrint() {};
 	
 	void array(char*);
 	void array(unsigned long*);
