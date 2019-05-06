@@ -139,7 +139,7 @@ void BinController::set_bin_defaults()
 	
 	bin_width = 4158;
 	
-	bin_distances[0] = 0;
+	bin_distances[0] = 23077;	// off the end of the belt
 	bin_distances[1] = 6445;
 	bin_distances[2] = 6445;
 	bin_distances[3] = 10603;
@@ -172,19 +172,7 @@ void BinController::init_pins()
 }
 
 
-int BinController::check_past_bin(int bin, unsigned long part_dist)
-{
-	// returns an int indicating where a part is relative to a bin.
-	
-	// past the bin
-	if (part_dist > bin_distances[bin] + bin_width) return -1;
-	
-	// in front of the bin, ready for airjet
-	if (part_dist > bin_distances[bin]) return 1;
-	
-	// not in front of bin yet.
-	return 0;
-}
+
 
 
 

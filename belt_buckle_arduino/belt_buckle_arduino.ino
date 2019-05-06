@@ -13,8 +13,7 @@ EncoderController	encoder{};
 EventDriver			events{};
 SerialPacket		packet{};
 
-unsigned long count = 0;
-int loops = 0;
+
 
 void setup() {
 																			
@@ -22,7 +21,7 @@ void setup() {
 	Serial.begin(57600);
 	Serial.print("[BB_ONLINE]");
 	delay(100);										// This delay is to allow our serial read to timeout on the server.
-	Serial.print("[Belt Buckle v0.5.9]");			//  display program name on boot
+	Serial.print("[Belt Buckle v0.6.0]");			//  display program name on boot
 }
 
 
@@ -37,16 +36,5 @@ void loop() {
 	events.check_encoder();
 	
 	events.check_feeder();
-	
-	if (count > 100000)
-	{
-		count = 0;
-		loops++;
-		Serial.print(loops);
-		Serial.print(" x 100k loops: ");
-		Serial.print(millis());
-		Serial.println("ms");
-	}	
-	count++;
 }
 

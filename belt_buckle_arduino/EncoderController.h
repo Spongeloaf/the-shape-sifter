@@ -24,18 +24,35 @@ public:
 	
 	unsigned long get_dist();
 	bool is_running();
+	void start_sim();
+	void stop_sim();
+	bool get_sim();
+	void toggle_sim();
 	
 private:
-
+	
 	bool status;
 	bool old_status;
 	unsigned long old_dist = 0;
+	
+	// simulates a moving belt; for testing without having the hardware hooked up.
+	unsigned long enc_sim();
+	bool sim_mode = false;	
 };
 
 
 // get the distance from the encoder. Credit: https:// thewanderingengineer.com/2015/05/06/sending-16-bit-and-32-bit-numbers-with-arduino-i2c/
 unsigned long EncoderController::get_dist()																											
+
 {
+	// This method has not been protected from rollovers at all.
+	// That protection should be handled by whomever calls get_dist.
+	
+	if (sim_mode) 
+	{
+		return enc_sim();
+	}
+	
 	unsigned long distance;
 	byte a,b,c,d;
 
@@ -70,6 +87,37 @@ bool EncoderController::is_running()
 	return true;
 }
 
+
+unsigned long EncoderController::enc_sim()
+{
+	// This method has not been protected from rollovers at all.
+	// That protection should be handled by whomever calls get_dist.
+	return sim_scaler * millis();
+}
+
+
+void EncoderController::toggle_sim()
+{
+	(sim_mode) ? stop_sim() : start_sim();
+}
+
+
+void EncoderController::start_sim()
+{
+	sim_mode = true;
+}
+
+
+void EncoderController::stop_sim()
+{
+	sim_mode = false;
+}
+
+
+bool EncoderController::get_sim()
+{
+	return sim_mode;
+}
 
 
 #endif /* ENCODERCONTROLLER_H_ */

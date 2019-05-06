@@ -23,122 +23,102 @@ public:
 	void flush_part_array(int);
 	int get_bin(int);
 	unsigned long  get_dist(int);
-	
+	bool get_occupied(int)
 
 private:
 
-	unsigned int index_selector = 0;                                 // the next available index for storing a part
-	unsigned long index_distance[index_length];                // the main distance index - global
-	int index_bin[index_length];                               // the main bin index - global
-	char index_payload[index_length][payload_length];          // the main part index - global
+	TrackedPart part_list[part_list_length];
 };
 
 
-int PartTracker::add_part(SerialPacket& serial_packet, unsigned long dist){                                                      
+		
+int PartTracker::add_part(SerialPacket& packet, unsigned long dist){
 
 	// first check to see if this part number exists already
-	for (unsigned int i = 0; i < index_length; i++)
+	for (unsigned int i = 0; i < part_list_length; i++)
 	{
-		if (memcmp(index_payload[i], serial_packet.payload, payload_length) == 0)
+		if (memcmp(part_list[i].id, packet.payload, payload_length) == 0)
 		{
-			serial_packet.result = 409;
+			packet.result = 409;
 			return;
 		}
 	}
 	
-	for (int i = 0; i < payload_length; i++)                                          // Stores the received part index in the DB
+	// find a free slot in the part list.
+	int slot = -1;
+	for (unsigned int i = 0; i < part_list_length; i++)
 	{
-		index_payload[index_selector][i] = serial_packet.payload[i];
+		if (part_list[i].occupied == false)
+			{
+				part_list[i].occupied == true;
+				slot = i;
+				break;
+			}
+	}
+	
+	// true when there's no free slots in the part list.
+	if (slot == -1)
+	{
+		packet.result = 419;
+		return;
+	}
+	
+	// Stores the received part index in the part_list
+	for (int i = 0; i < payload_length; i++)            
+	{
+		part_list[slot].id[i] = packet.payload[i];
 	}
 
-	index_distance[index_selector] = dist;                    // set the belt distance
-	index_bin[index_selector] = 0;                                           // bin is always 0 until the assign command
-	index_selector++;
-	
-	if (index_selector >= index_length)
-	{
-		index_selector = 0;
-	}
-	serial_packet.result = 200;
+	part_list[slot].distance = dist;                    // set the belt distance
+	part_list[slot].bin = 0;                            // bin is always 0 until the assign command
+		
+	packet.result = 200;
 }
 
 
-int PartTracker::assign_bin(SerialPacket& packet){             // assign a part to a bin. loops through the payload array, returns 404 if the part isn't found
-
-	for (unsigned int i = 0; i < index_length; i++)
+int PartTracker::assign_bin(SerialPacket& packet){ 
+	            
+	// assign a part to a bin. loops through the payload array, returns 404 if the part isn't found
+	for (unsigned int i = 0; i < part_list_length; i++)
 	{
-		if (memcmp(index_payload[i], packet.payload, payload_length) == 0)   // Reminder: memcmp returns 0 when it finds a match.
+		if (memcmp(part_list[i].id, packet.payload, payload_length) == 0)
 		{
-			index_bin[i] = packet.argument_int;
+			part_list[i].bin = packet.argument_int;
 			packet.result = 200;
 			return;
 		}
 	}
+	
 	packet.result = 404;
 }
 
 
-void PartTracker::flush_part_array(int index)
+unsigned long PartTracker::get_dist(int slot)
 {
-	// this function zeroes the part index array.
-	// If the index number passed is out of bounds, an error is printed.
-	// If the index number passed is -1, the whole array is flushed.
+	// returns the distance value stored in the parts list.
+	// This distance is the belt position when the part was added.
 	
-
-	if ((-1 < index) && (index < index_length))	// zeroes one index of the array
+	// check if index is in range
+	if (slot >= part_list_length || slot < 0)
 	{
-		index_bin[index] = 0;
-		index_distance[index] = 0;
-		index_payload[index][0] = '0';
-		index_payload[index][1] = '0';
-		index_payload[index][2] = '0';
-		index_payload[index][3] = '0';
-		index_payload[index][4] = '0';
-		index_payload[index][5] = '0';
-		index_payload[index][6] = '0';
-		index_payload[index][7] = '0';
-		index_payload[index][8] = '0';
-		index_payload[index][9] = '0';
-		index_payload[index][10] = '0';
-		index_payload[index][11] = '0';
-		index_payload[index][12] = '\0';
-		return;
+		// TODO: Make this send an error message to the server.
+		Serial.println("Part list index out of range!");
+		return 0;
 	}
-	if (index == -1)   // zeroes the whole array
-	{
-		for (int i=0; i < index_length; i++)
-		{
-			index_bin[i] = 0;
-			index_distance[i] = 0;
-			index_payload[i][0] = '0';
-			index_payload[i][1] = '0';
-			index_payload[i][2] = '0';
-			index_payload[i][3] = '0';
-			index_payload[i][4] = '0';
-			index_payload[i][5] = '0';
-			index_payload[i][6] = '0';
-			index_payload[i][7] = '0';
-			index_payload[i][8] = '0';
-			index_payload[i][9] = '0';
-			index_payload[i][10] = '0';
-			index_payload[i][11] = '0';
-			index_payload[i][12] = '\0';
-		}
-		return;
-	}
-	Serial.println("Error: Flush index out of range!");		// nothing is zeroed if index is out of range!
+	
+	return part_list[slot].distance;
 }
 
 
-int PartTracker::get_bin(int index)
+int PartTracker::get_bin(int slot)
 {
-	return index_bin[index];
+	return part_list[slot].bin;
 }
 
 
-unsigned long  PartTracker::get_dist(int bin)
+bool PartTracker::get_occupied(int slot)
 {
-	return index_distance[bin];
+	
 }
 
 

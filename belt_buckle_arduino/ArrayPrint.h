@@ -54,10 +54,10 @@ void ArrayPrint::array(unsigned long* to_be_printed){                    // prin
 	}
 }
 
-/*
+
 void ArrayPrint::array_2d() {
 	
-	for ( int i = 0; i < index_length; ++i ) {               //  loop through array's rows
+	for ( int i = 0; i < part_list_length; ++i ) {               //  loop through array's rows
 		
 		for ( int j = 0; j < payload_length; ++j )
 		{                //  loop through columns of current row
@@ -66,7 +66,7 @@ void ArrayPrint::array_2d() {
 		Serial.print ("\n") ; //  start new line of output
 	}
 }
-*/
+
 
 /*
 void ArrayPrint::part_index_full() {

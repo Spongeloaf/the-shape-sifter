@@ -7,7 +7,6 @@
 
 
 
-
 #ifndef EVENTDRIVER_H_
 #define EVENTDRIVER_H_
 #include "bb_parameters.h"
@@ -58,8 +57,13 @@ public:
 	void parse_command(char*);
 	void construct_packet(char*);
 	void read_serial_port();
-
-
+	void tick_perf_timer();
+	void start_perf_timer();
+	void stop_perf_timer();
+	void toggle_perf_timer();
+	void set_param(SerialPacket&);
+	
+	
 private:
 	
 	bool encoder_stall;							// tracks status of encoder
@@ -68,7 +72,9 @@ private:
 	int  serial_str_index;						// the current index number of the read string
 	char serial_str[serial_str_len];			// stores the read chars.
 	char serial_char;							// the most recent char read from serial port
-
+	unsigned long loop_count = 0;				// used by the performance timer to track the number of loops the software has done.
+	bool timer_mode = false;					// turns the performance timer on and off.
+	
 };
 
 
@@ -164,19 +170,21 @@ void EventDriver::check_feeder()
 void EventDriver::check_distances()
 {
 	// needs to be tested. Does not handle distance long rollover.
+	// TODO: Make this handle distance rollover. Should happen after ~30 minutes of operation.
+	
 	int bin = 0;
 	int check = 0;
 	unsigned long current_dist = encoder.get_dist();
 	unsigned long travel_dist = 0;
 	
 	// loop through the main part array
-	for (unsigned int part = 0; part < index_length; part++)
+	for (unsigned int part = 0; part < part_list_length; part++)
 	{
 		// gets the bin assigned to part_array[part].
 		bin = parts.get_bin(part);
 		
 		// skips unassigned parts.
-		if (bin <= 0) continue;
+		if () continue;
 		
 		travel_dist = current_dist - parts.get_dist(part);
 		
@@ -193,6 +201,7 @@ void EventDriver::check_distances()
 			
 			case -1:
 			// TODO: Notify events that a part missed its' bin.
+			Serial.println("Lost a part");
 			parts.flush_part_array(part);
 			break;
 			
@@ -285,6 +294,12 @@ void EventDriver::parse_command(char* packet_string){					// parses the command 
 		Serial.print(packet.command);
 		Serial.println(" Received");
 		break;
+		
+		case 'M':
+		// set parameter
+		set_param(packet);
+		send_ack(packet);
+		break;
 
 		case 'O':
 		// flush index
@@ -343,7 +358,7 @@ void EventDriver::construct_packet(char* packet_str)
 	// check str len
 	if (strlen(packet_str) != packet_length)
 	{
-		packet.result = 401;		// 401 = bad length
+		packet.result = 401;		// 401 == bad length
 		return;
 	}
 	
@@ -371,9 +386,17 @@ void EventDriver::construct_packet(char* packet_str)
 	}
 	packet.payload[payload_length - 1] = '\0';
 	
-	// TODO: insert more thorough command and argument checking here
+	// convert payload to int, if possible. Remember that a failed conversion returns 0!
+	if (isdigit(packet.payload[0]) || packet.payload[0] == '-')
+	{
+		packet.payload_int = atol(packet.payload);	
+	}
+	else packet.payload_int = -1;
 	
-	packet.result = 200;  // 200 packet syntax is OK.
+	// TODO: insert more thorough command and argument checking here.
+	// It would be nice to change atoi() and atol() to functions which indicate whether or not there was a failure to interpret an int from an array.
+	
+	packet.result = 200;  // 200 == packet syntax is OK.
 }
 
 
@@ -428,6 +451,59 @@ void EventDriver::read_serial_port(){
 	}
 }
 
+
+void EventDriver::tick_perf_timer()
+{
+	if (!(timer_mode)) return;
+	
+	if (loop_count > 100000)
+	{
+		loop_count = 0;
+		Serial.print("100k loops: ");
+		Serial.print(millis());
+		Serial.println("ms");
+	}
+	loop_count++;
+}
+
+
+void EventDriver::start_perf_timer()
+{
+	timer_mode = true;
+}
+
+
+void EventDriver::stop_perf_timer()
+{
+	timer_mode = false;
+}
+
+
+void EventDriver::toggle_perf_timer()
+{
+	(timer_mode) ? stop_perf_timer() : start_perf_timer();
+}
+
+
+void EventDriver::set_param(SerialPacket& packet)
+{	
+	switch (packet.argument_int)
+	{
+		// set encoder sim mode
+		case 9001:
+			if (packet.payload_int == 0) encoder.stop_sim();
+			if (packet.payload_int == 1) encoder.start_sim();
+			if (packet.payload_int == 2) encoder.toggle_sim();
+		break;
+		
+		// set performance timer mode
+		case 9002:
+			if (packet.payload_int == 0) stop_perf_timer();
+			if (packet.payload_int == 1) start_perf_timer();
+			if (packet.payload_int == 2) toggle_perf_timer();
+		break;
+	}
+}
 
 
 #endif /* EVENTDRIVER_H_ */
