@@ -11,7 +11,7 @@ from datetime import datetime
 
 # 1st party imports
 from shape_sifter_tools.shape_sifter_tools import part_instance, create_logger
-from ss_server_lib import ClientParams
+from ss_server_lib import ClientParams, ServerInit
 
 # Todo: Add color detection via opencv
 
@@ -27,13 +27,13 @@ class TaxiParams:
     def __init__(self, init_params: ClientParams,
                  mode="1",
                  feed="1",
-                 vid_file="video\\multi.flv"):
+                 vid_file="C:\\google_drive\\software_dev\\the_shape_sifter\\assets\\taxidermist\\video\\multi.flv"):
 
         # adjustable parameters
         self.logger = create_logger(init_params.log_fname_const, init_params.log_level)
 
         self.logger.debug("Creating Taxiparams:")
-        log_dump(ClientParams)
+        # log_dump(init_params)
 
         self.pipe_recv = init_params.pipe_recv
         self.pipe_send = init_params.pipe_send
@@ -42,7 +42,7 @@ class TaxiParams:
         self.fg_bg = cv2.createBackgroundSubtractorMOG2()  # setup the background subtractor.
         self.font = cv2.FONT_HERSHEY_SIMPLEX
         self.dilate_kernel = cv2.getStructuringElement(2, (8, 8))
-        self.belt_mask = cv2.imread(ClientParams.belt_mask)
+        self.belt_mask = cv2.imread(init_params.belt_mask)
         self.belt_mask = cv2.cvtColor(self.belt_mask, cv2.COLOR_BGR2GRAY)  # gray scale the image
         self.feed = feed
         self.vid_file = vid_file
@@ -233,13 +233,14 @@ def update_part_list(new_parts_list: List[PartParams], old_parts_list: List[Part
 
                 # Hey,
                 #
-                # I think one more thing you have to be careful is that OpenCV imports image in BGR format instead of RGB format, so you have to use this additional step to convert imported images in RGB format-
+                # I think one more thing you have to be careful is that OpenCV imports image in BGR format instead of RGB format,
+                # so you have to use this additional step to convert imported images in RGB format-
                 # img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
                 #
                 # This step is especially important if you are using a pre-trained model for transfer learning purpose. Hope this helps.
 
                 new_part = make_new_part(img_fastai)
-                save_image(new_part, params.count)
+                # save_image(new_part, params.count)
                 params.count += 1
 
                 # Dispatch to server and BB, but not when running stand alone.
@@ -435,8 +436,8 @@ def main_client(client_params: ClientParams):
 
 def main_standalone():
     """ Runs the taxidermist without the server. Will not attempt to dispatch parts to the server or belt buckle """
-
-    init_params = ClientParams("taxi")
+    server_params = ServerInit()
+    client_params = ClientParams(server_params, "taxi")
 
     mode_str = input("Choose your operating mode (default = camera:\ncamera = 1\nvideo file = 2\n")
     if mode_str is not ("2" or "1"):
@@ -447,7 +448,7 @@ def main_standalone():
         cam_str = "1"
 
     # initialize
-    params = TaxiParams(init_params, mode_str, cam_str)
+    params = TaxiParams(client_params, mode_str, cam_str)
 
     if params.mode is "1":
         video, video_shape = configure_webcam()

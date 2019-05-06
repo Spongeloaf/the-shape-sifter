@@ -7,7 +7,7 @@ import serial
 import time
 
 
-def main(client_params: ClientParams):
+def main(params: ClientParams):
     """This is the software interface for the conveyor belt controller.
     We differentiate the hardware belt buckle from this piece of software
     by calling the hardware the 'belt buckle', and this software 'belt buckle client'
@@ -23,11 +23,11 @@ def main(client_params: ClientParams):
     # BB init
     bb_status = False
     serial_read_str = ''
-    logger = ss.create_logger(client_params.log_fname_const, client_params.log_level, 'belt_buckle_client')
+    logger = ss.create_logger(params.log_fname_const, params.log_level, 'belt_buckle_client')
 
     # start serial port
-    ser = serial.Serial(client_params.com_port,
-                        client_params.baud_rate,
+    ser = serial.Serial(params.com_port,
+                        params.baud_rate,
                         writeTimeout=0,
                         timeout=0.001,
                         inter_byte_timeout=0.0007)
@@ -36,8 +36,8 @@ def main(client_params: ClientParams):
     time.sleep(1)
 
     # when skip_handshake is true we skip waiting for the BB to report that it's online.
-    if client_params.skip_handshake != 'True':
-        logger.info('Belt Buckle is up on {0} with log level {1}. Waiting for BB handshake'.format(ser.name, client_params.log_level))
+    if params.skip_handshake != 'True':
+        logger.info('Belt Buckle is up on {0} with log level {1}. Waiting for BB handshake'.format(ser.name, params.log_level))
         while not bb_status:
             t_start = time.perf_counter()
 
@@ -62,26 +62,28 @@ def main(client_params: ClientParams):
         # TODO: Make the TRY/Except sections below into a function and call it once per pipe.
 
         # TODO: remove this block so the server handles all BB packets. We are not having the taxi send things directly
+
         # check taxi #
-        if client_params.pipe_recv.poll(0):
-            taxi_command_received: ss.bb_packet = client_params.pipe_recv.recv()
-            try:
-                if taxi_command_received.type == 'BBC':  # the part is fresh from the taxidermist, send the 'A' command.
-                    if taxi_command_received.status_code == '200':
-
-                        print('taxi > bb: {}'.format(taxi_command_received.byte_string))
-
-                        ser.write(taxi_command_received.byte_string)
-                    else:
-                        logger.error('received bad bb_packet from server:{}').format(vars(taxi_command_received))
-
-            except AttributeError:
-                logger.critical("Attribute Error while executing taxi_command_received")
-                logger.critical(vars(taxi_command_received))
+        # depreciated!
+        # if params.pipe_recv.poll(0):
+        #     taxi_command_received: ss.bb_packet = params.pipe_recv.recv()
+        #     try:
+        #         if taxi_command_received.type == 'BBC':  # the part is fresh from the taxidermist, send the 'A' command.
+        #             if taxi_command_received.status_code == '200':
+        #
+        #                 print('taxi > bb: {}'.format(taxi_command_received.byte_string))
+        #
+        #                 ser.write(taxi_command_received.byte_string)
+        #             else:
+        #                 logger.error('received bad bb_packet from server:{}').format(vars(taxi_command_received))
+        #
+        #     except AttributeError:
+        #         logger.critical("Attribute Error while executing taxi_command_received")
+        #         logger.critical(vars(taxi_command_received))
 
         # check server #
-        if client_params.pipe_recv.poll(0):
-            server_command_received: ss.bb_packet = client_params.pipe_recv.recv()
+        if params.pipe_recv.poll(0):
+            server_command_received: ss.bb_packet = params.pipe_recv.recv()
             try:
                 if server_command_received.type == 'BBC':  # the part has been assigned a to a bin. Send the B command.
                     if server_command_received.status_code == '200':
@@ -109,7 +111,7 @@ def main(client_params: ClientParams):
             logger.debug("serial_string_split[-1]: {}".format(serial_read_str))
             bb_command_receive = ss.bb_packet(serial_string=serial_read_str)
             if bb_command_receive.status_code == '200':
-                client_params.pipe_send.send(bb_command_receive)
+                params.pipe_send.send(bb_command_receive)
             else:
                 logger.debug('malformed packet received from belt buckle: {}'.format(vars(bb_command_receive)))
             serial_read_str = ''
@@ -119,5 +121,5 @@ def main(client_params: ClientParams):
 
         t_stop = time.perf_counter()
         t_duration = t_stop - t_start
-        if t_duration < 0.0005:
-            time.sleep(0.0005 - t_duration)
+        if t_duration < params.tick_rate:
+            time.sleep(params.tick_rate - t_duration)

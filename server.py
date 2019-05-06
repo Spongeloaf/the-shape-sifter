@@ -44,7 +44,6 @@ if __name__ == '__main__':
 
         if mode.check_taxi:
             slib.check_taxi(server)
-            # taxi.taxidermist_sim(server)
 
         if mode.iterate_active_part_db:
             slib.iterate_active_part_db(server)

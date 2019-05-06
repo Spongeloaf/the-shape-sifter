@@ -44,13 +44,17 @@ class ServerInit:
             ss.create_server_config(self.server_settings_file_const)
 
         # load config file and assign values.
-        # TODO: Turn this into a function that verifies the settings and returns an object. It should also handle key exceptions. It should also log it's actions.
+        # TODO: Turn this into a function that verifies the settings and returns an object.
+        # TODO: It should also handle key exceptions. It should also log it's actions. I should also do some of these TODOs someday.
         self.server_config = ss.load_server_config(self.server_settings_file_const, self.logger)
+
+        self.global_tick_rate = self.server_config['server']['global_tick_rate']
+
         self.server_log_level = self.server_config['server']['log_level']
         self.server_bb_ack_timeout = self.server_config['server']['bb_ack_timeout']
 
         self.taxi_log_level = self.server_config['taxi']['log_level']
-        self.taxi_belt_mask = self.server_config['taxi']['mask']
+        self.taxi_belt_mask = self. google_path + "\\assets\\taxidermist\\" + self.server_config['taxi']['belt_mask']
 
         self.mtm_log_level = self.server_config['mtm']['log_level']
         self.mtm_model_path = self.server_config['mtm']['model_path']
@@ -110,6 +114,7 @@ class ClientParams:
         self.google_path = server_init.google_path
         self.server_db_fname_const = server_init.server_db_fname_const
         self.log_level = server_init.server_log_level                   # uses server log level if unspecified
+        self.tick_rate = server_init.global_tick_rate
 
         if client_type == "taxi":
             self.log_fname_const = self.google_path + "\\log\\log_taxi.txt"
@@ -141,6 +146,7 @@ class ClientParams:
             self.baud_rate = server_init.bb_baud_rate
             self.timeout = server_init.bb_timeout
             self.skip_handshake = server_init.bb_skip_handshake
+            self.tick_rate = 0.0005
 
         if client_type == "suip":
             self.log_fname_const = self.google_path + "\\log\\log_suip.txt"

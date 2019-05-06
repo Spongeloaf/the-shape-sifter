@@ -15,6 +15,8 @@
 
 
 class ArrayPrint{
+// A humble class to print arrays for deugging purposes.
+
 public:
 	
 	ArrayPrint() {};
@@ -53,59 +55,6 @@ void ArrayPrint::array(unsigned long* to_be_printed){                    // prin
 		Serial.print("\r\n");
 	}
 }
-
-
-void ArrayPrint::array_2d() {
-	
-	for ( int i = 0; i < part_list_length; ++i ) {               //  loop through array's rows
-		
-		for ( int j = 0; j < payload_length; ++j )
-		{                //  loop through columns of current row
-			Serial.print (index_payload[ i ][ j ] );
-		}
-		Serial.print ("\n") ; //  start new line of output
-	}
-}
-
-
-/*
-void ArrayPrint::part_index_full() {
-	
-	Serial.println("  Payload    :  Dist. : Bin") ;
-	for ( int i = 0; i < index_length; ++i )                     //  loop through array's rows
-	{
-		
-		for ( int j = 0; j < payload_length; ++j )
-		{                //  loop through columns of current row
-			Serial.print (index_payload[ i ][ j ] );
-		}
-		
-		Serial.print(" : ") ;
-		Serial.print(part_index_distance[i]);
-		Serial.print(" : ") ;
-		Serial.print(part_index_bin[i]);
-		Serial.print("\n") ; //  start new line of output
-	}
-}
-*/
-
-/*
-void ArrayPrint::part_index_single(int i) {
-	
-	Serial.println("  Payload    :  Dist. : Bin") ;
-	
-	for ( int j = 0; j < payload_length; ++j )
-	{                //  loop through columns of current row
-		Serial.print (index_payload[ i ][ j ] );
-	}
-	
-	Serial.print(" : ") ;
-	Serial.print(part_index_distance[i]);
-	Serial.print(" : ") ;
-	Serial.print(part_index_bin[i]);
-	Serial.print("\n") ; //  start new line of output
-}
-*/
 
 
 #endif /* ARRAYPRINT_H_ */

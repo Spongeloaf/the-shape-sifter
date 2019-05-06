@@ -32,9 +32,11 @@ void loop() {
 	events.check_inputs();
 
 	events.check_distances();
-	
+
+	events.check_feeder();
+
 	events.check_encoder();
 	
-	events.check_feeder();
+	events.check_airjets();
 }
 

@@ -20,14 +20,20 @@ public:
 
 	int add_part(SerialPacket&, unsigned long);
 	int assign_bin(SerialPacket&);
-	void flush_part_array(int);
-	int get_bin(int);
-	unsigned long  get_dist(int);
-	bool get_occupied(int)
-
+	void free_part_slot(unsigned int);
+	int get_bin(unsigned int);
+	unsigned long  get_dist(unsigned int);
+	bool get_occupied(unsigned int);
+	void print_part_list();
+	void print_part_single(unsigned int);
+	
 private:
 
 	TrackedPart part_list[part_list_length];
+	bool check_range(unsigned int);
+	void print_array(char*);
+	void print_slot(unsigned int);
+	void print_list_header();
 };
 
 
@@ -68,9 +74,10 @@ int PartTracker::add_part(SerialPacket& packet, unsigned long dist){
 	{
 		part_list[slot].id[i] = packet.payload[i];
 	}
-
-	part_list[slot].distance = dist;                    // set the belt distance
-	part_list[slot].bin = 0;                            // bin is always 0 until the assign command
+	
+	part_list[slot].occupied = true;			// this slot is no longer free
+	part_list[slot].distance = dist;            // set the belt distance
+	part_list[slot].bin = 0;                    // bin is always 0 until the assign command
 		
 	packet.result = 200;
 }
@@ -93,33 +100,112 @@ int PartTracker::assign_bin(SerialPacket& packet){
 }
 
 
-unsigned long PartTracker::get_dist(int slot)
+void PartTracker::free_part_slot(unsigned int slot)
+{
+	part_list[slot].occupied = false;
+}
+
+
+unsigned long PartTracker::get_dist(unsigned int slot)
 {
 	// returns the distance value stored in the parts list.
-	// This distance is the belt position when the part was added.
-	
+	// This distance is the belt position when the part was added.	
+	return part_list[slot].distance;
+}
+
+
+int PartTracker::get_bin(unsigned int slot)
+{
+	if (check_range(slot))
+	{
+		return part_list[slot].bin;
+	}
+	return 0;
+}
+
+
+bool PartTracker::get_occupied(unsigned int slot)
+{
+	if (check_range(slot))
+	{
+		return part_list[slot].occupied;
+	}
+	return 0;
+}
+
+
+inline bool PartTracker::check_range(unsigned int slot)
+{
 	// check if index is in range
 	if (slot >= part_list_length || slot < 0)
 	{
 		// TODO: Make this send an error message to the server.
 		Serial.println("Part list index out of range!");
-		return 0;
+		return false;
 	}
-	
-	return part_list[slot].distance;
+	return true;
 }
 
 
-int PartTracker::get_bin(int slot)
+void PartTracker::print_part_list() 
 {
-	return part_list[slot].bin;
-}
-
-
-bool PartTracker::get_occupied(int slot)
-{
+	// Prints out the part list like this:
+	// Occ.  :   Dist   :   Bin   :  Id
+	// bool  : 12345678 :     0   : 123456789012
+	// ...
+	// bool  : 12345678 :     0   : 123456789012
 	
+	print_list_header();
+	for ( unsigned int slot = 0; slot < part_list_length; ++slot )                     //  loop through array's rows
+	{
+		print_slot(slot);
+	}
 }
+
+
+void PartTracker::print_part_single(unsigned int slot) 
+{
+	// Prints out the part list like this:
+	// Occ.  :   Dist   :   Bin   :  Id
+	// bool  : 12345678 :     0   : 123456789012
+	
+	print_list_header();
+	print_part_single(slot);
+}
+
+
+void PartTracker::print_array(char* to_be_printed)
+{                    
+	// prints an array of characters
+	for (int i = 0; i <= print_size; i++)
+	{
+		if (to_be_printed[i] == '\0')
+		{
+			Serial.print("\r\n");
+			return;
+		}
+		Serial.print(to_be_printed[i]);
+	}
+}
+
+
+void PartTracker::print_slot(unsigned int slot)
+{
+	Serial.print(part_list[slot].occupied);
+	Serial.print("      :     ");
+	Serial.print(part_list[slot].bin);
+	Serial.print("     :     ");
+	Serial.print(part_list[slot].distance);
+	Serial.print("  : ");
+	print_array(part_list[slot].id);
+}
+
+
+void PartTracker::print_list_header()
+{
+	Serial.println("Occ.   :    Bin    :    Dist   :   Id") ;
+}
+
 
 
 #endif /* PARTTRACKER_H_ */
