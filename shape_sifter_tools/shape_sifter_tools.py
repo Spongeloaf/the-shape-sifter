@@ -5,17 +5,18 @@
 import logging
 import configparser
 from fastai.vision import Image
+from sqlite3 import Binary
 
 class part_instance:
     """A single part from the belt
     The SQL tuple function does NOT automagically populate itself with the attributes of this class,
     like create_active_part_table() does. It needs to be updated manually!"""
     def __init__(self,
+                 part_image: Image,
                  instance_id: str = '',
                  capture_time: float = 0.0,
                  part_number: str ='',
                  category_number: str ='',
-                 part_image: Image ='',
                  part_color: str ='',
                  category_name: str ='',
                  bin_assignment: int =0,
@@ -308,7 +309,7 @@ def create_sql_part_tuple(part_object: part_instance):
                     '{0}'.format(part_object.capture_time),
                     '{0}'.format(part_object.part_number),
                     '{0}'.format(part_object.category_number),
-                    '{0}'.format(part_object.part_image),
+                    Binary(bytes(part_object.part_image)),
                     '{0}'.format(part_object.part_color),
                     '{0}'.format(part_object.category_name),
                     '{0}'.format(part_object.bin_assignment),

@@ -24,29 +24,24 @@ def log_dump(obj):
 
 class TaxiParams:
     """ Parameters for configuring the taxidermist"""
-    def __init__(self, init_params: ClientParams,
-                 mode="1",
-                 feed="1",
-                 vid_file="C:\\google_drive\\software_dev\\the_shape_sifter\\assets\\taxidermist\\video\\multi.flv"):
+    def __init__(self, init_params: ClientParams):
 
-        # adjustable parameters
-        self.logger = create_logger(init_params.log_fname_const, init_params.log_level)
-
-        self.logger.debug("Creating Taxiparams:")
-        # log_dump(init_params)
-
+        self.logger = create_logger(init_params.log_fname_const, init_params.log_level, "Taxidermist")
         self.pipe_recv = init_params.pipe_recv
         self.pipe_send = init_params.pipe_send
-        self.mode = mode
+
         self.min_contour_size = 700  # the minimum contour size that will be included in the crop
         self.fg_bg = cv2.createBackgroundSubtractorMOG2()  # setup the background subtractor.
         self.font = cv2.FONT_HERSHEY_SIMPLEX
         self.dilate_kernel = cv2.getStructuringElement(2, (8, 8))
         self.belt_mask = cv2.imread(init_params.belt_mask)
         self.belt_mask = cv2.cvtColor(self.belt_mask, cv2.COLOR_BGR2GRAY)  # gray scale the image
-        self.feed = feed
-        self.vid_file = vid_file
         self.count = 0
+
+        self.vid_file = "C:\\google_drive\\software_dev\\the_shape_sifter\\assets\\taxidermist\\video\\multi.flv"
+        self.video_source = init_params.video_source
+        self.view_video = init_params.view_video
+        self.logger.debug("created taxi params")
 
 
 class PartParams:
@@ -228,7 +223,7 @@ def update_part_list(new_parts_list: List[PartParams], old_parts_list: List[Part
 
                 old_parts_list.append(new_parts_list[i])
                 cropped_part_image = crop_image(new_parts_list[i], frame)
-
+                cropped_part_image = cv2.cvtColor(cropped_part_image, cv2.COLOR_BGR2RGB)
                 img_fastai = Image(pil2tensor(cropped_part_image, dtype=np.float32).div_(255))
 
                 # Hey,
@@ -245,13 +240,15 @@ def update_part_list(new_parts_list: List[PartParams], old_parts_list: List[Part
 
                 # Dispatch to server and BB, but not when running stand alone.
                 if __name__ != '__main__':
-                    dispatch_part(new_part)
+                    dispatch_part(params, new_part)
+                else:
+                    params.logger.debug("Part not dispatched")
 
             # decrement i, so we move backwards through the list
             i -= 1
 
     except TypeError:
-        pass
+        params.logger.debug("Type error in update part list")
 
     try:
         i = len(old_parts_list) - 1
@@ -349,7 +346,7 @@ def save_image(part: part_instance, count):
     print("saved images: {0}".format(count))
 
 
-def make_new_part(cropped_part_image):
+def make_new_part(cropped_part_image: Image):
 
     # create a part object and send it to the server
     now = datetime.now()
@@ -359,7 +356,7 @@ def make_new_part(cropped_part_image):
     part_number = ''
     category_number = ''
     category_name = ''
-    server_status = 'wait_mtm'
+    server_status = 'new'
     bb_status = 'new'
 
     part = part_instance(
@@ -378,88 +375,104 @@ def make_new_part(cropped_part_image):
 
 def dispatch_part(params: TaxiParams, part: part_instance):
     # TODO: make it work!
-    params.logger.info("Part dispatched to BB")
-    pass
+    params.logger.info("Part dispatched to server")
+    params.pipe_send.send(part)
 
 
 def main_client(client_params: ClientParams):
-    if __name__ == "__main__":
-        # initialize. Combine the server params with the taxi-specific params into one object.
-        params = TaxiParams(client_params)
+    # if __name__ == "__main__":
+
+    # initialize. Combine the server params with the taxi-specific params into one object.
+    params = TaxiParams(client_params)
+    params.logger.debug(params.video_source)
+    if params.video_source == "cam":
+        params.logger.debug("params.video_source == cam")
         video, video_shape = configure_webcam()
-        old_list, new_list = [], []
-        params.logger.info("taxidermist started")
 
-        while video.isOpened:
+    elif params.video_source == "vid":
+        params.logger.debug("params.video_source == vid")
+        video, video_shape = configure_video_file(params)
+    else:
+        # This is only here to make the syntax checker happy. Else it highlights the assertions below.
+        video = False
+        video_shape = False
 
-            t_start = time.perf_counter()
+        params.logger.critical("Invalid 'video_source' in parameter object. Expected 'cam' or 'vid', got {}. Check settings.ini".format(params.video_source))
+        exit(2)
 
-            # TODO: add capability to receive control signals from the server
-            # client_params.pipe_recv()
+    assert video_shape is not False
+    assert video is not False
 
-            # grab a frame and render it
-            ret, frame = video.read()
-            t_frame_start = time.perf_counter()
+    old_list, new_list = [], []
+    params.logger.info("taxidermist started")
 
-            fg_mask = get_fg_mask(frame, params)
-            fg_mask = cv2.bitwise_and(fg_mask, fg_mask, mask=params.belt_mask)     # Applies a bitmask to the image which removes
-            fg_dilated = dilate_image(fg_mask, params.dilate_kernel)
-            contours = find_contours(fg_dilated, params)
+    while video.isOpened:
 
-            new_list = get_rects_and_centers(frame, contours)
-            map_centers(old_list, new_list, video_shape)
-            update_part_list(new_list, old_list, frame)
+        t_start = time.perf_counter()
 
-            if params.feed == "1":
-                draw_rects_and_centers(frame, old_list, params)
+        # TODO: add capability to receive control signals from the server
+        # client_params.pipe_recv()
 
-                t_frame_stop = time.perf_counter()
-                t_frame_time = t_frame_stop - t_frame_start
+        # grab a frame and render it
+        ret, frame = video.read()
+        t_frame_start = time.perf_counter()
 
-                cv2.putText(frame, 'process time: {0:3.3f}'.format(t_frame_time), (10, 700), params.font, 1, (255, 255, 255), 2, cv2.LINE_AA)
-                cv2.imshow('raw_frame', frame)
-                cv2.imshow('fg_mask', fg_mask)
+        fg_mask = get_fg_mask(frame, params)
+        fg_mask = cv2.bitwise_and(fg_mask, fg_mask, mask=params.belt_mask)     # Applies a bitmask to the image which removes
+        fg_dilated = dilate_image(fg_mask, params.dilate_kernel)
+        contours = find_contours(fg_dilated, params)
 
-                # create a window for live viewing of frames
-                if cv2.waitKey(1) & 0xFF == ord('q'):
-                    break
+        new_list = get_rects_and_centers(frame, contours)
+        map_centers(old_list, new_list, video_shape)
+        update_part_list(new_list, old_list, frame, params)
 
-            # keeps the taxidermist ticking at 30hz. Measures the duration from the start of the loop (t_start) and waits until 17ms have passed.
-            t_stop = time.perf_counter()
-            t_duration = t_stop - t_start
-            if t_duration < 0.032:
-                time.sleep(0.032 - t_duration)
+        if params.view_video == "1":
+            t_frame_stop = time.perf_counter()
+            t_frame_time = t_frame_stop - t_frame_start
 
-        video.release()
-        cv2.destroyAllWindows()
+            draw_rects_and_centers(frame, old_list, params)
+
+            cv2.putText(frame, 'process time: {0:3.3f}'.format(t_frame_time), (10, 700), params.font, 1, (255, 255, 255), 2, cv2.LINE_AA)
+            cv2.imshow('raw_frame', frame)
+            cv2.imshow('fg_mask', fg_mask)
+
+            # create a window for live viewing of frames
+            if cv2.waitKey(1) & 0xFF == ord('q'):
+                break
+
+        # keeps the taxidermist ticking at 30hz. Measures the duration from the start of the loop (t_start) and waits until 17ms have passed.
+        t_stop = time.perf_counter()
+        t_duration = t_stop - t_start
+        if t_duration < 0.032:
+            time.sleep(0.032 - t_duration)
+
+    video.release()
+    cv2.destroyAllWindows()
 
 
 def main_standalone():
     """ Runs the taxidermist without the server. Will not attempt to dispatch parts to the server or belt buckle """
     server_params = ServerInit()
     client_params = ClientParams(server_params, "taxi")
+    params = TaxiParams(client_params)
 
-    mode_str = input("Choose your operating mode (default = camera:\ncamera = 1\nvideo file = 2\n")
-    if mode_str is not ("2" or "1"):
-        mode_str = "1"
+    params.logger.debug(params.video_source)
 
-    cam_str = input("Choose your output mode (default = view camera feed:\nview camera feed = 1\nhide camera feed = 2\n")
-    if cam_str is not ("2" or "1"):
-        cam_str = "1"
-
-    # initialize
-    params = TaxiParams(client_params, mode_str, cam_str)
-
-    if params.mode is "1":
+    if params.video_source == 'cam':
         video, video_shape = configure_webcam()
 
-    elif params.mode is "2":
+    elif params.video_source == 'vid':
         video, video_shape = configure_video_file(params)
     else:
+        # This is only here to make the syntax checker happy. Else it highlights the assertions below.
+        video = False
+        video_shape = False
+
+        params.logger.critical("Invalid 'video_source' in parameter object. Expected 'cam' or 'vid', got {}. Check settings.ini".format(params.video_source))
         exit(2)
 
-    assert video_shape != False
-    assert video != False
+    assert video_shape is not False
+    assert video is not False
 
     old_list, new_list = [], []
 
@@ -481,7 +494,7 @@ def main_standalone():
         map_centers(old_list, new_list, video_shape)
         update_part_list(new_list, old_list, frame, params)
 
-        if params.feed == "1":
+        if params.view_video == "1":
 
             draw_rects_and_centers(frame, old_list, params)
             t_frame_stop = time.perf_counter()

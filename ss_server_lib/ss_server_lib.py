@@ -127,7 +127,7 @@ class server_init:
 
 
 class server_mode:
-    """Server mode object. Stores attributes used to control the state of the server."""
+    """Server video_source object. Stores attributes used to control the state of the server."""
 
     def __init__(self):
         self.iterate_active_part_db = False

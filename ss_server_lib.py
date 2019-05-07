@@ -5,6 +5,7 @@ from os.path import isfile
 from shutil import copyfile
 import sqlite3
 import numpy as np
+from fastai.vision import open_image, Image
 
 # first party imports. Safe to use from x import *
 import shape_sifter_tools.shape_sifter_tools as ss
@@ -32,6 +33,7 @@ class ServerInit:
         self.server_db_template_const = self.google_path + '\\db\\shape_sifter_template.sqlite'
         self.part_log_fname_const = self.google_path + '\\log\\part_log.txt'
         self.active_part_table_const = ('active_part_db',)   # the fuck is this for? I think it's the name of the DB?
+        self.dummy_image = open_image(self.google_path + '\\dummy.png')
         self.prev_id = ''
 
         # create logger, default debug level. Level will be changed once config file is loaded
@@ -54,13 +56,16 @@ class ServerInit:
         self.server_bb_ack_timeout = self.server_config['server']['bb_ack_timeout']
 
         self.taxi_log_level = self.server_config['taxi']['log_level']
-        self.taxi_belt_mask = self. google_path + "\\assets\\taxidermist\\" + self.server_config['taxi']['belt_mask']
+        self.taxi_belt_mask = self.google_path + "\\assets\\taxidermist\\" + self.server_config['taxi']['belt_mask']
+        self.taxi_video_source = self.server_config['taxi']['video_source']
+        self.taxi_view_video = self.server_config['taxi']['view_video']
 
         self.mtm_log_level = self.server_config['mtm']['log_level']
         self.mtm_model_path = self.server_config['mtm']['model_path']
         self.mtm_model_fname = self.server_config['mtm']['model_fname']
 
         self.cf_log_level = self.server_config['cf']['log_level']
+
         self.suip_log_level = self.server_config['suip']['log_level']
 
         self.bb_com_port = self.server_config['bb']['com_port']
@@ -74,7 +79,7 @@ class ServerInit:
         self.part_log = ss.create_logger(self.part_log_fname_const, 'DEBUG', 'part_log')
 
         # the primary SQLite table used for tracking active parts. Will be iterated each loop to update part status.
-        self.active_part_db = setup_active_part_table(self.server_db_fname_const, self.server_db_template_const, self.logger)
+        self.active_part_db = setup_active_part_table(self.server_db_fname_const, self.server_db_template_const, self.logger, self.dummy_image)
 
         # used by all primary DB functions, such as the main active part db iterator and most insert/update functions
         self.primary_curr = self.active_part_db.cursor()
@@ -122,6 +127,8 @@ class ClientParams:
             self.pipe_recv = server_init.pipe_taxi_recv_server
             self.pipe_send = server_init.pipe_taxi_send_server
             self.belt_mask = server_init.taxi_belt_mask
+            self.video_source = server_init.taxi_video_source
+            self.view_video = server_init.taxi_view_video
 
         if client_type == "mtmind":
             self.log_fname_const = self.google_path + "\\log\\log_mtmind.txt"
@@ -156,7 +163,7 @@ class ClientParams:
 
 
 class ServerMode:
-    """Server mode object. Stores attributes used to control the state of the server."""
+    """Server video_source object. Stores attributes used to control the state of the server."""
 
     def __init__(self):
         self.iterate_active_part_db = False
@@ -172,7 +179,8 @@ def start_clients(server_init: ServerInit):
     :return = List of client processes """
 
     from taxidermist.taxidermist import main_client as taxi
-    from shape_sifter_clients.shape_sifter_clients import mt_mind_sim
+    # from shape_sifter_clients.shape_sifter_clients import mt_mind_sim
+    from mt_mind.mtMind import main as mtmind
     from shape_sifter_clients.shape_sifter_clients import classifist
     from belt_buckle_client.belt_buckle_client import main as bb
     from shape_sifter_gui.shape_sifter_gui import main as gui
@@ -187,32 +195,39 @@ def start_clients(server_init: ServerInit):
     taxi.start()
     server_init.logger.info('taxidermist started')
 
-    # Start mtmind simulator
+    # # Start mtmind simulator
+    # mtmind_params = ClientParams(server_init, "mtmind")
+    # mtmind = multiprocessing.Process(target=mt_mind_sim, args=(mtmind_params,))
+    # clients.append(mtmind)
+    # mtmind.start()
+    # server_init.logger.info('mtmind started')
+
+    # Start mtmind
     mtmind_params = ClientParams(server_init, "mtmind")
-    mtmind = multiprocessing.Process(target=mt_mind_sim, args=(mtmind_params,))
-    clients.append(mtmind)
-    mtmind.start()
+    mtmind_proc = multiprocessing.Process(target=mtmind, args=(mtmind_params,))
+    clients.append(mtmind_proc)
+    mtmind_proc.start()
     server_init.logger.info('mtmind started')
 
     # start classifist
     classifist_params = ClientParams(server_init, "classifist")
-    classifist = multiprocessing.Process(target=classifist, args=(classifist_params,))
-    clients.append(classifist)
-    classifist.start()
+    classifist_proc = multiprocessing.Process(target=classifist, args=(classifist_params,))
+    clients.append(classifist_proc)
+    classifist_proc.start()
     server_init.logger.info('classifist started')
 
     # start belt buckle
     belt_buckle_params = ClientParams(server_init, "bb")
-    belt_buckle = multiprocessing.Process(target=bb, args=(belt_buckle_params,))
-    clients.append(belt_buckle)
-    belt_buckle.start()
+    belt_buckle_proc = multiprocessing.Process(target=bb, args=(belt_buckle_params,))
+    clients.append(belt_buckle_proc)
+    belt_buckle_proc.start()
     server_init.logger.info('belt_buckle started')
 
     # start the SUIP
     suip_params = ClientParams(server_init, "suip")
-    suip = multiprocessing.Process(target=gui, args=(suip_params,))
-    clients.append(suip)
-    suip.start()
+    suip_proc = multiprocessing.Process(target=gui, args=(suip_params,))
+    clients.append(suip_proc)
+    suip_proc.start()
     server_init.logger.info('suip started')
 
     return clients
@@ -425,7 +440,7 @@ def check_bb(server):
             server.logger.error("A packet received from by the check_BB function has a bad status code. {}".format(vars(bb_read_part)))
 
 
-def setup_active_part_table(db_fname, db_template_fname, logger):
+def setup_active_part_table(db_fname, db_template_fname, logger, dummy_image):
     """Creates an SQlite table in memory for tracking parts on the belt and returns this table to the caller.
     It creates an instance of a part class and uses it's __dict__ keys to create columns in the table
 
@@ -453,7 +468,7 @@ def setup_active_part_table(db_fname, db_template_fname, logger):
     sqlcurr.execute("CREATE TABLE IF NOT EXISTS active_part_db (ID INTEGER PRIMARY KEY) ")
 
     # use list comprehension and an instance of a part class to populate the database with columns of matching types.
-    part_dummy = ss.part_instance()
+    part_dummy = ss.part_instance(part_image=dummy_image)
     active_part_columns: List[str] = [i for i in part_dummy.__dict__.items()]  # holy fuck list comprehension is cool
 
     for i in active_part_columns:
@@ -461,6 +476,7 @@ def setup_active_part_table(db_fname, db_template_fname, logger):
         # These return True if the items() in part_dummy are floats or ints.
         is_float = isinstance(i[1], float)
         is_int = isinstance(i[1], int)
+        is_img = isinstance(i[1], Image)
 
         # TODO: Add support for NP arrays for part images in the DB
         # is_blob = isinstance(i[1], numpy array)
@@ -471,6 +487,9 @@ def setup_active_part_table(db_fname, db_template_fname, logger):
         elif is_int:
             sqlcurr.execute("ALTER TABLE active_part_db ADD COLUMN {0} INTEGER".format(i[0]))
 
+        elif is_img:
+            sqlcurr.execute("ALTER TABLE active_part_db ADD COLUMN {0} BLOB".format(i[0]))
+
         # We assume we are storing strings if not explicitly storing anything else like float or int.
         else:
             sqlcurr.execute("ALTER TABLE active_part_db ADD COLUMN {0} TEXT".format(i[0]))
@@ -479,7 +498,8 @@ def setup_active_part_table(db_fname, db_template_fname, logger):
     return active_part_db
 
 
-# Where the fuck did this come from?
+
+
 def adapt_np_array_for_sql(image_array):
     """
     http://stackoverflow.com/a/31312102/190597 (SoulNibbler)
@@ -492,7 +512,7 @@ def adapt_np_array_for_sql(image_array):
     return sqlite3.Binary(out.read())
 
 
-# Jamie or me probalby left them here thinking they'd be useful.
+
 def convert_sql_text_to_array(text):
     """
     http://stackoverflow.com/a/31312102/190597 (SoulNibbler)

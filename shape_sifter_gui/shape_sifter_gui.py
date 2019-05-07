@@ -1,6 +1,6 @@
 from typing import List, Any
 from sys import argv
-import shape_sifter_tools as ss
+import shape_sifter_tools.shape_sifter_tools as ss
 import sqlite3
 from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtWidgets import QMainWindow, QTableWidget, QTableWidgetItem, QApplication

@@ -8,19 +8,23 @@ import shape_sifter_tools.shape_sifter_tools as ss
 from ss_server_lib import ClientParams, ServerInit
 
 
-def main(client_params: ClientParams):
-    image_path = client_params.google_path + "mt_mind\\captured_images\\"
-    print(image_path)
-    logger = ss.create_logger(client_params.log_fname_const, client_params.log_level, 'mtmind')
-    logger.info('mtmind running! Log level set to {}'.format(client_params.log_level))
+def main(params: ClientParams):
 
-    mtmind = load_learner(client_params.model_path, client_params.model_fname)
+    logger = ss.create_logger(params.log_fname_const, params.log_level, 'mtmind')
+    logger.info('mtmind running! Log level set to {}'.format(params.log_level))
+    image_path = params.google_path + "mt_mind\\captured_images\\"
+    logger.debug(image_path)
+
+    logger.debug("loading learner....")
+    mtmind = load_learner(params.model_path, params.model_fname)
+    logger.info("Learner loaded!")
 
     while True:
         t_start = time.perf_counter()
 
-        if client_params.pipe_recv.poll(0):
-            read_part: ss.part_instance = client_params.pipe_recv.recv()
+        if params.pipe_recv.poll(0):
+            read_part: ss.part_instance = params.pipe_recv.recv()
+            read_part.part_image.show()
             print(mtmind.predict(read_part.part_image))
 
         t_stop = time.perf_counter()
