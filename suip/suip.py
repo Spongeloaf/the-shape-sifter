@@ -6,25 +6,28 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtWidgets import QMainWindow, QTableWidget, QTableWidgetItem, QApplication
 from PyQt5.QtCore import QTimer
 from PyQt5.QtGui import QPalette,QColor
+from shape_sifter_tools.shape_sifter_tools import PartInstance, SuipLadle, BbPacket
+from ss_server_lib import ClientParams
 
 
 class SuipWindow(QMainWindow, ):
 
-    #constructor
-    def __init__(self, active_part_db_fname_const, pipe_me_recv, pipe_me_send,):
+    # constructor
+    def __init__(self, params: ClientParams):
         super().__init__()
 
         # load settings.ini
-        pass
+        self.tick_rate = params.tick_rate
 
         # pipes
-        self.pipe_me_send = pipe_me_send
-        self.pipe_me_recv = pipe_me_recv
+        self.pipe_send = params.pipe_send
+        self.pipe_recv = params.pipe_recv
+        self.pipe_part_list = params.pipe_part_list
 
-        # init SQL.
-        self.active_part_db = sqlite3.connect(active_part_db_fname_const)
-        self.sql_curr = self.active_part_db.cursor()
+        # part list init
+        self.part_list = [PartInstance]
 
+        # windows parameters
         self.setObjectName("MainWindow")
         self.resize(862, 665)
         self.centralwidget = QtWidgets.QWidget(self)
@@ -55,12 +58,12 @@ class SuipWindow(QMainWindow, ):
         self.horizontalLayout_4.addWidget(self.table_sort_log)
         self.verticalLayout_3.addLayout(self.horizontalLayout_4)
         self.table_server_log = QtWidgets.QTableWidget(self.tab_sorting)
-        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Maximum)
-        sizePolicy.setHorizontalStretch(0)
-        sizePolicy.setVerticalStretch(0)
-        sizePolicy.setHeightForWidth(self.table_server_log.sizePolicy().hasHeightForWidth())
+        size_policy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Maximum)
+        size_policy.setHorizontalStretch(0)
+        size_policy.setVerticalStretch(0)
+        size_policy.setHeightForWidth(self.table_server_log.sizePolicy().hasHeightForWidth())
 
-        self.table_server_log.setSizePolicy(sizePolicy)
+        self.table_server_log.setSizePolicy(size_policy)
         self.table_server_log.setObjectName("table_server_log")
         self.table_server_log.setColumnCount(0)
         self.table_server_log.setRowCount(0)
@@ -119,41 +122,43 @@ class SuipWindow(QMainWindow, ):
         self.menubar.addAction(self.menu_edit.menuAction())
         self.menubar.addAction(self.menu_help.menuAction())
 
-        self.retranslateUi(self)
+        self.retranslate_ui(self)
         self.tabWidget.setCurrentIndex(1)
         QtCore.QMetaObject.connectSlotsByName(self)
 
-        #start SQL timer. sql_timer drives the auto-refresh function of the parts DB
-        self.sql_timer = QTimer()
-        self.sql_timer.timeout.connect(self.update_active_part_table)
-        #self.sql_timer.timeout.connect(self.update_part_tables(self.sql_curr,'table_bin_config'))
-        #self.sql_timer.timeout.connect(self.update_part_tables(self.sql_curr,'table_part_log'))
-        self.sql_timer.start(250)
 
-    def retranslateUi(self, MainWindow):
+        #start SQL timer. refresh_timer drives the auto-refresh function of the parts DB
+        self.refresh_timer = QTimer()
+
+        self.refresh_timer.timeout.connect(self.update_active_part_table)
+        self.refresh_timer.start(self.tick_rate)
+
+    def retranslate_ui(self, main_window):
         _translate = QtCore.QCoreApplication.translate
-        MainWindow.setWindowTitle(_translate("MainWindow", "MainWindow"))
-        self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab_sorting), _translate("MainWindow", "Sorting"))
-        self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab_active_parts), _translate("MainWindow", "Active Parts"))
-        self.button_apply_sorting.setText(_translate("MainWindow", "Apply Sorting Rules"))
-        self.butto_load_sorting.setText(_translate("MainWindow", "Load Sorting Rules"))
-        self.button_stop_sorting.setText(_translate("MainWindow", "Stop Sorting"))
-        self.button_start_sorting.setText(_translate("MainWindow", "Start Sorting"))
-        self.menu_file.setTitle(_translate("MainWindow", "File"))
-        self.menu_edit.setTitle(_translate("MainWindow", "Edit"))
-        self.menu_help.setTitle(_translate("MainWindow", "Help"))
+        main_window.setWindowTitle(_translate("main_window", "main_window"))
+        self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab_sorting), _translate("main_window", "Sorting"))
+        self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab_active_parts), _translate("main_window", "Active Parts"))
+        self.button_apply_sorting.setText(_translate("main_window", "Apply Sorting Rules"))
+        self.butto_load_sorting.setText(_translate("main_window", "Load Sorting Rules"))
+        self.button_stop_sorting.setText(_translate("main_window", "Stop Sorting"))
+        self.button_start_sorting.setText(_translate("main_window", "Start Sorting"))
+        self.menu_file.setTitle(_translate("main_window", "File"))
+        self.menu_edit.setTitle(_translate("main_window", "Edit"))
+        self.menu_help.setTitle(_translate("main_window", "Help"))
+
 
     def create_active_part_table_widget(self):
-        #get sql info
+        part = PartInstance()
+        part_variables = part.__dir__()
         column_names: List[str] = []
-        column_count = -1
-        for row in self.sql_curr.execute("PRAGMA table_info(active_part_db)"):
-            column_names.append(row[1])
+        column_count = 0
+
+        for var in part_variables:
+            if var.startswith('__'):
+                continue
+            column_names.append(var)
             column_count += 1
 
-        # the row returned from sql is a tuple, so we convert to a list, and drop the first item using slice notation
-        column_names = list(column_names[1:])
-        print(column_names)
         # Create table
         tableWidget = QTableWidget(self.tab_active_parts)
         tableWidget.setRowCount(64)
@@ -161,39 +166,65 @@ class SuipWindow(QMainWindow, ):
         tableWidget.setHorizontalHeaderLabels(column_names)
         tableWidget.move(0, 0)
         tableWidget.setObjectName("table_active_parts")
-        #tableWidget.doubleClicked.connect(self.on_click)
+        # tableWidget.doubleClicked.connect(self.on_click)
+
         return tableWidget
+
 
     def update_active_part_table(self):
         """Hold on to your butts because there's some shit happening here.
         We are attempting to update a table on the GUI by reading values from the SQL database.
         """
-        # We begin by initializing a row count at 0 because I haven't found a way to loop through rows in pyQT.
-        row_num = 0
 
-        # loop through the whole DB
-        for row in self.sql_curr.execute("SELECT * FROM active_part_db"):
+        # bail if there's no new list
+        if not self.pipe_part_list.poll(0):
+            return
 
-            # the row returned from sql is a tuple, so we convert to a list, and drop the first item using slice notation
-            row = list(row[1:])
+        part_list: list[PartInstance] = self.pipe_part_list.recv()
+        row = 0
 
-            # we need to fill each column of the GUI row individually, so we get the number of columns
-            column = len(row)
+        if len(part_list) == 0:
+            return
 
-            # loop through the columns adding each value individually.
-            for column in range(0, column, 1):
-                value = str(row[column])
-                self.table_active_parts.setItem(row_num, column, QTableWidgetItem(value))
+        for part in part_list:
+            column = 0
+            for attr, value in part.__dict__.items():
+                value = str(value)
+                self.table_active_parts.setItem(row, column, QTableWidgetItem(value))
+                column += 1
+            row += 1
+            if row > 64:
+                print("Suip part table overflow in update_active_part_table()")
+                break
 
-            row_num += 1
+        # # We begin by initializing a row count at 0 because I haven't found a way to loop through rows in pyQT.
+        # row_num = 0
+        #
+        # # loop through the whole DB
+        # for row in self.sql_curr.execute("SELECT * FROM active_part_db"):
+        #
+        #     # the row returned from sql is a tuple, so we convert to a list, and drop the first item using slice notation
+        #     row = list(row[1:])
+        #
+        #     # we need to fill each column of the GUI row individually, so we get the number of columns
+        #     column = len(row)
+        #
+        #     # loop through the columns adding each value individually.
+        #     for column in range(0, column, 1):
+        #         value = str(row[column])
+        #         self.table_active_parts.setItem(row_num, column, QTableWidgetItem(value))
+        #
+        #     row_num += 1
+
 
     def click_server_control_halt(self):
         ladle = ss.SuipLadle("server_control_halt", "")
-        self.pipe_me_send.send(ladle)
+        self.pipe_send.send(ladle)
+
 
     def click_start_sorting(self):
         ladle = ss.SuipLadle("server_control_run", "")
-        self.pipe_me_send.send(ladle)
+        self.pipe_send.send(ladle)
 
 
 def set_dark_theme(qApp):
@@ -229,7 +260,7 @@ def set_dark_theme(qApp):
 
 def main(client_params):
     """ The sorting machine UI
-        All fucntion defs are in shape_sifter_gui.py
+        All fucntion defs are in suip.py
         The GUI consists of a pyQT gui connected to the active part DB and the part log DB,
         with a pipe to the server for command/control signaling. This signaling is handled by
         a class of objects called ladles. The ladle definition is shape_sifter_tools.py
@@ -237,7 +268,7 @@ def main(client_params):
 
     suip_app = QApplication(argv)
     set_dark_theme(suip_app)
-    suip_window = SuipWindow(client_params.server_db_fname_const, client_params.pipe_recv, client_params.pipe_send, )
+    suip_window = SuipWindow(client_params)
     suip_window.show()
     suip_window.raise_()
     suip_app.exec_()

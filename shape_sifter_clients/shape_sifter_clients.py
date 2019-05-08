@@ -6,7 +6,7 @@ import sqlite3
 
 # 1st party imports
 import shape_sifter_tools.shape_sifter_tools as ss
-import shape_sifter_gui.shape_sifter_gui as gui
+import suip.suip as gui
 from ss_server_lib import ClientParams
 
 
@@ -79,7 +79,7 @@ def classifist(client_params: ClientParams):
             sqcur = sqconn.cursor()
 
             # TODO: Fix this to call fetchone() instead of calling an iterator on cursor.execute!    <------ why tho?
-            # TODO: Really though, looping fethcall isn't possible until we upgrade the venv
+            # TODO: Really though, looping fetchall isn't possible until we upgrade the venv
             # evaluate query
             for bin in sqcur.execute("SELECT * FROM table_bin_config"):
                 if bin[1] == 'part':

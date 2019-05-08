@@ -25,7 +25,10 @@ def main(params: ClientParams):
         if params.pipe_recv.poll(0):
             read_part: ss.PartInstance = params.pipe_recv.recv()
             read_part.part_image.show()
-            print(mtmind.predict(read_part.part_image))
+            pred = mtmind.predict(read_part.part_image)
+            read_part.category_name = pred[0]
+            read_part.server_status = 'mtm_done'
+            params.pipe_send.send(read_part)
 
         t_stop = time.perf_counter()
         t_duration = t_stop - t_start

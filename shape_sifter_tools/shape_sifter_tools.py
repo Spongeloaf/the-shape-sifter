@@ -9,11 +9,10 @@ from sqlite3 import Binary
 
 
 class PartInstance:
-    """A single part from the belt
-    The SQL tuple function does NOT automagically populate itself with the attributes of this class,
-    like create_active_part_table() does. It needs to be updated manually!"""
+    """A single part from the belt."""
+
     def __init__(self,
-                 part_image: Image,
+                 part_image: Image = None,
                  instance_id: str = '',
                  capture_time: float = 0.0,
                  part_number: str ='',
@@ -43,9 +42,10 @@ class PartInstance:
 
 class SuipLadle:
     """An object class for sending and receiving commands from the SUIP"""
-    def __init__(self, command: str = '', info: str = ''):
+    def __init__(self, command: str = '', info: str = '', payload=None):
         self.command = command
         self.info = info
+        self. payload = payload
 
 
 class BbPacket:
@@ -64,8 +64,7 @@ class BbPacket:
                  type: str = '',
                  status_code: str = '408',
                  status_string: str = '',
-                 response: str = ''
-                 ) -> object:
+                 response: str = ''):
 
         self.command = command              # command string
         self.argument = argument            # argument string

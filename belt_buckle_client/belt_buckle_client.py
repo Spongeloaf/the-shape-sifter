@@ -25,6 +25,15 @@ def main(params: ClientParams):
     serial_read_str = ''
     logger = ss.create_logger(params.log_fname_const, params.log_level, 'belt_buckle_client')
 
+    # run without a com port. Dumps the pipe to nowhere. For development purposes only!
+    if params.test_run:
+        logger.info("Belt buckle is running in test mode. No hardware interaction!")
+        while True:
+            time.sleep(params.tick_rate)
+            if params.pipe_recv.poll(0):
+                server_command_received: ss.BbPacket = params.pipe_recv.recv()
+                server_command_received = None
+
     # start serial port
     ser = serial.Serial(params.com_port,
                         params.baud_rate,

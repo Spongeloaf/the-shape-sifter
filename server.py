@@ -38,15 +38,14 @@ if __name__ == '__main__':
     # main loop
     while True:
 
-        # our main loop timer. Keeps the server ticking at 60hz. See t_stop at the end of the loop.
+        # main loop timer.
         t_start = time.perf_counter()
-        slib.check_suip(server, mode)
 
         if mode.check_taxi:
             slib.check_taxi(server)
 
         if mode.iterate_active_part_db:
-            slib.iterate_active_part_db(server)
+            slib.iterate_part_list(server)
 
         if mode.check_mtm:
             slib.check_mtm(server)
@@ -57,8 +56,11 @@ if __name__ == '__main__':
         if mode.check_bb:
             slib.check_bb(server)
 
-        # keeps the server ticking at 60hz. Measures the duration from the start of the loop (t_start) and waits until 17ms have passed.
+        slib.check_suip(server, mode)
+        slib.send_part_list_to_suip(server)
+
+        # global_tick_rate is the time in milliseconds of each loop, taken from settings.ini
         t_stop = time.perf_counter()
         t_duration = t_stop - t_start
-        if t_duration < 0.017:
-            time.sleep(0.017 - t_duration)
+        if t_duration < server.global_tick_rate:
+            time.sleep(server.global_tick_rate - t_duration)
