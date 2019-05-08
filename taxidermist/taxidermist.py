@@ -10,7 +10,7 @@ from datetime import datetime
 
 
 # 1st party imports
-from shape_sifter_tools.shape_sifter_tools import part_instance, create_logger
+from shape_sifter_tools.shape_sifter_tools import PartInstance, create_logger
 from ss_server_lib import ClientParams, ServerInit
 
 # Todo: Add color detection via opencv
@@ -340,7 +340,7 @@ def crop_image(part_param: PartParams, frame):
     return cropped_part_image
 
 
-def save_image(part: part_instance, count):
+def save_image(part: PartInstance, count):
     """ Saves the part image to the disk"""
     cv2.imwrite("images\{0}.png".format(part.instance_id), part.part_image)  # writes image to disk
     print("saved images: {0}".format(count))
@@ -359,7 +359,7 @@ def make_new_part(cropped_part_image: Image):
     server_status = 'new'
     bb_status = 'new'
 
-    part = part_instance(
+    part = PartInstance(
         instance_id=instance_id,
         part_image=cropped_part_image,
         part_number=part_number,
@@ -373,7 +373,7 @@ def make_new_part(cropped_part_image: Image):
     return part
 
 
-def dispatch_part(params: TaxiParams, part: part_instance):
+def dispatch_part(params: TaxiParams, part: PartInstance):
     # TODO: make it work!
     params.logger.info("Part dispatched to server")
     params.pipe_send.send(part)

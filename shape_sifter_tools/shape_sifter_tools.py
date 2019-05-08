@@ -7,7 +7,8 @@ import configparser
 from fastai.vision import Image
 from sqlite3 import Binary
 
-class part_instance:
+
+class PartInstance:
     """A single part from the belt
     The SQL tuple function does NOT automagically populate itself with the attributes of this class,
     like create_active_part_table() does. It needs to be updated manually!"""
@@ -40,14 +41,14 @@ class part_instance:
         self.bb_timeout = bb_timeout
 
 
-class suip_ladle:
+class SuipLadle:
     """An object class for sending and receiving commands from the SUIP"""
     def __init__(self, command: str = '', info: str = ''):
         self.command = command
         self.info = info
 
 
-class bb_packet:
+class BbPacket:
     """A class containing all of the necessary parts of a belt buckle packet.
     All attributes are strings, CSUM is a string of bytes
 
@@ -277,7 +278,7 @@ def load_server_config(settings_file_const, log):
 #     sqlcurr.execute("CREATE TABLE IF NOT EXISTS active_part_db (ID INTEGER PRIMARY KEY) ")
 #
 #     # use list comprehension and an instance of a part class to populate the database with columns of matching types.
-#     part_dummy = part_instance()
+#     part_dummy = PartInstance()
 #     active_part_columns: List[str] = [i for i in part_dummy.__dict__.items()]  # holy fuck list comprehension is cool
 #
 #     for i in active_part_columns:
@@ -303,7 +304,7 @@ def load_server_config(settings_file_const, log):
 #     return active_part_db
 
 
-def create_sql_part_tuple(part_object: part_instance):
+def create_sql_part_tuple(part_object: PartInstance):
     """Creates an SQL friendly tuple out of a part object"""
     part_tuple =   ('{0}'.format(part_object.instance_id),
                     '{0}'.format(part_object.capture_time),

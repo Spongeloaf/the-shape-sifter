@@ -14,7 +14,7 @@ import shape_sifter_tools.shape_sifter_tools as ss
 """ This file contains all of the shape sifter server specific functions.
 Common functions and classes used by more than the server are stored elsewhere."""
 
-# TODO: Change this library to create part_instance objects when it pulls parts from the DB. Right now we simply get a string, and slice it.
+# TODO: Change this library to create PartInstance objects when it pulls parts from the DB. Right now we simply get a string, and slice it.
 # TODO: Properly plan belt buckle timeouts and status changes
 
 
@@ -35,6 +35,7 @@ class ServerInit:
         self.active_part_table_const = ('active_part_db',)   # the fuck is this for? I think it's the name of the DB?
         self.dummy_image = open_image(self.google_path + '\\dummy.png')
         self.prev_id = ''
+        self.part_list = [ss.PartInstance]
 
         # create logger, default debug level. Level will be changed once config file is loaded
         self.logger = ss.create_logger(self.server_log_file_const, 'DEBUG')
@@ -233,6 +234,85 @@ def start_clients(server_init: ServerInit):
     return clients
 
 
+def iterate_part_list(server: ServerInit):
+    """
+    Iterate active part db. Once per main server loop we check for actionable statuses on all current parts.
+    Actions are taken where necessary. Each If statement below represents and actionable status.
+    see the documentation on Trello for a complete list of what all the statuses mean.
+
+    row[1] = instance_id
+    row[2] = capture_time
+    row[3] = part_number
+    row[6] = part_
+    row[8] = bin assignment
+    row[9] = server status
+    row[10] = bb_status
+    row[11] = serial_string
+    row[12] = bb_timeout
+
+    :param server: server init object
+    :return: none
+    """
+
+    for part in server.part_list:
+
+        # row_part: ss.PartInstance = create_obj_from_sql_row(row)
+
+        # server status = new; the part was just received from the taxidermist. Send it to the MTM
+        if part.server_status == 'new':
+            server.pipe_server_send_mtm.send(part)
+
+            part.server_status = 'wait_mtm'
+
+        # server status = mtm_done; the part was returned frm the MTMind, send it to the classifist.
+        if part.server_status == 'mtm_done':
+            server.pipe_server_send_cf.send(part)
+            part.server_status = 'wait_cf'
+
+        # server_status = cf_done; the part was returned from the classifist. Send the bin assignment to the belt buckle.
+        if part.server_status == 'cf_done':
+            cf_done_packet = ss.BbPacket(command='B', argument=part.bin_assignment, payload=part.instance_id, type='BBC')
+            if cf_done_packet.status_code == '200':
+                server.pipe_server_send_bb.send(cf_done_packet)
+                part.capture_time = time.monotonic()                 # make a time stamp so we can resend the packet if we don't get a reply in 50ms
+                part.server_status = 'wait_bb'
+
+            else:
+                server.logger.error(
+                    'Bad BbPacket when processing "cf_done" while iterating part table. Packet:{}'.format(vars(cf_done_packet)))
+
+        # checks for any parts that have not been acknowledged by the belt buckle
+        if part.server_status == 'wait_bb':
+            if (time.monotonic() - part.capture_time) > part.bb_timeout:
+                print('BB timeout: ({} - {}) > {}'.format(time.monotonic(), part.capture_time, part.bb_timeout))
+                wait_bb_packet = ss.BbPacket(serial_string=part.serial_string)
+                if wait_bb_packet.status_code == '200':
+                    server.pipe_server_send_bb.send(wait_bb_packet)
+                    part.bb_timeout = part.bb_timeout * 2
+
+                else:
+                    server.logger.error('Bad BbPacket when processing "wait_bb" while iterating part table. Packet:{}'.format(vars(wait_bb_packet)))
+
+        if part.server_status == 'bb_done':
+            # read_part = ss.PartInstance(row[1], row[2], row[3], row[4], row[5], row[6], row[7], row[8], row[9], row[10], row[11])
+            pass
+            # TODO:
+            # set server_status to wait_sort
+
+        if part.bb_status == 'sorted':
+            pass
+            # TODO:
+            # send to log
+            # clear row from active part DB
+
+        if part.server_status == 'lost':
+            # read_part = ss.PartInstance(row[1], row[2], row[3], row[4], row[5], row[6], row[7], row[8], row[9], row[10], row[11])
+            pass
+            # TODO:
+            # send to log
+            # clear row from active part DB
+
+
 def iterate_active_part_db(server: ServerInit):
     """
     Iterate active part db. Once per main server loop we check for actionable statuses on all current parts.
@@ -255,11 +335,11 @@ def iterate_active_part_db(server: ServerInit):
 
     for row in server.primary_curr.execute("SELECT * FROM active_part_db"):
 
-        # row_part: ss.part_instance = create_obj_from_sql_row(row)
+        # row_part: ss.PartInstance = create_obj_from_sql_row(row)
 
         # server status = new; the part was just received from the taxidermist. Send it to the MTM
         if row[9] == 'new':
-            taxi_done_part = ss.part_instance(row[1], row[2], row[3], row[4], row[5], row[6], row[7], row[8], 'wait_mtm', row[10], row[11])  # TODO make this work with dynamic changes in column counts!
+            taxi_done_part = ss.PartInstance(row[1], row[2], row[3], row[4], row[5], row[6], row[7], row[8], 'wait_mtm', row[10], row[11])  # TODO make this work with dynamic changes in column counts!
             taxi_done_part_tuple = (taxi_done_part.server_status, taxi_done_part.instance_id,)
             server.pipe_server_send_mtm.send(taxi_done_part)
             server.secondary_curr.execute("UPDATE active_part_db SET server_status=? WHERE instance_id=?", taxi_done_part_tuple)
@@ -267,7 +347,7 @@ def iterate_active_part_db(server: ServerInit):
 
         # server status = mtm_done; the part was returned frm the MTMind, send it to the classifist.
         if row[9] == 'mtm_done':
-            mtm_done_part = ss.part_instance(row[1], row[2], row[3], row[4], row[5], row[6], row[7], row[8], 'wait_cf', row[10], row[11])  # TODO make this work with dynamic changes in column counts!
+            mtm_done_part = ss.PartInstance(row[1], row[2], row[3], row[4], row[5], row[6], row[7], row[8], 'wait_cf', row[10], row[11])  # TODO make this work with dynamic changes in column counts!
             mtm_done_part_tuple = (mtm_done_part.server_status, mtm_done_part.instance_id,)
             server.pipe_server_send_cf.send(mtm_done_part)
             server.secondary_curr.execute("UPDATE active_part_db SET server_status=? WHERE instance_id=?", mtm_done_part_tuple)
@@ -275,7 +355,7 @@ def iterate_active_part_db(server: ServerInit):
 
         # server_status = cf_done; the part was returned from the classifist. Send the bin assignment to the belt buckle.
         if row[9] == 'cf_done':
-            cf_done_packet = ss.bb_packet(command='B', argument=row[8], payload=row[1], type='BBC')
+            cf_done_packet = ss.BbPacket(command='B', argument=row[8], payload=row[1], type='BBC')
             if cf_done_packet.status_code == '200':
                 server.pipe_server_send_bb.send(cf_done_packet)
 
@@ -287,13 +367,13 @@ def iterate_active_part_db(server: ServerInit):
                 server.active_part_db.commit()
             else:
                 server.logger.error(
-                    'Bad bb_packet when processing "cf_done" while iterating part table. Packet:{}'.format(vars(cf_done_packet)))
+                    'Bad BbPacket when processing "cf_done" while iterating part table. Packet:{}'.format(vars(cf_done_packet)))
 
         # checks for any parts that have not been acknowledged by the belt buckle
         if row[9] == 'wait_bb':
             if (time.monotonic() - row[2]) > row[12]:
                 print('BB timeout: ({} - {}) > {}'.format(time.monotonic(), row[2], row[12]))
-                wait_bb_packet = ss.bb_packet(serial_string=row[11])
+                wait_bb_packet = ss.BbPacket(serial_string=row[11])
                 if wait_bb_packet.status_code == '200':
                     server.pipe_server_send_bb.send(wait_bb_packet)
                     new_timeout = row[12] * 2
@@ -302,23 +382,23 @@ def iterate_active_part_db(server: ServerInit):
                     server.active_part_db.commit()
                 else:
                     server.logger.error(
-                        'Bad bb_packet when processing "wait_bb" while iterating part table. Packet:{}'.format(vars(wait_bb_packet)))
+                        'Bad BbPacket when processing "wait_bb" while iterating part table. Packet:{}'.format(vars(wait_bb_packet)))
 
         if row[9] == 'bb_done':
-            # read_part = ss.part_instance(row[1], row[2], row[3], row[4], row[5], row[6], row[7], row[8], row[9], row[10], row[11])
+            # read_part = ss.PartInstance(row[1], row[2], row[3], row[4], row[5], row[6], row[7], row[8], row[9], row[10], row[11])
             pass
             # TODO:
             # set server_status to wait_sort
 
         if row[9] == 'sort_done':
-            # read_part = ss.part_instance(row[1], row[2], row[3], row[4], row[5], row[6], row[7], row[8], row[9], row[10], row[11])
+            # read_part = ss.PartInstance(row[1], row[2], row[3], row[4], row[5], row[6], row[7], row[8], row[9], row[10], row[11])
             pass
             # TODO:
             # send to log
             # clear row from active part DB
 
         if row[9] == 'lost':
-            # read_part = ss.part_instance(row[1], row[2], row[3], row[4], row[5], row[6], row[7], row[8], row[9], row[10], row[11])
+            # read_part = ss.PartInstance(row[1], row[2], row[3], row[4], row[5], row[6], row[7], row[8], row[9], row[10], row[11])
             pass
             # TODO:
             # send to log
@@ -346,73 +426,62 @@ def check_suip(server, mode):
                 mode.check_cf = False
                 mode.check_bb = False
 
-            # stops the belt
-            server.pipe_server_recv_suip.fileno()
         except AttributeError:
             server.logger.error("Attribute Error in check_suip(). See dump on next line")
             server.logger.error("{0}".format(suip_command))
 
 
-def check_taxi(server):
+def check_taxi(server: ServerInit):
     """Checks the taxidermist for parts"""
     # checks if the taxidermist has anything for us. Sends the part to the MTM and the BB
     if server.pipe_server_recv_taxi.poll(0):
-        taxi_read_part = server.pipe_server_recv_taxi.recv()
-        taxi_read_part_tuple = ss.create_sql_part_tuple(taxi_read_part)
-        server.primary_curr.execute('INSERT INTO active_part_db VALUES (NULL,?,?,?,?,?,?,?,?,?,?,?,?)', taxi_read_part_tuple)
-        server.active_part_db.commit()
+        read_part: ss.PartInstance = server.pipe_server_recv_taxi.recv()
+        server.part_list.append(read_part)
 
 
-def check_mtm(server):
+def check_mtm(server: ServerInit):
     """Checks the MT mind for parts"""
-    # checks if the mtm pipe has something yet, if so, read that shit and do stuff
     if server.pipe_server_recv_mtm.poll(0):
-        mtm_read_part = server.pipe_server_recv_mtm.recv()
-        # mtm_read_part_tuple = ss.create_sql_part_tuple(mtm_read_part)
-        mtm_read_part_tuple = ('{0}'.format(mtm_read_part.part_number),
-                               '{0}'.format(mtm_read_part.category_number),
-                               '{0}'.format(mtm_read_part.category_name),
-                               '{0}'.format(mtm_read_part.server_status),
-                               '{0}'.format(mtm_read_part.instance_id)
-                               )
-        server.primary_curr.execute("UPDATE active_part_db SET part_number=?,category_number=?,category_name=?,server_status=? WHERE instance_id=?", mtm_read_part_tuple)
-        server.active_part_db.commit()
+        read_part: ss.PartInstance = server.pipe_server_recv_mtm.recv()
+
+        for part in server.part_list:
+            if part.instance_id == read_part.instance_id:
+                server.part_list.remove(part)
+                server.part_list.append(read_part)
 
 
-def check_cf(server):
+def check_cf(server: ServerInit):
     """Checks the classifist for parts"""
-    # checks if the classifist pipe has something yet, if so, read that shit and do stuff
     if server.pipe_server_recv_cf.poll(0):
-        cf_read_part: ss.part_instance = server.pipe_server_recv_cf.recv()
-        cf_read_part_tuple = (cf_read_part.bin_assignment, cf_read_part.server_status, cf_read_part.instance_id)
-        server.primary_curr.execute("UPDATE active_part_db SET bin_assignment=?, server_status=? WHERE instance_id=?", cf_read_part_tuple)
-        server.active_part_db.commit()
-        # logger.debug(active_curr.execute("SELECT * FROM active_part_db WHERE instance_id=?", cf_read_part_tuple))
+        read_part: ss.PartInstance = server.pipe_server_recv_cf.recv()
+
+        for part in server.part_list:
+            if part.instance_id == read_part.instance_id:
+                server.part_list.remove(part)
+                server.part_list.append(read_part)
 
 
-def check_bb(server):
+def check_bb(server: ServerInit):
     """Checks the belt buckle for messages"""
     # TODO: Add support for all the response codes below. Remove all the PASS commands and replace them with proper commands
     if server.pipe_server_recv_bb.poll(0):
-        bb_read_part: ss.bb_packet = server.pipe_server_recv_bb.recv()
+        bb_read_part: ss.BbPacket = server.pipe_server_recv_bb.recv()
         if bb_read_part.status_code == '200':
 
             # TEL commands notify the server that...
             if bb_read_part.type == 'TEL':
 
-                # ...a part has been sorted. Remove it from the active_part_db.
+                # ...a part has been sorted. Remove it from the part_list.
                 if bb_read_part.command == 'C':
-                    bb_read_part_tuple = (bb_read_part.payload,)
-                    for rows in server.primary_curr.execute("SELECT FROM active_part_db WHERE instance_id=?", bb_read_part_tuple):
-                        server.part_log("part:{}, color:{}, bin:{}".format(rows[3],rows[6],rows[8]))
-                    server.primary_curr.execute("DELETE FROM active_part_db WHERE instance_id=?", bb_read_part_tuple)
+                    for part in server.part_list:
+                        if bb_read_part.payload == part.instance_id:
+                            part.bb_status = 'sorted'
 
                 # ...a part has gone off the end of the belt
                 if bb_read_part.command == 'F':
-                    bb_read_part_tuple = (bb_read_part.payload, )
-                    for rows in server.primary_curr.execute("SELECT FROM active_part_db WHERE instance_id=?", bb_read_part_tuple):
-                        server.part_log("part:{}, color:{}, bin: 0 - missed assigned bin".format(rows[3],rows[6]))
-                    server.primary_curr.execute("DELETE FROM active_part_db WHERE instance_id=?", bb_read_part_tuple)
+                    for part in server.part_list:
+                        if bb_read_part.payload == part.instance_id:
+                            part.bb_status = 'lost'
 
                 # ...a handshake has been received
                 if bb_read_part.command == 'H':
@@ -420,6 +489,7 @@ def check_bb(server):
 
                 # ...the belt buckle has requested to download the bin config
                 if bb_read_part.command == 'D':
+                    server.logger.debug('Received download command from belt buckle')
                     pass
 
             # ACK commands inform the server that a previous BBC command sent to the BB was received, understood, and executed. Any errors will be indicated by the response code
@@ -429,9 +499,9 @@ def check_bb(server):
                 if bb_read_part.response == '200':
                     # ...a part has been sorted
                     if bb_read_part.command == 'B':
-                        bb_read_part_tuple = ('bb_done', bb_read_part.payload)
-                        server.primary_curr.execute("UPDATE active_part_db SET server_status=? WHERE instance_id=?", bb_read_part_tuple)
-                        server.active_part_db.commit()
+                        for part in server.part_list:
+                            if bb_read_part.payload == part.instance_id:
+                                part.bb_status = 'sorted'
 
                 else:
                     server.logger.error("slib.check_bb failed. response code = {}. Packet:{}".format(bb_read_part.response, vars(bb_read_part)))
@@ -468,7 +538,7 @@ def setup_active_part_table(db_fname, db_template_fname, logger, dummy_image):
     sqlcurr.execute("CREATE TABLE IF NOT EXISTS active_part_db (ID INTEGER PRIMARY KEY) ")
 
     # use list comprehension and an instance of a part class to populate the database with columns of matching types.
-    part_dummy = ss.part_instance(part_image=dummy_image)
+    part_dummy = ss.PartInstance(part_image=dummy_image)
     active_part_columns: List[str] = [i for i in part_dummy.__dict__.items()]  # holy fuck list comprehension is cool
 
     for i in active_part_columns:
@@ -498,8 +568,6 @@ def setup_active_part_table(db_fname, db_template_fname, logger, dummy_image):
     return active_part_db
 
 
-
-
 def adapt_np_array_for_sql(image_array):
     """
     http://stackoverflow.com/a/31312102/190597 (SoulNibbler)
@@ -510,7 +578,6 @@ def adapt_np_array_for_sql(image_array):
     np.save(out, image_array)
     out.seek(0)
     return sqlite3.Binary(out.read())
-
 
 
 def convert_sql_text_to_array(text):

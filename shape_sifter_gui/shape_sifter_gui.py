@@ -188,11 +188,11 @@ class SuipWindow(QMainWindow, ):
             row_num += 1
 
     def click_server_control_halt(self):
-        ladle = ss.suip_ladle("server_control_halt","")
+        ladle = ss.SuipLadle("server_control_halt", "")
         self.pipe_me_send.send(ladle)
 
     def click_start_sorting(self):
-        ladle = ss.suip_ladle("server_control_run","")
+        ladle = ss.SuipLadle("server_control_run", "")
         self.pipe_me_send.send(ladle)
 
 

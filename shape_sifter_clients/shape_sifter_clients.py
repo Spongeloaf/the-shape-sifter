@@ -71,7 +71,7 @@ def classifist(client_params: ClientParams):
 
         if client_params.pipe_recv.poll(0):
 
-            read_part: ss.part_instance = client_params.pipe_recv.recv()
+            read_part: ss.PartInstance = client_params.pipe_recv.recv()
 
             # time to write a whole new loop using THE POWER OF SQLITE
             # open connection to SQL

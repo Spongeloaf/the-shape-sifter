@@ -66,7 +66,7 @@ def main(params: ClientParams):
         # check taxi #
         # depreciated!
         # if params.pipe_recv.poll(0):
-        #     taxi_command_received: ss.bb_packet = params.pipe_recv.recv()
+        #     taxi_command_received: ss.BbPacket = params.pipe_recv.recv()
         #     try:
         #         if taxi_command_received.type == 'BBC':  # the part is fresh from the taxidermist, send the 'A' command.
         #             if taxi_command_received.status_code == '200':
@@ -75,7 +75,7 @@ def main(params: ClientParams):
         #
         #                 ser.write(taxi_command_received.byte_string)
         #             else:
-        #                 logger.error('received bad bb_packet from server:{}').format(vars(taxi_command_received))
+        #                 logger.error('received bad BbPacket from server:{}').format(vars(taxi_command_received))
         #
         #     except AttributeError:
         #         logger.critical("Attribute Error while executing taxi_command_received")
@@ -83,7 +83,7 @@ def main(params: ClientParams):
 
         # check server #
         if params.pipe_recv.poll(0):
-            server_command_received: ss.bb_packet = params.pipe_recv.recv()
+            server_command_received: ss.BbPacket = params.pipe_recv.recv()
             try:
                 if server_command_received.type == 'BBC':  # the part has been assigned a to a bin. Send the B command.
                     if server_command_received.status_code == '200':
@@ -92,7 +92,7 @@ def main(params: ClientParams):
 
                         ser.write(server_command_received.byte_string)
                     else:
-                        logger.error('received bad bb_packet from server:{}').format(vars(server_command_received))
+                        logger.error('received bad BbPacket from server:{}').format(vars(server_command_received))
 
             except AttributeError:
                 logger.critical("Attribute Error while executing server_command_received")
@@ -109,7 +109,7 @@ def main(params: ClientParams):
         elif serial_read_char == ']':
             serial_read_str = serial_read_str + serial_read_char
             logger.debug("serial_string_split[-1]: {}".format(serial_read_str))
-            bb_command_receive = ss.bb_packet(serial_string=serial_read_str)
+            bb_command_receive = ss.BbPacket(serial_string=serial_read_str)
             if bb_command_receive.status_code == '200':
                 params.pipe_send.send(bb_command_receive)
             else:

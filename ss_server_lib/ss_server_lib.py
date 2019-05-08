@@ -14,7 +14,7 @@ import taxidermist_lib
 """ This file contains all of the shape sifter server specific functions.
 Common functions and classes used by more than the server are stored elsewhere."""
 
-# TODO: Change this library to create part_instance objects when it pulls parts from the DB. Right now we simply get a string, and slice it.
+# TODO: Change this library to create PartInstance objects when it pulls parts from the DB. Right now we simply get a string, and slice it.
 # TODO: Properly plan belt buckle timeouts and status changes
 
 
@@ -160,7 +160,7 @@ def iterate_active_part_db(server: server_init):
 
     for row in server.primary_curr.execute("SELECT * FROM active_part_db"):
 
-        # row_part: ss.part_instance = creat_obj_from_sql_row(row)
+        # row_part: ss.PartInstance = creat_obj_from_sql_row(row)
 
         # server status = new; the part was just received from the taxidermist. Send it to the MTM
         if row[9] == 'new':
@@ -192,7 +192,7 @@ def iterate_active_part_db(server: server_init):
                 server.active_part_db.commit()
             else:
                 server.logger.error(
-                    'Bad bb_packet when processing "cf_done" while iterating part table. Packet:{}'.format(vars(cf_done_packet)))
+                    'Bad BbPacket when processing "cf_done" while iterating part table. Packet:{}'.format(vars(cf_done_packet)))
 
         # checks for any parts that have not been acknowledged by the belt buckle
         if row[9] == 'wait_bb':
@@ -207,23 +207,23 @@ def iterate_active_part_db(server: server_init):
                     server.active_part_db.commit()
                 else:
                     server.logger.error(
-                        'Bad bb_packet when processing "wait_bb" while iterating part table. Packet:{}'.format(vars(wait_bb_packet)))
+                        'Bad BbPacket when processing "wait_bb" while iterating part table. Packet:{}'.format(vars(wait_bb_packet)))
 
         if row[9] == 'bb_done':
-            # read_part = ss.part_instance(row[1], row[2], row[3], row[4], row[5], row[6], row[7], row[8], row[9], row[10], row[11])
+            # read_part = ss.PartInstance(row[1], row[2], row[3], row[4], row[5], row[6], row[7], row[8], row[9], row[10], row[11])
             pass
             # TODO:
             # set server_status to wait_sort
 
         if row[9] == 'sort_done':
-            # read_part = ss.part_instance(row[1], row[2], row[3], row[4], row[5], row[6], row[7], row[8], row[9], row[10], row[11])
+            # read_part = ss.PartInstance(row[1], row[2], row[3], row[4], row[5], row[6], row[7], row[8], row[9], row[10], row[11])
             pass
             # TODO:
             # send to log
             # clear row from active part DB
 
         if row[9] == 'lost':
-            # read_part = ss.part_instance(row[1], row[2], row[3], row[4], row[5], row[6], row[7], row[8], row[9], row[10], row[11])
+            # read_part = ss.PartInstance(row[1], row[2], row[3], row[4], row[5], row[6], row[7], row[8], row[9], row[10], row[11])
             pass
             # TODO:
             # send to log

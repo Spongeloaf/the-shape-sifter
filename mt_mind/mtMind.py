@@ -23,7 +23,7 @@ def main(params: ClientParams):
         t_start = time.perf_counter()
 
         if params.pipe_recv.poll(0):
-            read_part: ss.part_instance = params.pipe_recv.recv()
+            read_part: ss.PartInstance = params.pipe_recv.recv()
             read_part.part_image.show()
             print(mtmind.predict(read_part.part_image))
 
@@ -45,7 +45,7 @@ def stand_alone(client_params: ClientParams):
     image3 = open_image("C:\\google_drive\\software_dev\\the_shape_sifter\\mt_mind\\lego_v4\\valid\\tile\\164749628490.png")
 
 
-    ss.part_instance()
+    ss.PartInstance()
 
     input("Press Enter to continue...")
     t_start = time.perf_counter()
