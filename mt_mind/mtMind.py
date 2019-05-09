@@ -24,22 +24,8 @@ def main(params: ClientParams):
 
         if params.pipe_recv.poll(0):
             part: ss.PartInstance = params.pipe_recv.recv()
-
-            # false when testing without images.
-            if isinstance(part.part_image, Image):
-                pred = mtmind.predict(part.part_image)
-                part.category_name = pred[0]
-            else:
-                # since we don't have an image, just pick brick or plate at random and return it.
-                t = int(time.perf_counter())
-
-                if t % 2 == 0:
-                    category = 'brick_test'
-                else:
-                    category = 'plate_test'
-
-                part.category_number = category
-
+            pred = mtmind.predict(part.part_image)
+            part.category_name = pred[0]
             part.server_status = 'mtm_done'
             params.pipe_send.send(part)
 

@@ -89,8 +89,8 @@ def classifist(client_params: ClientParams):
                         client_params.pipe_send.send(read_part)  # return results to server
                         break
 
-                if bin[1] == 'cat':
-                    if bin[2] == str(read_part.category_number):  # assume all values are strings, just to be safe!
+                if bin[1] == 'category_name':
+                    if bin[2] == str(read_part.category_name):  # assume all values are strings, just to be safe!
                         read_part.bin_assignment = bin[0]
                         read_part.server_status = 'cf_done'
                         client_params.pipe_send.send(read_part)  # return results to server
