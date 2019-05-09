@@ -169,6 +169,67 @@ class ServerMode:
         self.check_bb = False
 
 
+def start_clients(server_init: ServerInit):
+    """ starts the clients
+
+    :return = List of client processes """
+
+    # from taxidermist.taxidermist import main_client as taxi
+    from taxidermist.taxidermist import taxi_sim as taxi
+    # from shape_sifter_clients.shape_sifter_clients import mt_mind_sim
+    from mt_mind.mtMind import main as mtmind
+    from shape_sifter_clients.shape_sifter_clients import classifist
+    from belt_buckle_client.belt_buckle_client import main as bb
+    from suip.suip import main as gui
+
+    # list of client processes
+    clients = []
+
+    # start taxidermist
+    taxi_params = ClientParams(server_init, "taxi")
+    taxi = multiprocessing.Process(target=taxi, args=(taxi_params,))
+    clients.append(taxi)
+    taxi.start()
+    server_init.logger.info('taxidermist started')
+
+    # # Start mtmind simulator
+    # mtmind_params = ClientParams(server_init, "mtmind")
+    # mtmind = multiprocessing.Process(target=mt_mind_sim, args=(mtmind_params,))
+    # clients.append(mtmind)
+    # mtmind.start()
+    # server_init.logger.info('mtmind started')
+
+    # Start mtmind
+    mtmind_params = ClientParams(server_init, "mtmind")
+    mtmind_proc = multiprocessing.Process(target=mtmind, args=(mtmind_params,))
+    clients.append(mtmind_proc)
+    mtmind_proc.start()
+    server_init.logger.info('mtmind started')
+
+    # start classifist
+    classifist_params = ClientParams(server_init, "classifist")
+    classifist_proc = multiprocessing.Process(target=classifist, args=(classifist_params,))
+    clients.append(classifist_proc)
+    classifist_proc.start()
+    server_init.logger.info('classifist started')
+
+    # start belt buckle
+    belt_buckle_params = ClientParams(server_init, "bb")
+    belt_buckle_proc = multiprocessing.Process(target=bb, args=(belt_buckle_params,))
+    clients.append(belt_buckle_proc)
+    belt_buckle_proc.start()
+    server_init.logger.info('belt_buckle started')
+
+    # start the SUIP
+    suip_params = ClientParams(server_init, "suip")
+    suip_proc = multiprocessing.Process(target=gui, args=(suip_params,))
+    clients.append(suip_proc)
+    suip_proc.start()
+    server_init.logger.info('suip started')
+
+    return clients
+
+
 def iterate_part_list(server: ServerInit):
     """
     Iterate active part db. Once per main server loop we check for actionable statuses on all current parts.
@@ -182,9 +243,9 @@ def iterate_part_list(server: ServerInit):
     for part in server.part_list:
 
         # checks for any parts that have not been acknowledged by the belt buckle
-        if part.bb_status == 'wait_ack':
-            check_bb_timeout(server, part)
-            continue
+        # if part.bb_status == 'wait_ack':
+        #    check_bb_timeout(server, part)
+        #    continue
 
         # checks for any parts that were sorted by the belt buckle
         if part.bb_status == 'sorted':
@@ -311,73 +372,19 @@ def check_bb(server: ServerInit):
                     if bb_read_part.command == 'B':
                         for part in server.part_list:
                             if bb_read_part.payload == part.instance_id:
-                                part.bb_status = 'sorted'
+                                part.bb_status = 'assigned'
+
+                    # ...a part has been sorted
+                    if bb_read_part.command == 'A':
+                        for part in server.part_list:
+                            if bb_read_part.payload == part.instance_id:
+                                part.bb_status = 'added'
 
                 else:
                     server.logger.error("slib.check_bb failed. response code = {}. Packet:{}".format(bb_read_part.response, vars(bb_read_part)))
 
         else:
             server.logger.error("A packet received from by the check_BB function has a bad status code. {}".format(vars(bb_read_part)))
-
-
-def start_clients(server_init: ServerInit):
-    """ starts the clients
-
-    :return = List of client processes """
-
-    from taxidermist.taxidermist import main_client as taxi
-    # from shape_sifter_clients.shape_sifter_clients import mt_mind_sim
-    from mt_mind.mtMind import main as mtmind
-    from shape_sifter_clients.shape_sifter_clients import classifist
-    from belt_buckle_client.belt_buckle_client import main as bb
-    from suip.suip import main as gui
-
-    # list of client processes
-    clients = []
-
-    # start taxidermist
-    taxi_params = ClientParams(server_init, "taxi")
-    taxi = multiprocessing.Process(target=taxi, args=(taxi_params,))
-    clients.append(taxi)
-    taxi.start()
-    server_init.logger.info('taxidermist started')
-
-    # # Start mtmind simulator
-    # mtmind_params = ClientParams(server_init, "mtmind")
-    # mtmind = multiprocessing.Process(target=mt_mind_sim, args=(mtmind_params,))
-    # clients.append(mtmind)
-    # mtmind.start()
-    # server_init.logger.info('mtmind started')
-
-    # Start mtmind
-    mtmind_params = ClientParams(server_init, "mtmind")
-    mtmind_proc = multiprocessing.Process(target=mtmind, args=(mtmind_params,))
-    clients.append(mtmind_proc)
-    mtmind_proc.start()
-    server_init.logger.info('mtmind started')
-
-    # start classifist
-    classifist_params = ClientParams(server_init, "classifist")
-    classifist_proc = multiprocessing.Process(target=classifist, args=(classifist_params,))
-    clients.append(classifist_proc)
-    classifist_proc.start()
-    server_init.logger.info('classifist started')
-
-    # start belt buckle
-    belt_buckle_params = ClientParams(server_init, "bb")
-    belt_buckle_proc = multiprocessing.Process(target=bb, args=(belt_buckle_params,))
-    clients.append(belt_buckle_proc)
-    belt_buckle_proc.start()
-    server_init.logger.info('belt_buckle started')
-
-    # start the SUIP
-    suip_params = ClientParams(server_init, "suip")
-    suip_proc = multiprocessing.Process(target=gui, args=(suip_params,))
-    clients.append(suip_proc)
-    suip_proc.start()
-    server_init.logger.info('suip started')
-
-    return clients
 
 
 def send_mtm(server: ServerInit, part: ss.PartInstance):
@@ -395,7 +402,7 @@ def send_bb_a(server: ServerInit, part: ss.PartInstance):
         server.pipe_server_send_bb.send(packet)
         part.capture_time = time.monotonic()  # make a time stamp so we can resend the packet if we don't get a reply in time
     else:
-        server.logger.critiical("A bb packet failed in send_bb_a(). with status code: {}".format(packet.status_code))
+        server.logger.critical("A bb packet failed in send_bb_a(). with status code: {}".format(packet.status_code))
 
 
 def send_bb_b(server: ServerInit, part: ss.PartInstance):

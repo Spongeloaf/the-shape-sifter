@@ -517,5 +517,46 @@ def main_standalone():
     cv2.destroyAllWindows()
 
 
+def taxi_sim(params: ClientParams):
+    """Simulates the taxidermist"""
+    import random
+    while True:
+        t_start = time.perf_counter()
+
+        rnjezus = random.randint(1, 3)
+
+        if rnjezus == 1:
+            now = datetime.now()
+            instance_id = now.strftime("%H%M%S%f")
+
+            part_image = 'some picture'
+            part_color = ''
+            part_number = ''
+            category_number = ''
+            category_name = ''
+            server_status = 'new'
+            bb_status = 'new'
+
+
+            part = PartInstance(
+                part_image=part_image,
+                instance_id=instance_id,
+                part_number=part_number,
+                category_number=category_number,
+                part_color=part_color,
+                category_name=category_name,
+                server_status=server_status,
+                bb_status=bb_status,
+                serial_string='',
+                bb_timeout=0.5
+            )
+            params.pipe_send.send(part)
+
+        t_stop = time.perf_counter()
+        t_duration = t_stop - t_start
+        if t_duration < 1:
+            time.sleep(1 - t_duration)
+
+
 if __name__ == '__main__':
     main_standalone()

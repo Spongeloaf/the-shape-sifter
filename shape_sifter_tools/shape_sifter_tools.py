@@ -148,7 +148,7 @@ class BbPacket:
                 self.status_code = '200'
 
                 # TODO: Replace this line with a robust 0 padding formatter.
-                if argument is int:
+                if isinstance(argument, int):
                     argument = str(argument)
                 self.argument = argument.zfill(4)
 

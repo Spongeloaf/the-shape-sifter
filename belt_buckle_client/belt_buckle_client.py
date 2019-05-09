@@ -97,7 +97,7 @@ def main(params: ClientParams):
                 if server_command_received.type == 'BBC':  # the part has been assigned a to a bin. Send the B command.
                     if server_command_received.status_code == '200':
 
-                        print('server > bb: {}'.format(server_command_received.byte_string))
+                        logger.info('server > bb: {}'.format(server_command_received.byte_string))
 
                         ser.write(server_command_received.byte_string)
                     else:
@@ -117,7 +117,7 @@ def main(params: ClientParams):
 
         elif serial_read_char == ']':
             serial_read_str = serial_read_str + serial_read_char
-            logger.debug("serial_string_split[-1]: {}".format(serial_read_str))
+            logger.info("bb > server {}".format(serial_read_str))
             bb_command_receive = ss.BbPacket(serial_string=serial_read_str)
             if bb_command_receive.status_code == '200':
                 params.pipe_send.send(bb_command_receive)

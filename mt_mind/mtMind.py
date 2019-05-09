@@ -23,12 +23,25 @@ def main(params: ClientParams):
         t_start = time.perf_counter()
 
         if params.pipe_recv.poll(0):
-            read_part: ss.PartInstance = params.pipe_recv.recv()
-            read_part.part_image.show()
-            pred = mtmind.predict(read_part.part_image)
-            read_part.category_name = pred[0]
-            read_part.server_status = 'mtm_done'
-            params.pipe_send.send(read_part)
+            part: ss.PartInstance = params.pipe_recv.recv()
+
+            # false when testing without images.
+            if isinstance(part.part_image, Image):
+                pred = mtmind.predict(part.part_image)
+                part.category_name = pred[0]
+            else:
+                # since we don't have an image, just pick brick or plate at random and return it.
+                t = int(time.perf_counter())
+
+                if t % 2 == 0:
+                    category = 'brick_test'
+                else:
+                    category = 'plate_test'
+
+                part.category_number = category
+
+            part.server_status = 'mtm_done'
+            params.pipe_send.send(part)
 
         t_stop = time.perf_counter()
         t_duration = t_stop - t_start
@@ -91,6 +104,7 @@ def stand_alone(client_params: ClientParams):
     t_stop = time.perf_counter()
     print(t_stop - t_start)
     print(result)
+
 
 if __name__ == '__main__':
 
