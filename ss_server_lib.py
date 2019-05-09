@@ -25,6 +25,7 @@ class ServerInit:
         # declarations and initializations. All objects ending with _const are NOT to be modified at run time!
         self.server_settings_file_const = self.google_path + '\\settings.ini'
         self.server_log_file_const = self.google_path + '\\log\\log_server.txt'
+        self.server_sort_log_file_const = self.google_path + '\\log\\sort_log.txt'
         self.server_db_fname_const = self.google_path + '\\db\\shape_sifter.sqlite'
         self.server_db_template_const = self.google_path + '\\db\\shape_sifter_template.sqlite'
         self.part_log_fname_const = self.google_path + '\\log\\part_log.txt'
@@ -35,6 +36,9 @@ class ServerInit:
 
         # create logger, default debug level. Level will be changed once config file is loaded
         self.logger = ss.create_logger(self.server_log_file_const, 'DEBUG')
+
+        # create sorting log
+        self.sort_log = ss.create_logger(self.server_sort_log_file_const, 'INFO')
 
         # TODO: Move this somewhere else! Make a function out of it along with the next block below
         # if config file doesn't exist, create one. Defaults are in shape_sifter_tools.py
@@ -165,81 +169,11 @@ class ServerMode:
         self.check_bb = False
 
 
-def start_clients(server_init: ServerInit):
-    """ starts the clients
-
-    :return = List of client processes """
-
-    from taxidermist.taxidermist import main_client as taxi
-    # from shape_sifter_clients.shape_sifter_clients import mt_mind_sim
-    from mt_mind.mtMind import main as mtmind
-    from shape_sifter_clients.shape_sifter_clients import classifist
-    from belt_buckle_client.belt_buckle_client import main as bb
-    from suip.suip import main as gui
-
-    # list of client processes
-    clients = []
-
-    # start taxidermist
-    taxi_params = ClientParams(server_init, "taxi")
-    taxi = multiprocessing.Process(target=taxi, args=(taxi_params,))
-    clients.append(taxi)
-    taxi.start()
-    server_init.logger.info('taxidermist started')
-
-    # # Start mtmind simulator
-    # mtmind_params = ClientParams(server_init, "mtmind")
-    # mtmind = multiprocessing.Process(target=mt_mind_sim, args=(mtmind_params,))
-    # clients.append(mtmind)
-    # mtmind.start()
-    # server_init.logger.info('mtmind started')
-
-    # Start mtmind
-    mtmind_params = ClientParams(server_init, "mtmind")
-    mtmind_proc = multiprocessing.Process(target=mtmind, args=(mtmind_params,))
-    clients.append(mtmind_proc)
-    mtmind_proc.start()
-    server_init.logger.info('mtmind started')
-
-    # start classifist
-    classifist_params = ClientParams(server_init, "classifist")
-    classifist_proc = multiprocessing.Process(target=classifist, args=(classifist_params,))
-    clients.append(classifist_proc)
-    classifist_proc.start()
-    server_init.logger.info('classifist started')
-
-    # start belt buckle
-    belt_buckle_params = ClientParams(server_init, "bb")
-    belt_buckle_proc = multiprocessing.Process(target=bb, args=(belt_buckle_params,))
-    clients.append(belt_buckle_proc)
-    belt_buckle_proc.start()
-    server_init.logger.info('belt_buckle started')
-
-    # start the SUIP
-    suip_params = ClientParams(server_init, "suip")
-    suip_proc = multiprocessing.Process(target=gui, args=(suip_params,))
-    clients.append(suip_proc)
-    suip_proc.start()
-    server_init.logger.info('suip started')
-
-    return clients
-
-
 def iterate_part_list(server: ServerInit):
     """
     Iterate active part db. Once per main server loop we check for actionable statuses on all current parts.
     Actions are taken where necessary. Each If statement below represents and actionable status.
     see the documentation on Trello for a complete list of what all the statuses mean.
-
-    row[1] = instance_id
-    row[2] = capture_time
-    row[3] = part_number
-    row[6] = part_
-    row[8] = bin assignment
-    row[9] = server status
-    row[10] = bb_status
-    row[11] = serial_string
-    row[12] = bb_timeout
 
     :param server: server init object
     :return: none
@@ -247,60 +181,38 @@ def iterate_part_list(server: ServerInit):
 
     for part in server.part_list:
 
+        # checks for any parts that have not been acknowledged by the belt buckle
+        if part.bb_status == 'wait_ack':
+            check_bb_timeout(server, part)
+            continue
+
+        # checks for any parts that were sorted by the belt buckle
+        if part.bb_status == 'sorted':
+            server.sort_log.info('id:{}, bin{}, cat: {}, pnum: {}'.format(part.instance_id, part.bin_assignment, part.category_name, part.part_number))
+            server.part_list.remove(part)
+            continue
+
+        # checks for parts that have been lost by the belt buckle. A part is lost if it misses it's bin and goes off the end of the belt.
+        if part.bb_status == 'lost':
+            server.sort_log.info('id:{}, bin{}, cat: {}, pnum: {}, NOT SORTED!'.format(part.instance_id, part.bin_assignment, part.category_name, part.part_number))
+            server.part_list.remove(part)
+            continue
+
         # server status = new; the part was just received from the taxidermist. Send it to the MTM
         if part.server_status == 'new':
-            server.pipe_server_send_mtm.send(part)
-            server.pipe_server_send_bb.send(part)
-            part.server_status = 'wait_mtm'
-            part.bb_status = 'wait_bb_add'
+            send_bb_a(server, part)
+            send_mtm(server, part)
+            continue
 
         # server status = mtm_done; the part was returned frm the MTMind, send it to the classifist.
         if part.server_status == 'mtm_done':
-            server.pipe_server_send_cf.send(part)
-            part.server_status = 'wait_cf'
+            send_cf(server, part)
+            continue
 
         # server_status = cf_done; the part was returned from the classifist. Send the bin assignment to the belt buckle.
         if part.server_status == 'cf_done':
-            cf_done_packet = ss.BbPacket(command='B', argument=part.bin_assignment, payload=part.instance_id, type='BBC')
-            if cf_done_packet.status_code == '200':
-                server.pipe_server_send_bb.send(cf_done_packet)
-                part.capture_time = time.monotonic()                 # make a time stamp so we can resend the packet if we don't get a reply in 50ms
-                part.bb_status = 'wait_bb_sort'
-
-            else:
-                server.logger.error(
-                    'Bad BbPacket when processing "cf_done" while iterating part table. Packet:{}'.format(vars(cf_done_packet)))
-
-        # checks for any parts that have not been acknowledged by the belt buckle
-        if part.bb_status == 'wait_bb_add':
-            if (time.monotonic() - part.capture_time) > part.bb_timeout:
-                print('BB timeout: ({} - {}) > {}'.format(time.monotonic(), part.capture_time, part.bb_timeout))
-                wait_bb_packet = ss.BbPacket(serial_string=part.serial_string)
-                if wait_bb_packet.status_code == '200':
-                    server.pipe_server_send_bb.send(wait_bb_packet)
-                    part.bb_timeout = part.bb_timeout * 2
-
-                else:
-                    server.logger.error('Bad BbPacket when processing "wait_bb" while iterating part table. Packet:{}'.format(vars(wait_bb_packet)))
-
-        if part.server_status == 'bb_done':
-            # read_part = ss.PartInstance(row[1], row[2], row[3], row[4], row[5], row[6], row[7], row[8], row[9], row[10], row[11])
-            pass
-            # TODO:
-            # set server_status to wait_sort
-
-        if part.bb_status == 'sorted':
-            pass
-            # TODO:
-            # send to log
-            # clear row from active part DB
-
-        if part.server_status == 'lost':
-            # read_part = ss.PartInstance(row[1], row[2], row[3], row[4], row[5], row[6], row[7], row[8], row[9], row[10], row[11])
-            pass
-            # TODO:
-            # send to log
-            # clear row from active part DB
+            send_bb_b(server, part)
+            continue
 
 
 def check_suip(server, mode):
@@ -406,6 +318,112 @@ def check_bb(server: ServerInit):
 
         else:
             server.logger.error("A packet received from by the check_BB function has a bad status code. {}".format(vars(bb_read_part)))
+
+
+def start_clients(server_init: ServerInit):
+    """ starts the clients
+
+    :return = List of client processes """
+
+    from taxidermist.taxidermist import main_client as taxi
+    # from shape_sifter_clients.shape_sifter_clients import mt_mind_sim
+    from mt_mind.mtMind import main as mtmind
+    from shape_sifter_clients.shape_sifter_clients import classifist
+    from belt_buckle_client.belt_buckle_client import main as bb
+    from suip.suip import main as gui
+
+    # list of client processes
+    clients = []
+
+    # start taxidermist
+    taxi_params = ClientParams(server_init, "taxi")
+    taxi = multiprocessing.Process(target=taxi, args=(taxi_params,))
+    clients.append(taxi)
+    taxi.start()
+    server_init.logger.info('taxidermist started')
+
+    # # Start mtmind simulator
+    # mtmind_params = ClientParams(server_init, "mtmind")
+    # mtmind = multiprocessing.Process(target=mt_mind_sim, args=(mtmind_params,))
+    # clients.append(mtmind)
+    # mtmind.start()
+    # server_init.logger.info('mtmind started')
+
+    # Start mtmind
+    mtmind_params = ClientParams(server_init, "mtmind")
+    mtmind_proc = multiprocessing.Process(target=mtmind, args=(mtmind_params,))
+    clients.append(mtmind_proc)
+    mtmind_proc.start()
+    server_init.logger.info('mtmind started')
+
+    # start classifist
+    classifist_params = ClientParams(server_init, "classifist")
+    classifist_proc = multiprocessing.Process(target=classifist, args=(classifist_params,))
+    clients.append(classifist_proc)
+    classifist_proc.start()
+    server_init.logger.info('classifist started')
+
+    # start belt buckle
+    belt_buckle_params = ClientParams(server_init, "bb")
+    belt_buckle_proc = multiprocessing.Process(target=bb, args=(belt_buckle_params,))
+    clients.append(belt_buckle_proc)
+    belt_buckle_proc.start()
+    server_init.logger.info('belt_buckle started')
+
+    # start the SUIP
+    suip_params = ClientParams(server_init, "suip")
+    suip_proc = multiprocessing.Process(target=gui, args=(suip_params,))
+    clients.append(suip_proc)
+    suip_proc.start()
+    server_init.logger.info('suip started')
+
+    return clients
+
+
+def send_mtm(server: ServerInit, part: ss.PartInstance):
+    """Sends a part to the MTMind"""
+    server.pipe_server_send_mtm.send(part)
+    part.server_status = 'wait_mtm'
+
+
+def send_bb_a(server: ServerInit, part: ss.PartInstance):
+    """Sends the A command to the belt buckle"""
+    packet = ss.BbPacket(command='A', payload=part.instance_id, type='BBC')
+    if packet.status_code == '200':
+        part.serial_string = packet.serial_string
+        part.bb_status = 'wait_ack'
+        server.pipe_server_send_bb.send(packet)
+        part.capture_time = time.monotonic()  # make a time stamp so we can resend the packet if we don't get a reply in time
+    else:
+        server.logger.critiical("A bb packet failed in send_bb_a(). with status code: {}".format(packet.status_code))
+
+
+def send_bb_b(server: ServerInit, part: ss.PartInstance):
+    """Sends the B command to the belt buckle"""
+    packet = ss.BbPacket(command='B', argument=part.bin_assignment, payload=part.instance_id, type='BBC')
+    if packet.status_code == '200':
+        part.serial_string = packet.serial_string
+        part.bb_status = 'wait_ack'
+        part.server_status = 'wait_sort'
+        server.pipe_server_send_bb.send(packet)
+        part.capture_time = time.monotonic()  # make a time stamp so we can resend the packet if we don't get a reply in time
+    else:
+        server.logger.critiical("A bb packet failed in send_bb_b(). with status code: {}".format(packet.status_code))
+
+
+def send_cf(server: ServerInit, part: ss.PartInstance):
+    part.server_status = 'wait_cf'
+    server.pipe_server_send_cf.send(part)
+
+
+def check_bb_timeout(server: ServerInit, part: ss.PartInstance):
+    if (time.monotonic() - part.capture_time) > part.bb_timeout:
+        packet = ss.BbPacket(serial_string=part.serial_string)
+        if packet.status_code == '200':
+            server.pipe_server_send_bb.send(packet)
+            part.bb_timeout = part.bb_timeout * 2
+        else:
+            server.logger.error('Bad BbPacket in check_bb_timeout". Packet:{}'.format(vars(packet)))
 
 
 def send_part_list_to_suip(server: ServerInit):

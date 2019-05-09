@@ -44,9 +44,6 @@ if __name__ == '__main__':
         if mode.check_taxi:
             slib.check_taxi(server)
 
-        if mode.iterate_active_part_db:
-            slib.iterate_part_list(server)
-
         if mode.check_mtm:
             slib.check_mtm(server)
 
@@ -55,6 +52,9 @@ if __name__ == '__main__':
 
         if mode.check_bb:
             slib.check_bb(server)
+
+        if mode.iterate_active_part_db:
+            slib.iterate_part_list(server)
 
         slib.check_suip(server, mode)
         slib.send_part_list_to_suip(server)

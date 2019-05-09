@@ -57,7 +57,7 @@ class BbPacket:
     """
 
     def __init__(self, command: str = '',
-                 argument: str = '',
+                 argument: str = '0000',
                  payload: str = '',
                  csum: str = '',
                  serial_string: str = '',
@@ -147,8 +147,10 @@ class BbPacket:
             if self.type == 'BBC':
                 self.status_code = '200'
 
-                # TODO: Replace this line with a robust 0 padding formatter. Right now we can only sort single digit bins!
-                self.argument = '000' + str(self.argument)
+                # TODO: Replace this line with a robust 0 padding formatter.
+                if argument is int:
+                    argument = str(argument)
+                self.argument = argument.zfill(4)
 
                 self.serial_string = '<{}{}{}CSUM>'.format(self.command, self.argument, self.payload)
 
