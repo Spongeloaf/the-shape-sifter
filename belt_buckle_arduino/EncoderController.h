@@ -16,12 +16,8 @@
 class EncoderController{
 public:
 	
-	EncoderController() 
-	{
-		Wire.begin();
-		status = true;
-	};
-	
+	EncoderController() {};
+	void init();
 	unsigned long get_dist();
 	bool is_running();
 	void start_sim();
@@ -29,6 +25,7 @@ public:
 	bool get_sim();
 	void toggle_sim();
 	
+
 private:
 	
 	bool status;
@@ -41,14 +38,21 @@ private:
 };
 
 
+void EncoderController::init()
+{
+		Wire.begin();
+		status = true;
+		sim_mode = false;
+}
+
+
 // get the distance from the encoder. Credit: https:// thewanderingengineer.com/2015/05/06/sending-16-bit-and-32-bit-numbers-with-arduino-i2c/
 unsigned long EncoderController::get_dist()																											
-
 {
 	// This method has not been protected from rollovers at all.
 	// That protection should be handled by whomever calls get_dist.
 	
-	if (sim_mode) 
+	if (sim_mode == true) 
 	{
 		return enc_sim();
 	}

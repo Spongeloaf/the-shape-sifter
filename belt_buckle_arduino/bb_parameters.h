@@ -11,13 +11,12 @@
 #define BB_PARAMETERS_H_
 
 
-
 // These globals are used for setting up pin numbers, and size parameters.
 // They are all magic constants that may change. All of them are used in constructing the main controller objects.
 // Magic constants which are unlikely to change exist within each class's constructor.
 constexpr int hopper_pwm_pin = 3;						// PWM pin number of the hopper. Should be 3.
 constexpr int belt_control_pin = 52;					// Pin connected to belt drive relay.
-constexpr int wire_address = 2;							// I2C address of the belt encoder.
+constexpr int wire_address = 2;							// I2C address of the belt encoder. This is the address we read from.
 constexpr int part_list_length = 64;                        // the number of parts we can keep track of - global
 constexpr int num_inputs = 8;							// self explanatory, I hope
 constexpr unsigned long debounce_delay = 210;           // the input debounce time

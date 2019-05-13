@@ -410,7 +410,7 @@ void EventDriver::parse_command(char* packet_string){					// parses the command 
 		case 'S':
 		// print part index
 		// TODO
-		Serial.println("TODO S");
+		Serial.println(encoder.get_sim());
 		break;
 		
 		case 'T':
