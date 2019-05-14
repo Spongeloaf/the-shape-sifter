@@ -23,16 +23,24 @@ def main(params: ClientParams):
         t_start = time.perf_counter()
 
         if params.pipe_recv.poll(0):
+            logger.debug("A {}".format(time.perf_counter()))
             part: ss.PartInstance = params.pipe_recv.recv()
+            logger.debug("B {}".format(time.perf_counter()))
             pred = mtmind.predict(part.part_image)
+            logger.debug("C {}".format(time.perf_counter()))
             part.category_name = pred[0]
+            logger.debug("D {}".format(time.perf_counter()))
             part.server_status = 'mtm_done'
+            logger.debug("E {}".format(time.perf_counter()))
             params.pipe_send.send(part)
+            logger.debug("F {}".format(time.perf_counter()))
+            logger.info(vars(part))
+            logger.debug("G {} \n".format(time.perf_counter()))
 
         t_stop = time.perf_counter()
         t_duration = t_stop - t_start
-        if t_duration < 0.017:
-            time.sleep(0.017 - t_duration)
+        if t_duration < params.tick_rate:
+            time.sleep(params.tick_rate - t_duration)
 
 
 def stand_alone(client_params: ClientParams):
@@ -42,10 +50,9 @@ def stand_alone(client_params: ClientParams):
     logger.info('mtmind running! Log level set to {}'.format(client_params.log_level))
 
     mtmind = load_learner(client_params.model_path, client_params.model_fname)
-    image1 = open_image("C:\\google_drive\\software_dev\\the_shape_sifter\\mt_mind\\lego_v4\\valid\wheel\\183508738698.png")
-    image2 = open_image("C:\\google_drive\\software_dev\\the_shape_sifter\\mt_mind\\lego_v4\\valid\\tile\\165128210491.png")
-    image3 = open_image("C:\\google_drive\\software_dev\\the_shape_sifter\\mt_mind\\lego_v4\\valid\\tile\\164749628490.png")
-
+    image1 = open_image("C:\\Users\Development\\Google Drive\\software_dev\\the_shape_sifter\\assets\\images\\wheels\\172616422709.png")
+    image2 = open_image("C:\\Users\Development\\Google Drive\\software_dev\\the_shape_sifter\\assets\\images\\wheels\\172616422709.png")
+    image3 = open_image("C:\\Users\Development\\Google Drive\\software_dev\\the_shape_sifter\\assets\\images\\wheels\\172616422709.png")
 
     ss.PartInstance()
 

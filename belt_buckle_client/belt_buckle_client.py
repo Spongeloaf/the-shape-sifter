@@ -107,6 +107,8 @@ def main(params: ClientParams):
                 logger.critical("Attribute Error while executing server_command_received")
                 logger.critical(vars(server_command_received))
 
+        time.sleep(0.01)
+
         # Read the serial port. We drop any extra characters before the packet initiator by splitting the string, and keeping only the last item.
         serial_read_byt = ser.read()
 

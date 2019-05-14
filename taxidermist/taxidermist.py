@@ -43,6 +43,26 @@ class TaxiParams:
         self.view_video = init_params.view_video
         self.logger.debug("created taxi params")
 
+        if init_params.video_source == "cam":
+            self.logger.debug("params.video_source == cam")
+            self.video, self.video_shape = configure_webcam()
+
+        elif init_params.video_source == "vid":
+            self.logger.debug("params.video_source == vid")
+            self.video, self.video_shape = self.configure_video_file()
+        else:
+            self.logger.critical("Invalid 'video_source' in parameter object. Expected 'cam' or 'vid', got {}. Check settings.ini".format(params.video_source))
+            exit(2)
+
+
+    def configure_video_file(self):
+
+        video = cv2.VideoCapture(self.vid_file, cv2.CAP_FFMPEG)
+        ret, frame = video.read()
+        height, width, depth = frame.shape
+        shape = [height, width, depth]
+        return video, shape
+
 
 class PartParams:
     """ parameters for each currently visible part on the belt. X and Y coordinates
@@ -92,11 +112,11 @@ def get_fg_mask(frame, params):
     return fg_mask
 
 
-def find_contours(fg_mask, params):
+def find_contours(fg_mask, taxi):
     # finds contours in the masked frame taken at the same time as the middle frame of the array
     contours, hierarchy = cv2.findContours(fg_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
-    height, width = fg_mask.shape
+    height, width, depth = taxi.video_shape
     min_x, min_y = width, height
     max_x = max_y = 0
 
@@ -106,16 +126,16 @@ def find_contours(fg_mask, params):
         # find the biggest area
         for c in contours:
             area = cv2.contourArea(c)
-            if area > params.min_contour_size:
+            if area > taxi.min_contour_size:
                 lego_contours.append(c)
 
     return lego_contours
 
 
-def get_rects_and_centers(image, contours):
+def get_rects_and_centers(image, contours, taxi):
     """Returns a list of part_param objects for each set of contours."""
 
-    height, width, depth = image.shape
+    height, width, depth = taxi.video_shape
     parts_list = []
 
     for contour in contours:
@@ -185,14 +205,6 @@ def configure_webcam():
     return video, shape
 
 
-def configure_video_file(params: TaxiParams):
-    video = cv2.VideoCapture(params.vid_file, cv2.CAP_FFMPEG)
-    ret, frame = video.read()
-    height, width, depth = frame.shape
-    shape = [height, width, depth]
-    return video, shape
-
-
 def create_test_data():
     parts_list = []
     parts_list.append(PartParams(15, 15, 10, 10, 20, 20))
@@ -220,11 +232,11 @@ def update_part_list(new_parts_list: List[PartParams], old_parts_list: List[Part
             if new_parts_list[i].status == "unknown":
                 new_parts_list[i].status = "mapped"
                 new_parts_list[i].part_count = params.count
-
+                
                 old_parts_list.append(new_parts_list[i])
-                cropped_part_image = crop_image(new_parts_list[i], frame)
-                cropped_part_image = cv2.cvtColor(cropped_part_image, cv2.COLOR_BGR2RGB)
-                img_fastai = Image(pil2tensor(cropped_part_image, dtype=np.float32).div_(255))
+                cropped_image = crop_image(new_parts_list[i], frame)
+                swapped_image = cv2.cvtColor(cropped_image, cv2.COLOR_BGR2RGB)
+                img_fastai = Image(pil2tensor(swapped_image, dtype=np.float32).div_(255))
 
                 # Hey,
                 #
@@ -248,7 +260,7 @@ def update_part_list(new_parts_list: List[PartParams], old_parts_list: List[Part
             i -= 1
 
     except TypeError:
-        params.logger.debug("Type error in update part list")
+        params.logger.debug("Type error in update part list: {}".format(TypeError))
 
     try:
         i = len(old_parts_list) - 1
@@ -262,10 +274,10 @@ def update_part_list(new_parts_list: List[PartParams], old_parts_list: List[Part
                 old_parts_list[i].status = 'gone'
             i -= 1
     except TypeError:
-        pass
+        params.logger.debug("Type error in update part list: {}".format(TypeError))
 
 
-def map_centers(old: List[PartParams], new: List[PartParams], shape):
+def map_centers(old: List[PartParams], new: List[PartParams]):
     """ Expects two lists of part params. Both lists will have their centers extracted
     and the new object centers will be mapped to the closest (without going backwards)
     object center in the new list. """
@@ -335,8 +347,7 @@ def map_centers(old: List[PartParams], new: List[PartParams], shape):
 
 def crop_image(part_param: PartParams, frame):
 
-    cropped_part_image = frame[part_param.min_y:part_param.max_y, part_param.min_x:part_param.max_x]
-
+    cropped_part_image = cv2.UMat(frame, [[part_param.min_y, part_param.max_y], [part_param.min_x, part_param.max_x]])
     return cropped_part_image
 
 
@@ -379,34 +390,17 @@ def dispatch_part(params: TaxiParams, part: PartInstance):
     params.pipe_send.send(part)
 
 
-def main_client(client_params: ClientParams):
+def main(client_params: ClientParams):
     # if __name__ == "__main__":
 
     # initialize. Combine the server params with the taxi-specific params into one object.
-    params = TaxiParams(client_params)
-    params.logger.debug(params.video_source)
-    if params.video_source == "cam":
-        params.logger.debug("params.video_source == cam")
-        video, video_shape = configure_webcam()
-
-    elif params.video_source == "vid":
-        params.logger.debug("params.video_source == vid")
-        video, video_shape = configure_video_file(params)
-    else:
-        # This is only here to make the syntax checker happy. Else it highlights the assertions below.
-        video = False
-        video_shape = False
-
-        params.logger.critical("Invalid 'video_source' in parameter object. Expected 'cam' or 'vid', got {}. Check settings.ini".format(params.video_source))
-        exit(2)
-
-    assert video_shape is not False
-    assert video is not False
+    taxi = TaxiParams(client_params)
+    taxi.logger.debug(taxi.video_source)
 
     old_list, new_list = [], []
-    params.logger.info("taxidermist started")
+    taxi.logger.info("taxidermist started")
 
-    while video.isOpened:
+    while taxi.video.isOpened:
 
         t_start = time.perf_counter()
 
@@ -414,27 +408,27 @@ def main_client(client_params: ClientParams):
         # client_params.pipe_recv()
 
         # grab a frame and render it
-        ret, frame = video.read()
+        ret, frame = taxi.video.read()
         t_frame_start = time.perf_counter()
+        uframe = cv2.UMat(frame)
+        fg_mask = get_fg_mask(uframe, taxi)
+        fg_mask = cv2.bitwise_and(fg_mask, fg_mask, mask=taxi.belt_mask)     # Applies a bitmask to the image which removes
+        fg_dilated = dilate_image(fg_mask, taxi.dilate_kernel)
+        contours = find_contours(fg_dilated, taxi)
 
-        fg_mask = get_fg_mask(frame, params)
-        fg_mask = cv2.bitwise_and(fg_mask, fg_mask, mask=params.belt_mask)     # Applies a bitmask to the image which removes
-        fg_dilated = dilate_image(fg_mask, params.dilate_kernel)
-        contours = find_contours(fg_dilated, params)
+        new_list = get_rects_and_centers(uframe, contours, taxi)
+        map_centers(old_list, new_list)
+        update_part_list(new_list, old_list, uframe, taxi)
 
-        new_list = get_rects_and_centers(frame, contours)
-        map_centers(old_list, new_list, video_shape)
-        update_part_list(new_list, old_list, frame, params)
-
-        if params.view_video == "1":
+        if taxi.view_video == "1":
             t_frame_stop = time.perf_counter()
             t_frame_time = t_frame_stop - t_frame_start
 
-            draw_rects_and_centers(frame, old_list, params)
+            draw_rects_and_centers(frame, old_list, taxi)
 
-            cv2.putText(frame, 'process time: {0:3.3f}'.format(t_frame_time), (10, 700), params.font, 1, (255, 255, 255), 2, cv2.LINE_AA)
+            cv2.putText(frame, 'process time: {0:3.3f}'.format(t_frame_time), (10, 700), taxi.font, 1, (255, 255, 255), 2, cv2.LINE_AA)
             cv2.imshow('raw_frame', frame)
-            cv2.imshow('fg_mask', fg_mask)
+            #cv2.imshow('fg_mask', fg_mask)
 
             # create a window for live viewing of frames
             if cv2.waitKey(1) & 0xFF == ord('q'):
@@ -446,74 +440,7 @@ def main_client(client_params: ClientParams):
         if t_duration < 0.032:
             time.sleep(0.032 - t_duration)
 
-    video.release()
-    cv2.destroyAllWindows()
-
-
-def main_standalone():
-    """ Runs the taxidermist without the server. Will not attempt to dispatch parts to the server or belt buckle """
-    server_params = ServerInit()
-    client_params = ClientParams(server_params, "taxi")
-    params = TaxiParams(client_params)
-
-    params.logger.debug(params.video_source)
-
-    if params.video_source == 'cam':
-        video, video_shape = configure_webcam()
-
-    elif params.video_source == 'vid':
-        video, video_shape = configure_video_file(params)
-    else:
-        # This is only here to make the syntax checker happy. Else it highlights the assertions below.
-        video = False
-        video_shape = False
-
-        params.logger.critical("Invalid 'video_source' in parameter object. Expected 'cam' or 'vid', got {}. Check settings.ini".format(params.video_source))
-        exit(2)
-
-    assert video_shape is not False
-    assert video is not False
-
-    old_list, new_list = [], []
-
-    while video.isOpened:
-
-        t_start = time.perf_counter()
-
-        # grab a frame and render it
-        ret, frame = video.read()
-
-        t_frame_start = time.perf_counter()
-
-        fg_mask = get_fg_mask(frame, params)
-        fg_mask = cv2.bitwise_and(fg_mask, fg_mask, mask=params.belt_mask)     # Applies a bitmask to the image which removes
-        fg_dilated = dilate_image(fg_mask, params.dilate_kernel)
-        contours = find_contours(fg_dilated, params)
-
-        new_list = get_rects_and_centers(frame, contours)
-        map_centers(old_list, new_list, video_shape)
-        update_part_list(new_list, old_list, frame, params)
-
-        if params.view_video == "1":
-
-            draw_rects_and_centers(frame, old_list, params)
-            t_frame_stop = time.perf_counter()
-            t_frame_time = t_frame_stop - t_frame_start
-            cv2.putText(frame, 'process time: {0:3.3f}'.format(t_frame_time), (10, 700), params.font, 1, (255, 255, 255), 2, cv2.LINE_AA)
-            cv2.imshow('raw_frame', frame)
-            cv2.imshow('fg_mask', fg_mask)
-
-            # create a window for live viewing of frames
-            if cv2.waitKey(1) & 0xFF == ord('q'):
-                break
-
-        # keeps the taxidermist ticking at 30hz. Measures the duration from the start of the loop (t_start) and waits until 17ms have passed.
-        t_stop = time.perf_counter()
-        t_duration = t_stop - t_start
-        if t_duration < 0.032:
-            time.sleep(0.032 - t_duration)
-
-    video.release()
+    taxi.video.release()
     cv2.destroyAllWindows()
 
 

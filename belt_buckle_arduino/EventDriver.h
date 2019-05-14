@@ -404,7 +404,7 @@ void EventDriver::parse_command(char* packet_string){					// parses the command 
 		break;
 
 		case 'P':
-		parts.print_part_list();
+		parts.print_part_list(packet.argument_int);
 		break;
 
 		case 'S':

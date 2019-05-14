@@ -3,6 +3,7 @@ import multiprocessing
 import time
 from os.path import isfile
 from fastai.vision import open_image, Image
+from typing import List
 
 # first party imports. Safe to use from x import *
 import shape_sifter_tools.shape_sifter_tools as ss
@@ -174,7 +175,7 @@ def start_clients(server_init: ServerInit):
 
     :return = List of client processes """
 
-    from taxidermist.taxidermist import main_client as taxi
+    from taxidermist.taxidermist import main as taxi
     # from taxidermist.taxidermist import taxi_sim as taxi
     # from shape_sifter_clients.shape_sifter_clients import mt_mind_sim
     from mt_mind.mtMind import main as mtmind
@@ -187,45 +188,38 @@ def start_clients(server_init: ServerInit):
 
     # start taxidermist
     taxi_params = ClientParams(server_init, "taxi")
-    taxi = multiprocessing.Process(target=taxi, args=(taxi_params,))
-    clients.append(taxi)
-    taxi.start()
-    server_init.logger.info('taxidermist started')
-
-    # # Start mtmind simulator
-    # mtmind_params = ClientParams(server_init, "mtmind")
-    # mtmind = multiprocessing.Process(target=mt_mind_sim, args=(mtmind_params,))
-    # clients.append(mtmind)
-    # mtmind.start()
-    # server_init.logger.info('mtmind started')
+    taxi_proc = multiprocessing.Process(target=taxi, args=(taxi_params,), name='taxi')
+    clients.append(taxi_proc)
+    taxi_proc.start()
+    server_init.logger.info('taxidermist started with pid: {0}'.format(taxi_proc.pid))
 
     # Start mtmind
     mtmind_params = ClientParams(server_init, "mtmind")
-    mtmind_proc = multiprocessing.Process(target=mtmind, args=(mtmind_params,))
+    mtmind_proc = multiprocessing.Process(target=mtmind, args=(mtmind_params,), name='mtmind')
     clients.append(mtmind_proc)
     mtmind_proc.start()
-    server_init.logger.info('mtmind started')
+    server_init.logger.info('mtmind started with pid: {0}'.format(mtmind_proc.pid))
 
     # start classifist
     classifist_params = ClientParams(server_init, "classifist")
-    classifist_proc = multiprocessing.Process(target=classifist, args=(classifist_params,))
+    classifist_proc = multiprocessing.Process(target=classifist, args=(classifist_params,), name='classifist')
     clients.append(classifist_proc)
     classifist_proc.start()
-    server_init.logger.info('classifist started')
+    server_init.logger.info('classifist started with pid: {0}'.format(classifist_proc.pid))
 
     # start belt buckle
     belt_buckle_params = ClientParams(server_init, "bb")
-    belt_buckle_proc = multiprocessing.Process(target=bb, args=(belt_buckle_params,))
+    belt_buckle_proc = multiprocessing.Process(target=bb, args=(belt_buckle_params,), name='mtmind')
     clients.append(belt_buckle_proc)
     belt_buckle_proc.start()
-    server_init.logger.info('belt_buckle started')
+    server_init.logger.info('belt_buckle started with pid: {0}'.format(belt_buckle_proc.pid))
 
     # start the SUIP
     suip_params = ClientParams(server_init, "suip")
-    suip_proc = multiprocessing.Process(target=gui, args=(suip_params,))
+    suip_proc = multiprocessing.Process(target=gui, args=(suip_params,), name='suip')
     clients.append(suip_proc)
     suip_proc.start()
-    server_init.logger.info('suip started')
+    server_init.logger.info('suip started with pid: {0}'.format(suip_proc.pid))
 
     return clients
 
@@ -240,12 +234,13 @@ def iterate_part_list(server: ServerInit):
     :return: none
     """
 
-    for part in server.part_list:
+    plist: List[ss.PartInstance] = server.part_list
 
-        # checks for any parts that have not been acknowledged by the belt buckle
-        # if part.bb_status == 'wait_ack':
-        #    check_bb_timeout(server, part)
-        #    continue
+    for part in plist:
+
+        if part.bb_status == 'assigned':
+            if part.t_assigned == 0.0:
+                part.t_assigned = time.perf_counter()
 
         # checks for any parts that were sorted by the belt buckle
         if part.bb_status == 'sorted':
@@ -261,17 +256,23 @@ def iterate_part_list(server: ServerInit):
 
         # server status = new; the part was just received from the taxidermist. Send it to the MTM
         if part.server_status == 'new':
+            if part.t_taxi == 0.0:
+                part.t_taxi = time.perf_counter()
             send_bb_a(server, part)
             send_mtm(server, part)
             continue
 
         # server status = mtm_done; the part was returned frm the MTMind, send it to the classifist.
         if part.server_status == 'mtm_done':
+            if part.t_mtm == 0.0:
+                part.t_mtm = time.perf_counter()
             send_cf(server, part)
             continue
 
         # server_status = cf_done; the part was returned from the classifist. Send the bin assignment to the belt buckle.
         if part.server_status == 'cf_done':
+            if part.t_cf == 0.0:
+                part.t_cf = time.perf_counter()
             send_bb_b(server, part)
             continue
 
@@ -319,6 +320,9 @@ def check_mtm(server: ServerInit):
             if part.instance_id == read_part.instance_id:
                 server.part_list.remove(part)
                 server.part_list.append(read_part)
+                return
+
+        server.logger.debug("No part list match when calling check_mtm(). Part: {}".format(vars(read_part)))
 
 
 def check_cf(server: ServerInit):

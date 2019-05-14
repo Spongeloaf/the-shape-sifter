@@ -23,8 +23,10 @@ class PartInstance:
                  server_status: str ='',
                  bb_status: str ='',
                  serial_string: str= '',
-                 bb_timeout: float = 0.1,
-                 ):
+                 t_taxi: float = 0.0,
+                 t_mtm: float = 0.0,
+                 t_cf: float = 0.0,
+                 t_assigned: float = 0.0):
 
         self.instance_id = instance_id
         self.capture_time = capture_time
@@ -37,7 +39,11 @@ class PartInstance:
         self.server_status = server_status
         self.bb_status = bb_status
         self.serial_string = serial_string
-        self.bb_timeout = bb_timeout
+        self.t_taxi = t_taxi
+        self.t_mtm = t_mtm
+        self.t_cf = t_cf
+        self.t_assigned = t_assigned
+
 
 
 class SuipLadle:

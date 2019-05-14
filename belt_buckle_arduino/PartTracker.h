@@ -24,7 +24,7 @@ public:
 	int get_bin(unsigned int);
 	unsigned long  get_dist(unsigned int);
 	bool get_occupied(unsigned int);
-	void print_part_list();
+	void print_part_list(int);
 	void print_part_single(unsigned int);
 	
 private:
@@ -147,16 +147,22 @@ inline bool PartTracker::check_range(unsigned int slot)
 }
 
 
-void PartTracker::print_part_list() 
+void PartTracker::print_part_list(int count = part_list_length) 
 {
-	// Prints out the part list like this:
+	// Prints out the part list from 0 to count like this:
 	// Occ.  :   Dist   :   Bin   :  Id
 	// bool  : 12345678 :     0   : 123456789012
-	// ...
+	// ... count ...
 	// bool  : 12345678 :     0   : 123456789012
 	
+	// Range checking. Print full list if out of range.
+	if (count < 1 || count > part_list_length)
+	{
+		count = part_list_length;
+	}
+
 	print_list_header();
-	for ( unsigned int slot = 0; slot < part_list_length; ++slot )                     //  loop through array's rows
+	for ( unsigned int slot = 0; slot < count; ++slot )                     //  loop through array's rows
 	{
 		print_slot(slot);
 	}

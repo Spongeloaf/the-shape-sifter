@@ -9,7 +9,7 @@ def start_clients(server_init: ServerInit):
 
     :return = List of client processes """
 
-    # from taxidermist.taxidermist import main_client as taxi
+    # from taxidermist.taxidermist import main as taxi
     from taxidermist.taxidermist import taxi_sim as taxi
     from shape_sifter_clients.shape_sifter_clients import classifist
 
