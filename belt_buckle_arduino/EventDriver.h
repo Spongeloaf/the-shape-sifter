@@ -270,12 +270,14 @@ void EventDriver::check_distances()
 				{
 					bins.on_airjet(bin);
 				}
+				parts.tel_server_sorted(part);
 				parts.free_part_slot(part);
 			break;
 			
 			case -1:
 				// TODO: Notify events that a part missed its' bin.
 				Serial.println("Lost a part");
+				parts.tel_server_lost(part);
 				parts.free_part_slot(part);
 			break;
 			
@@ -293,6 +295,12 @@ void EventDriver::check_distances()
 void EventDriver::check_feeder()
 {
 	// updates the feeder start phase.
+	if (feeder.get_delayed())
+	{
+		feeder.start_delayed();
+		return
+	}
+	
 	if (feeder.get_startup())
 	{
 		feeder.start();
@@ -522,8 +530,22 @@ void EventDriver::toggle_perf_timer()
 
 void EventDriver::set_param(SerialPacket& packet)
 {	
+	// Takes parameter arguments from the server to change operating modes
+	
 	switch (packet.argument_int)
 	{
+		// Run: Start the belt and feeder.
+		case 1001:
+			belt.start();
+			feeder.start_delayed(feeder_delay);
+		break;
+		
+		// Halt: Stop the belt and feeder.
+		case 1000:
+			belt.stop();
+			feeder.stop();
+		break;
+		
 		// set encoder sim mode
 		case 9001:
 			if (packet.payload_int == 0) encoder.stop_sim();
@@ -539,7 +561,7 @@ void EventDriver::set_param(SerialPacket& packet)
 		break;
 	}
 }
-
+ 
 
 
 

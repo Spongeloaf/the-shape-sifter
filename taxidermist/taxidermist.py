@@ -11,48 +11,53 @@ from datetime import datetime
 
 # 1st party imports
 from shape_sifter_tools.shape_sifter_tools import PartInstance, create_logger
-from ss_server_lib import ClientParams, ServerInit
+from ss_server_lib import ClientParams
 
 # Todo: Add color detection via opencv
-
-
-def log_dump(obj):
-   for attr in dir(obj):
-       if hasattr( obj, attr ):
-           print( "obj.%s = %s" % (attr, getattr(obj, attr)))
 
 
 class TaxiParams:
     """ Parameters for configuring the taxidermist"""
     def __init__(self, init_params: ClientParams):
 
+        # create logger
         self.logger = create_logger(init_params.log_fname_const, init_params.log_level, "Taxidermist")
+
+        # path to google drive and pipes
         self.pipe_recv = init_params.pipe_recv
         self.pipe_send = init_params.pipe_send
+        self.google_path = init_params.google_path
 
-        self.min_contour_size = 700  # the minimum contour size that will be included in the crop
-        self.fg_bg = cv2.createBackgroundSubtractorMOG2()  # setup the background subtractor.
-        self.font = cv2.FONT_HERSHEY_SIMPLEX
-        self.dilate_kernel = cv2.getStructuringElement(2, (8, 8))
-        self.belt_mask = cv2.imread(init_params.belt_mask)
-        self.belt_mask = cv2.cvtColor(self.belt_mask, cv2.COLOR_BGR2GRAY)  # gray scale the image
-        self.count = 0
+        # openCV Object detection properties
+        self.min_contour_size = 700                                   # the minimum contour size that will be included in the crop
+        self.fg_bg = cv2.createBackgroundSubtractorMOG2()             # setup the background subtractor
+        self.fg_learningRate = 0.002                                  # background subtractor learning rate
+        self.dilate_kernel = cv2.getStructuringElement(2, (7, 7))     # Dilation kernel
+        self.font = cv2.FONT_HERSHEY_SIMPLEX                          # Font for drawing part numbers on camera feed
 
-        self.vid_file = "C:\\google_drive\\software_dev\\the_shape_sifter\\assets\\taxidermist\\video\\multi.flv"
+        # Edge mask for conveyor belt. Used to eliminate detection of the belt edges.
+        self.belt_mask = cv2.imread(init_params.belt_mask)                  # load image
+        self.belt_mask = cv2.cvtColor(self.belt_mask, cv2.COLOR_BGR2GRAY)   # gray scale it
+
+        # path to video file, if we are not using the camera.
+        # TODO: move this to settings.ini
+        self.vid_file = self.google_path + "\\assets\\taxidermist\\video\\multi.flv"
+
+        # Setup video feed
         self.video_source = init_params.video_source
         self.view_video = init_params.view_video
-        self.logger.debug("created taxi params")
-
         if init_params.video_source == "cam":
             self.logger.debug("params.video_source == cam")
             self.video, self.video_shape = configure_webcam()
-
         elif init_params.video_source == "vid":
             self.logger.debug("params.video_source == vid")
             self.video, self.video_shape = self.configure_video_file()
         else:
             self.logger.critical("Invalid 'video_source' in parameter object. Expected 'cam' or 'vid', got {}. Check settings.ini".format(params.video_source))
             exit(2)
+
+        # log that we're finished
+        self.logger.debug("taxi params created successfully")
 
 
     def configure_video_file(self):
@@ -84,36 +89,71 @@ class PartParams:
     index = 0
 
     def __init__(self, center_x=-1, center_y=-1, min_x=-1, min_y=-1, max_x=-1, max_y=-1, status='unknown', part_count=-1):
-
+        # Coordinates
         self.center = (center_x, center_y)
         self.min_x = min_x
         self.min_y = min_y
         self.max_x = max_x
         self.max_y = max_y
+
+        # old/new part list status
         self.status = status
-        self.part_count = part_count
+
+        # Unique index number
         self.index = __class__.index
         __class__.index += 1
-        # TODO: Figure out how to implement this properly:
-        # self.image = []
 
 
-def dilate_image(image, kernel):
+def configure_webcam():
+    """ Initialize webcam """
+    video = cv2.VideoCapture(0)  # opens video capture
 
-    image = cv2.dilate(image, kernel)
-    return image
+    # camera settings
+    video.set(39, 0)    # auto focus
+    video.set(3, 1280)  # width
+    video.set(4, 720)   # height
+    video.set(5, 10)    # frame rate
+    video.set(10, 155)  # brightness min: 0 , max: 255 , increment:1
+    video.set(11, 125)  # contrast min: 0 , max: 255 , increment:1
+    video.set(12, 140)  # saturation min: 0 , max: 255 , increment:1 video.set(13, 0 ) # hue
+    video.set(14, 40)   # gain min: 0 , max: 127 , increment:1
+    video.set(15, -10)  # exposure min: -7 , max: -1 , increment:1
+    video.set(22, 255)  # might be gamma?
+    video.set(26, 3500) # white_balance min: 4000, max: 7000, increment:1
+    video.set(28, 20)   # focus min: 0 , max: 255 , increment:5
+
+    width = video.get(3)
+    height = video.get(4)
+    depth = -1
+    shape = [height, width, depth]
+    return video, shape
+
+
+def create_test_data():
+    """ Creates fake data for algorithm testing. """
+    parts_list = []
+    parts_list.append(PartParams(15, 15, 10, 10, 20, 20))
+    parts_list.append(PartParams(75, 75, 70, 70, 80, 80))
+    parts_list.append(PartParams(125, 125, 120, 120, 130, 130))
+
+    new_list = []
+    new_list.append(PartParams(125, 145, 120, 140, 130, 150))
+    new_list.append(PartParams(75, 95, 70, 90, 80, 100))
+    new_list.append(PartParams(15, 35, 10, 30, 20, 40))
+
+    return parts_list, new_list
 
 
 def get_fg_mask(frame, params):
-    frame_grayscale = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)  # grayscale the image
-    frame_grayscale = cv2.blur(frame_grayscale, (7, 7))  # blur the image to remove noise
-    fg_mask = params.fg_bg.apply(frame_grayscale, learningRate=0.002) # foreground subtractor this gets the B/W image while moving
-
+    """ Use a background subtractor to get a black and white image of just the moving parts. """
+    frame_grayscale = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)               # gray scale the image
+    frame_grayscale = cv2.blur(frame_grayscale, (7, 7))                     # blur the image to remove noise
+    fg_mask = params.fg_bg.apply(frame_grayscale, params.fg_learningRate)   # foreground subtractor gets the B/W image
     return fg_mask
 
 
 def find_contours(fg_mask, taxi):
-    # finds contours in the masked frame taken at the same time as the middle frame of the array
+    """ finds contours in the masked frame taken at the same time as the middle frame of the array """
     contours, hierarchy = cv2.findContours(fg_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
     height, width, depth = taxi.video_shape
@@ -132,7 +172,7 @@ def find_contours(fg_mask, taxi):
     return lego_contours
 
 
-def get_rects_and_centers(image, contours, taxi):
+def get_rects_and_centers(contours, taxi):
     """Returns a list of part_param objects for each set of contours."""
 
     height, width, depth = taxi.video_shape
@@ -158,69 +198,27 @@ def get_rects_and_centers(image, contours, taxi):
 
         # add centers to a list
         part = PartParams(center_x, center_y, min_x, min_y, max_x, max_y)
-
-        # # flags deletion for parts about to leave the frame
-        # if max_y > (height * 0.97):
-        #     part.status = "gone"
-
         parts_list.append(part)
 
     return parts_list
 
 
 def draw_rects_and_centers(image, part_list: List[PartParams], params):
-
+    """ Draws bounding rects and index numbers on all parts visible in the frame """
     for part in part_list:
         # draw rect
         cv2.rectangle(image, (part.min_x, part.min_y), (part.max_x, part.max_y), (255, 0, 0), 2)
-        cv2.putText(image, str(part.part_count), part.center, params.font, 1, (0, 0, 255), 3)
+        cv2.putText(image, str(part.index), part.center, params.font, 1, (0, 0, 255), 3)
 
 
 def get_center_y(part: PartParams):
+    """ Sorting function for map_centers()"""
     return part.center[1]
 
 
-def configure_webcam():
-
-    video = cv2.VideoCapture(0)  # opens video capture
-
-    # camera settings
-    video.set(39, 0)    # auto focus
-    video.set(3, 1280)  # width
-    video.set(4, 720)   # height
-    video.set(5, 10)    # framerate
-    video.set(10, 155)  # brightness min: 0 , max: 255 , increment:1
-    video.set(11, 125)  # contrast min: 0 , max: 255 , increment:1
-    video.set(12, 140)  # saturation min: 0 , max: 255 , increment:1 video.set(13, 0 ) # hue
-    video.set(14, 40)   # gain min: 0 , max: 127 , increment:1
-    video.set(15, -10)  # exposure min: -7 , max: -1 , increment:1
-    video.set(22, 255)  # might be gamma?
-    video.set(26, 3500) # white_balance min: 4000, max: 7000, increment:1
-    video.set(28, 20)   # focus min: 0 , max: 255 , increment:5
-
-    width = video.get(3)
-    height = video.get(4)
-    depth = -1
-    shape = [height, width, depth]
-    return video, shape
-
-
-def create_test_data():
-    parts_list = []
-    parts_list.append(PartParams(15, 15, 10, 10, 20, 20))
-    parts_list.append(PartParams(75, 75, 70, 70, 80, 80))
-    parts_list.append(PartParams(125, 125, 120, 120, 130, 130))
-
-    new_list = []
-    new_list.append(PartParams(125, 145, 120, 140, 130, 150))
-    new_list.append(PartParams(75, 95, 70, 90, 80, 100))
-    new_list.append(PartParams(15, 35, 10, 30, 20, 40))
-
-    return parts_list, new_list
-
-
 def update_part_list(new_parts_list: List[PartParams], old_parts_list: List[PartParams], frame, params: TaxiParams):
-
+    """ This function checks the part list and creates newp arts or discards gone parts as necessary.
+     It's a hot mess, but it works. """
     try:
         # we are going to move backwards through the list of parts, chopping out any unwanted ones.
         # This is done in reverse because if we remove an item while going forward,
@@ -231,24 +229,15 @@ def update_part_list(new_parts_list: List[PartParams], old_parts_list: List[Part
             # dispatches parts to the BB when they are first seen
             if new_parts_list[i].status == "unknown":
                 new_parts_list[i].status = "mapped"
-                new_parts_list[i].part_count = params.count
-                
+                # new_parts_list[i].part_count = params.count Possibly depreciated
                 old_parts_list.append(new_parts_list[i])
+
+                new_part = make_new_part()
+
                 cropped_image = crop_image(new_parts_list[i], frame)
-                swapped_image = cv2.cvtColor(cropped_image, cv2.COLOR_BGR2RGB)
-                img_fastai = Image(pil2tensor(swapped_image, dtype=np.float32).div_(255))
-
-                # Hey,
-                #
-                # I think one more thing you have to be careful is that OpenCV imports image in BGR format instead of RGB format,
-                # so you have to use this additional step to convert imported images in RGB format-
-                # img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-                #
-                # This step is especially important if you are using a pre-trained model for transfer learning purpose. Hope this helps.
-
-                new_part = make_new_part(img_fastai)
-                # save_image(new_part, params.count)
-                params.count += 1
+                save_image(cropped_image, new_part.instance_id, params)
+                fastai_image = convert_to_fastai(cropped_image)
+                new_part.part_image = fastai_image
 
                 # Dispatch to server and BB, but not when running stand alone.
                 if __name__ != '__main__':
@@ -259,8 +248,8 @@ def update_part_list(new_parts_list: List[PartParams], old_parts_list: List[Part
             # decrement i, so we move backwards through the list
             i -= 1
 
-    except TypeError:
-        params.logger.debug("Type error in update part list: {}".format(TypeError))
+    except TypeError as e:
+        params.logger.debug("Type error in update part list: {}".format(e))
 
     try:
         i = len(old_parts_list) - 1
@@ -273,8 +262,20 @@ def update_part_list(new_parts_list: List[PartParams], old_parts_list: List[Part
             if old_parts_list[i].status == 'mapped':
                 old_parts_list[i].status = 'gone'
             i -= 1
-    except TypeError:
-        params.logger.debug("Type error in update part list: {}".format(TypeError))
+    except TypeError as e:
+        params.logger.debug("Type error in update part list: {}".format(e))
+
+
+def convert_to_fastai(frame):
+    """ Makes an opencv::mat image into a fastai compatible image. """
+    swapped_image = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+    img_fastai = Image(pil2tensor(swapped_image, dtype=np.float32).div_(255))
+
+    # using Umat. I found it to be slow, but I'm leaving it here for posterity.
+    # mat_image = cv2.UMat.get(swapped_image)
+    # img_fastai = Image(pil2tensor(mat_image, dtype=np.float32).div_(255))
+
+    return img_fastai
 
 
 def map_centers(old: List[PartParams], new: List[PartParams]):
@@ -346,20 +347,28 @@ def map_centers(old: List[PartParams], new: List[PartParams]):
 
 
 def crop_image(part_param: PartParams, frame):
+    """ Crops a raw frame to just the image of a desired part. """
+    cropped_part_image = frame[part_param.min_y:part_param.max_y, part_param.min_x:part_param.max_x]
+    return cropped_part_image
+
+
+def crop_image_umat(part_param: PartParams, frame):
+    """ An attempt at using Umat instead of regular cv2 mat images.
+    It didn't save any time, but I'm leaving it here for posterity."""
 
     cropped_part_image = cv2.UMat(frame, [[part_param.min_y, part_param.max_y], [part_param.min_x, part_param.max_x]])
     return cropped_part_image
 
 
-def save_image(part: PartInstance, count):
+def save_image(image, name, params: TaxiParams):
     """ Saves the part image to the disk"""
-    cv2.imwrite("images\{0}.png".format(part.instance_id), part.part_image)  # writes image to disk
-    print("saved images: {0}".format(count))
+    cv2.imwrite(params.google_path + "\\assets\\taxidermist\\new_part_images\\{0}.png".format(name), image)  # writes image to disk
+    params.logger.debug("saved image")
 
 
-def make_new_part(cropped_part_image: Image):
+def make_new_part():
+    """ Creates a new PartInstance object """
 
-    # create a part object and send it to the server
     now = datetime.now()
     instance_id = now.strftime("%H%M%S%f")
     # instance_id = time.strftime("%H%M%S")
@@ -372,7 +381,6 @@ def make_new_part(cropped_part_image: Image):
 
     part = PartInstance(
         instance_id=instance_id,
-        part_image=cropped_part_image,
         part_number=part_number,
         category_number=category_number,
         part_color=part_color,
@@ -385,21 +393,23 @@ def make_new_part(cropped_part_image: Image):
 
 
 def dispatch_part(params: TaxiParams, part: PartInstance):
-    # TODO: make it work!
-    params.logger.info("Part dispatched to server")
+    """ Sends a part to the server """
+    params.logger.debug("Part dispatched to server")
     params.pipe_send.send(part)
 
 
 def main(client_params: ClientParams):
-    # if __name__ == "__main__":
+    """ Main Taxidrmist function
+    Analyses a video file or camera feed, and dispatches part instance objects as they pass by.
+    In theory, each part is tracked from one frame to the next, and is only dispatched once to the server. """
 
-    # initialize. Combine the server params with the taxi-specific params into one object.
+    # initialization
     taxi = TaxiParams(client_params)
     taxi.logger.debug(taxi.video_source)
-
     old_list, new_list = [], []
     taxi.logger.info("taxidermist started")
 
+    # main loop
     while taxi.video.isOpened:
 
         t_start = time.perf_counter()
@@ -408,27 +418,29 @@ def main(client_params: ClientParams):
         # client_params.pipe_recv()
 
         # grab a frame and render it
-        ret, frame = taxi.video.read()
+        ret, raw_frame = taxi.video.read()
         t_frame_start = time.perf_counter()
-        uframe = cv2.UMat(frame)
-        fg_mask = get_fg_mask(uframe, taxi)
+        # uframe = cv2.UMat(frame)
+        process_frame = np.copy(raw_frame)
+        process_frame = cv2.dilate(process_frame, taxi.dilate_kernel)
+        fg_mask = get_fg_mask(process_frame, taxi)
         fg_mask = cv2.bitwise_and(fg_mask, fg_mask, mask=taxi.belt_mask)     # Applies a bitmask to the image which removes
-        fg_dilated = dilate_image(fg_mask, taxi.dilate_kernel)
+        fg_dilated = cv2.dilate(fg_mask, taxi.dilate_kernel)
         contours = find_contours(fg_dilated, taxi)
 
-        new_list = get_rects_and_centers(uframe, contours, taxi)
+        new_list = get_rects_and_centers(contours, taxi)
         map_centers(old_list, new_list)
-        update_part_list(new_list, old_list, uframe, taxi)
+        update_part_list(new_list, old_list, raw_frame, taxi)
 
         if taxi.view_video == "1":
             t_frame_stop = time.perf_counter()
             t_frame_time = t_frame_stop - t_frame_start
 
-            draw_rects_and_centers(frame, old_list, taxi)
+            draw_rects_and_centers(raw_frame, old_list, taxi)
 
-            cv2.putText(frame, 'process time: {0:3.3f}'.format(t_frame_time), (10, 700), taxi.font, 1, (255, 255, 255), 2, cv2.LINE_AA)
-            cv2.imshow('raw_frame', frame)
-            #cv2.imshow('fg_mask', fg_mask)
+            cv2.putText(raw_frame, 'process time: {0:3.3f}'.format(t_frame_time), (10, 700), taxi.font, 1, (255, 255, 255), 2, cv2.LINE_AA)
+            cv2.imshow('raw_frame', raw_frame)
+            # cv2.imshow('fg_mask', fg_mask)
 
             # create a window for live viewing of frames
             if cv2.waitKey(1) & 0xFF == ord('q'):
@@ -445,13 +457,13 @@ def main(client_params: ClientParams):
 
 
 def taxi_sim(params: ClientParams):
-    """Simulates the taxidermist"""
+    """Simulates the taxidermist
+    Randomly sends PartInstance objects to the server. """
+
     import random
     while True:
         t_start = time.perf_counter()
-
         rnjezus = random.randint(1, 3)
-
         if rnjezus == 1:
             now = datetime.now()
             instance_id = now.strftime("%H%M%S%f")
@@ -474,8 +486,7 @@ def taxi_sim(params: ClientParams):
                 category_name=category_name,
                 server_status=server_status,
                 bb_status=bb_status,
-                serial_string='',
-                bb_timeout=0.5
+                serial_string=''
             )
             params.pipe_send.send(part)
 
@@ -485,5 +496,10 @@ def taxi_sim(params: ClientParams):
             time.sleep(1 - t_duration)
 
 
+# Running standalone
 if __name__ == '__main__':
-    main_standalone()
+    from ss_server_lib import ServerInit
+    server_init = ServerInit()
+    params = ClientParams(server_init, 'taxi')
+    main(params)
+

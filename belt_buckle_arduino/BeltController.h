@@ -19,13 +19,14 @@ public:
 
 	BeltController()
 	{ 
-		pinMode(belt_control_pin, OUTPUT);
+		pinMode(gp::belt_control_pin, OUTPUT);
 		mode = false;
 	};
 
 	bool get_mode();
-	void set_mode(bool);
 	void toggle_mode();
+	void start();
+	void stop();
 
 
 private:
@@ -38,13 +39,11 @@ void BeltController::toggle_mode()
 {
 	if (mode)
 	{
-		mode = false;
-		digitalWrite(belt_control_pin, LOW);
+		stop();
 	}
 	else
 	{
-		mode = true;
-		digitalWrite(belt_control_pin, HIGH);
+		start();
 	}
 }
 
@@ -55,18 +54,17 @@ bool BeltController::get_mode()
 }
 
 
-void BeltController::set_mode(bool set)
+void BeltController::start()
 {
-	if (set)
-	{
-		mode = true;
-		digitalWrite(belt_control_pin, HIGH);
-	}
-	else
-	{
-		mode = false;
-		digitalWrite(belt_control_pin, LOW);
-	}
+	mode = true;
+	digitalWrite(gp::belt_control_pin, HIGH);
+}
+
+
+void BeltController::stop()
+{
+	mode = false;
+	digitalWrite(gp::belt_control_pin, LOW);
 }
 
 

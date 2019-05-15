@@ -31,14 +31,16 @@ class FeederController{
 	bool get_mode();
 	bool get_startup();
 	int get_speed();
+	void start_delayed(unsigned int);
+	
 
 	private:
-	int speed_selector = 0;																				// selects the current feeder speed from the speed_array
-	bool mode = false;																						// bool to control the current speed of the belt, so we can turn it off without changing speed.
-	bool startup = false;																					// true during speed limited startup phase.
-	unsigned long startup_t = 0;																	// tracks when the motor began to spin. Used by start() to limit current draw of stationary motor.
+	int speed_selector = 0;																	// selects the current feeder speed from the speed_array
+	bool mode = false;																		// bool to control the current speed of the belt, so we can turn it off without changing speed.
+	bool startup = false;																	// true during speed limited startup phase.
+	unsigned long startup_t = 0;															// tracks when the motor began to spin. Used by start() to limit current draw of stationary motor.
 	unsigned long startup_delay = 2000;														// delay in milliseconds to keep the motor in the startup phase.
-	const int num_speeds = 12;																		// The number of speeds the feeder has. Used to unsure speed_selector doesn't go out of bounds.
+	const int num_speeds = 12;																// The number of speeds the feeder has. Used to unsure speed_selector doesn't go out of bounds.
 	const int speed_array[13] = {										// hold the PWM output speeds for the feeder.
 		20,
 		30,
@@ -54,7 +56,8 @@ class FeederController{
 		225,
 		255
 	};
-	
+	bool delayed = false;																	// Bool to control startup delay
+	unsigned int delay_timer = 0;															// time in ms when the startup delay will be over.
 };
 
 
@@ -187,6 +190,33 @@ bool FeederController::get_startup()
 int FeederController::get_speed()
 {
 	return speed_selector;
+}
+
+
+void FeederController::start_delayed(unsigned int delay)
+{
+	// sets a delay in ms before the feeder spins up.
+	
+	unsigned int now = millis();
+	
+	if (delayed == false)
+	{
+		delayed = true
+		delay_timer = now + delay;
+	}
+	
+	if (millis > delay_timer)
+	{
+		delayed = false;
+		start();
+	}
+	
+}
+
+
+bool FeederController::get_delayed()
+{
+	return delayed;
 }
 
 

@@ -12,7 +12,7 @@ import shape_sifter_tools.shape_sifter_tools as ss
 """ This file contains all of the shape sifter server specific functions.
 Common functions and classes used by more than the server are stored elsewhere."""
 
-# TODO: Properly plan belt buckle timeouts and status changes
+# TODO: Properly plan belt buckle timeouts
 
 
 class ServerInit:
@@ -21,7 +21,7 @@ class ServerInit:
     def __init__(self):
 
         # get google drive directory
-        self.google_path = get_google_drive_path()
+        self.google_path = self.get_google_drive_path()
 
         # declarations and initializations. All objects ending with _const are NOT to be modified at run time!
         self.server_settings_file_const = self.google_path + '\\settings.ini'
@@ -105,7 +105,31 @@ class ServerInit:
         self.pipe_suip_recv, self.pipe_server_send_suip = multiprocessing.Pipe(duplex=False)
         self.pipe_server_recv_suip, self.pipe_suip_send = multiprocessing.Pipe(duplex=False)
         self.pipe_part_list_recv, self.pipe_part_list_send = multiprocessing.Pipe(duplex=False)
-        
+
+    @staticmethod
+    def get_google_drive_path():
+        """
+        Get Google Drive path on windows machines.
+        :return: str
+        """
+        # this code written by /u/Vassilis Papanikolaou from this post:
+        # https://stackoverflow.com/a/53430229/10236951
+
+        import sqlite3
+        import os
+
+        db_path = (os.getenv('LOCALAPPDATA')+'\\Google\\Drive\\user_default\\sync_config.db')
+        db = sqlite3.connect(db_path)
+        cursor = db.cursor()
+        cursor.execute("SELECT * from data where entry_key = 'local_sync_root_path'")
+        res = cursor.fetchone()
+        path = res[2][4:]
+        db.close()
+
+        full_path = path + '\\software_dev\\the_shape_sifter'
+
+        return full_path
+
 
 class ClientParams:
     """ For clients to get server config parameters. """
@@ -234,10 +258,15 @@ def iterate_part_list(server: ServerInit):
     :return: none
     """
 
+    # An alias for the part list which gives us type hinting.
     plist: List[ss.PartInstance] = server.part_list
 
+    # loop through the part list checking for status codes that demand action.
+    # There are no "continue" statements on the bb_status checks because
+    # we may also want to take action based on server status codes too.
     for part in plist:
 
+        # checks for parts which have been assigned by the belt buckle and timestamps them.
         if part.bb_status == 'assigned':
             if part.t_assigned == 0.0:
                 part.t_assigned = time.perf_counter()
@@ -246,19 +275,17 @@ def iterate_part_list(server: ServerInit):
         if part.bb_status == 'sorted':
             server.sort_log.info('id:{}, bin{}, cat: {}, pnum: {}'.format(part.instance_id, part.bin_assignment, part.category_name, part.part_number))
             server.part_list.remove(part)
-            continue
 
         # checks for parts that have been lost by the belt buckle. A part is lost if it misses it's bin and goes off the end of the belt.
         if part.bb_status == 'lost':
             server.sort_log.info('id:{}, bin{}, cat: {}, pnum: {}, NOT SORTED!'.format(part.instance_id, part.bin_assignment, part.category_name, part.part_number))
             server.part_list.remove(part)
-            continue
 
         # server status = new; the part was just received from the taxidermist. Send it to the MTM
         if part.server_status == 'new':
             if part.t_taxi == 0.0:
                 part.t_taxi = time.perf_counter()
-            send_bb_a(server, part)
+            send_bb_part_command(server, part, 'A')
             send_mtm(server, part)
             continue
 
@@ -273,7 +300,7 @@ def iterate_part_list(server: ServerInit):
         if part.server_status == 'cf_done':
             if part.t_cf == 0.0:
                 part.t_cf = time.perf_counter()
-            send_bb_b(server, part)
+            send_bb_part_command(server, part, 'B', part.bin_assignment)
             continue
 
 
@@ -289,6 +316,8 @@ def check_suip(server, mode):
                 mode.check_mtm = True
                 mode.check_cf = True
                 mode.check_bb = True
+                send_bb_control_command(server, 'M', '1001')
+
 
             # stops the server main loop
             if suip_command.command == 'server_control_halt':
@@ -297,6 +326,7 @@ def check_suip(server, mode):
                 mode.check_mtm = False
                 mode.check_cf = False
                 mode.check_bb = False
+                send_bb_control_command(server, 'M', '1000')
 
         except AttributeError:
             server.logger.error("Attribute Error in check_suip(). See dump on next line")
@@ -338,57 +368,64 @@ def check_cf(server: ServerInit):
 
 def check_bb(server: ServerInit):
     """Checks the belt buckle for messages"""
-    # TODO: Add support for all the response codes below. Remove all the PASS commands and replace them with proper commands
     if server.pipe_server_recv_bb.poll(0):
         bb_read_part: ss.BbPacket = server.pipe_server_recv_bb.recv()
-        if bb_read_part.status_code == '200':
+        bb_parse_packet(server, bb_read_part)
 
-            # TEL commands notify the server that...
-            if bb_read_part.type == 'TEL':
 
-                # ...a part has been sorted. Remove it from the part_list.
-                if bb_read_part.command == 'C':
-                    for part in server.part_list:
-                        if bb_read_part.payload == part.instance_id:
-                            part.bb_status = 'sorted'
+def bb_update_part(server: ServerInit, packet: ss.BbPacket, status: str):
+    """ Takes a packet and finds a matching part in the part list and updates it's bb_status."""
+    for part in server.part_list:
+        if packet.payload == part.instance_id:
+            part.bb_status = status
 
-                # ...a part has gone off the end of the belt
-                if bb_read_part.command == 'F':
-                    for part in server.part_list:
-                        if bb_read_part.payload == part.instance_id:
-                            part.bb_status = 'lost'
 
-                # ...a handshake has been received
-                if bb_read_part.command == 'H':
-                    pass
+def bb_parse_packet(server: ServerInit, packet: ss.BbPacket):
+    """ Processes incoming packets from the belt buckle"""
+    # TODO: Add support for all the response codes below. Remove all the PASS commands and replace them with proper commands
+    if packet.status_code != '200':
+        server.logger.critical("Bad packet received from belt buckle: {0}".format(packet.serial_string))
 
-                # ...the belt buckle has requested to download the bin config
-                if bb_read_part.command == 'D':
-                    server.logger.debug('Received download command from belt buckle')
-                    pass
+    # TEL commands notify the server that...
+    if packet.type == 'TEL':
 
-            # ACK commands inform the server that a previous BBC command sent to the BB was received, understood, and executed. Any errors will be indicated by the response code
-            if bb_read_part.type == 'ACK':
+        # ...a part has been sorted. Remove it from the part_list.
+        if packet.command == 'C':
+            bb_update_part(server, packet, 'sorted')
+            return
 
-                # the previous BBC command was executed correctly. Update the active_part_DB
-                if bb_read_part.response == '200':
-                    # ...a part has been sorted
-                    if bb_read_part.command == 'B':
-                        for part in server.part_list:
-                            if bb_read_part.payload == part.instance_id:
-                                part.bb_status = 'assigned'
+        # ...a part has gone off the end of the belt
+        if packet.command == 'F':
+            bb_update_part(server, packet, 'lost')
+            return
 
-                    # ...a part has been sorted
-                    if bb_read_part.command == 'A':
-                        for part in server.part_list:
-                            if bb_read_part.payload == part.instance_id:
-                                part.bb_status = 'added'
+        # ...a handshake has been received
+        if packet.command == 'H':
+            pass
 
-                else:
-                    server.logger.error("slib.check_bb failed. response code = {}. Packet:{}".format(bb_read_part.response, vars(bb_read_part)))
+        # ...the belt buckle has requested to download the bin config
+        if packet.command == 'D':
+            server.logger.debug('Received download command from belt buckle')
+            pass
+
+    # ACK commands inform the server that a previous BBC command sent to the BB was received, understood, and executed. Any errors will be indicated by the response code
+    elif packet.type == 'ACK':
+
+        # ...a part has been assigned to a bin
+        if packet.command == 'B':
+            bb_update_part(server, packet, 'assigned')
+            return
+
+        # ...a part has been added to the tracker
+        if packet.command == 'A':
+            bb_update_part(server, packet, 'added')
+            return
 
         else:
-            server.logger.error("A packet received from by the check_BB function has a bad status code. {}".format(vars(bb_read_part)))
+            server.logger.error("slib.bb_parse_packet failed. Invalid response to an ACK: {}".format(packet.serial_string))
+
+    else:
+        server.logger.error("A packet received from by the check_BB function has a bad status code. {}".format(vars(packet)))
 
 
 def send_mtm(server: ServerInit, part: ss.PartInstance):
@@ -397,29 +434,25 @@ def send_mtm(server: ServerInit, part: ss.PartInstance):
     part.server_status = 'wait_mtm'
 
 
-def send_bb_a(server: ServerInit, part: ss.PartInstance):
-    """Sends the A command to the belt buckle"""
-    packet = ss.BbPacket(command='A', payload=part.instance_id, type='BBC')
+def send_bb_part_command(server: ServerInit, part: ss.PartInstance, command: str, arg='0000'):
+    """Sends a part command to the belt buckle"""
+    packet = ss.BbPacket(command=command, payload=part.instance_id, argument=arg, type='BBC')
     if packet.status_code == '200':
         part.serial_string = packet.serial_string
         part.bb_status = 'wait_ack'
         server.pipe_server_send_bb.send(packet)
         part.capture_time = time.monotonic()  # make a time stamp so we can resend the packet if we don't get a reply in time
     else:
-        server.logger.critical("A bb packet failed in send_bb_a(). with status code: {}".format(packet.status_code))
+        server.logger.critical("A bb packet failed in send_bb_part_command(). with status code: {}".format(packet.status_code))
 
 
-def send_bb_b(server: ServerInit, part: ss.PartInstance):
-    """Sends the B command to the belt buckle"""
-    packet = ss.BbPacket(command='B', argument=part.bin_assignment, payload=part.instance_id, type='BBC')
+def send_bb_control_command(server: ServerInit, command: str, arg: str= '0000', payload: str = '000000000000'):
+    """Sends a control command to the belt buckle"""
+    packet = ss.BbPacket(command=command, argument=arg, payload=payload, type='BBC')
     if packet.status_code == '200':
-        part.serial_string = packet.serial_string
-        part.bb_status = 'wait_ack'
-        part.server_status = 'wait_sort'
         server.pipe_server_send_bb.send(packet)
-        part.capture_time = time.monotonic()  # make a time stamp so we can resend the packet if we don't get a reply in time
     else:
-        server.logger.critiical("A bb packet failed in send_bb_b(). with status code: {}".format(packet.status_code))
+        server.logger.critical("A bb packet failed in send_tel_command(). with status code: {}".format(packet.status_code))
 
 
 def send_cf(server: ServerInit, part: ss.PartInstance):
@@ -440,27 +473,3 @@ def check_bb_timeout(server: ServerInit, part: ss.PartInstance):
 def send_part_list_to_suip(server: ServerInit):
     """Sends the part list to the suip"""
     server.pipe_part_list_send.send(server.part_list)
-
-
-def get_google_drive_path():
-    """
-    Get Google Drive path on windows machines.
-    :return: str
-    """
-    # this code written by /u/Vassilis Papanikolaou from this post:
-    # https://stackoverflow.com/a/53430229/10236951
-
-    import sqlite3
-    import os
-
-    db_path = (os.getenv('LOCALAPPDATA')+'\\Google\\Drive\\user_default\\sync_config.db')
-    db = sqlite3.connect(db_path)
-    cursor = db.cursor()
-    cursor.execute("SELECT * from data where entry_key = 'local_sync_root_path'")
-    res = cursor.fetchone()
-    path = res[2][4:]
-    db.close()
-
-    full_path = path + '\\software_dev\\the_shape_sifter'
-
-    return full_path

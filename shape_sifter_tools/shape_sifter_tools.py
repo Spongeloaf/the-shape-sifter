@@ -265,65 +265,15 @@ def load_server_config(settings_file_const, log):
         exit("Config file KeyError. Check config file for missing values!")
 
 
-# def setup_active_part_table(db_fname, db_template_fname, logger):
-#     """Creates an SQlite table in memory for tracking parts on the belt and returns this table to the caller.
-#     It creates an instance of a part class and uses it's __dict__ keys to create columns in the table
-#
-#     # TODO: Add table checks! right now we're only checking if the file exists!
-#     """
-#
-#     # if sqlite file doesn't exist, create it from template. Template is set in declarations and initializations section of the server.py.
-#     if not isfile(db_fname):
-#         logger.info("{0} not found. Creating a new one.....".format(db_fname))
-#         copyfile(db_template_fname, db_fname)
-#
-#     # create the new active part table in the db, using list comprehension to create column names from attributes in the part class.
-#     active_part_db = sqlite3.connect(db_fname)
-#     sqlcurr = active_part_db.cursor()
-#     sqlcurr.execute("DROP TABLE IF EXISTS active_part_db")
-#     active_part_db.commit()
-#     sqlcurr.execute("CREATE TABLE IF NOT EXISTS active_part_db (ID INTEGER PRIMARY KEY) ")
-#
-#     # use list comprehension and an instance of a part class to populate the database with columns of matching types.
-#     part_dummy = PartInstance()
-#     active_part_columns: List[str] = [i for i in part_dummy.__dict__.items()]  # holy fuck list comprehension is cool
-#
-#     for i in active_part_columns:
-#
-#         # These return True if the items() in part_dummy are floats or ints.
-#         is_float = isinstance(i[1], float)
-#         is_int = isinstance(i[1], int)
-#
-#         # TODO: Add support for NP arrays for part images in the DB
-#         # is_blob = isinstance(i[1], numpy array)
-#
-#         if is_float:
-#             sqlcurr.execute("ALTER TABLE active_part_db ADD COLUMN {0} REAL".format(i[0]))
-#
-#         elif is_int:
-#             sqlcurr.execute("ALTER TABLE active_part_db ADD COLUMN {0} INTEGER".format(i[0]))
-#
-#         # We assume we are storing strings if not explicitly storing anything else like float or int.
-#         else:
-#             sqlcurr.execute("ALTER TABLE active_part_db ADD COLUMN {0} TEXT".format(i[0]))
-#
-#     active_part_db.commit()
-#     return active_part_db
-
-
-def create_sql_part_tuple(part_object: PartInstance):
-    """Creates an SQL friendly tuple out of a part object"""
-    part_tuple =   ('{0}'.format(part_object.instance_id),
-                    '{0}'.format(part_object.capture_time),
-                    '{0}'.format(part_object.part_number),
-                    '{0}'.format(part_object.category_number),
-                    Binary(bytes(part_object.part_image)),
-                    '{0}'.format(part_object.part_color),
-                    '{0}'.format(part_object.category_name),
-                    '{0}'.format(part_object.bin_assignment),
-                    '{0}'.format(part_object.server_status),
-                    '{0}'.format(part_object.bb_status),
-                    '{0}'.format(part_object.serial_string),
-                    '{0}'.format(part_object.bb_timeout),
-                    )
-    return part_tuple
+def log_dump(obj, logger=None):
+    """ Dump contents of an object for debugging. If no logger is supplied as a second arg, object is dumped to console."""
+    if logger is None:
+        for attr in dir(obj):
+            if hasattr( obj, attr ):
+                print( "obj.%s = %s" % (attr, getattr(obj, attr)))
+                return
+    else:
+        for attr in dir(obj):
+            if hasattr( obj, attr ):
+                logger.critical( "obj.%s = %s" % (attr, getattr(obj, attr)))
+                return

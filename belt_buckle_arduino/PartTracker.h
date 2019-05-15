@@ -26,6 +26,9 @@ public:
 	bool get_occupied(unsigned int);
 	void print_part_list(int);
 	void print_part_single(unsigned int);
+	void tel_server_sorted(unsigned int);
+	void tel_server_lost(unsigned int);
+	
 	
 private:
 
@@ -139,8 +142,6 @@ inline bool PartTracker::check_range(unsigned int slot)
 	// check if index is in range
 	if (slot >= part_list_length || slot < 0)
 	{
-		// TODO: Make this send an error message to the server.
-		Serial.println("Part list index out of range!");
 		return false;
 	}
 	return true;
@@ -212,6 +213,37 @@ void PartTracker::print_list_header()
 	Serial.println("Occ.   :    Bin    :    Dist   :   Id") ;
 }
 
+
+void PartTracker::tel_server_sorted(unsigned int part)
+{
+		// Sends a TEL command to notify the server that a part has been sorted.
+		
+		if (!(check_range()))
+		{
+			Serial.println("Bad part index in tel_server_sorted");
+			return;
+		}
+		
+		Serial.print("[TEL-C-200-");
+		print_array(part_list[part].id);
+		Serial.println("-CSUM]");
+}
+
+
+void PartTracker::tel_server_lost(unsigned int part)
+{
+	// Sends a TEL command to notify the server that a part has been sorted.
+	
+	if (!(check_range()))
+	{
+		Serial.println("Bad part index in tel_server_sorted");
+		return;
+	}
+	
+	Serial.print("[TEL-F-200-");
+	print_array(part_list[part].id);
+	Serial.println("-CSUM]");
+}
 
 
 #endif /* PARTTRACKER_H_ */
