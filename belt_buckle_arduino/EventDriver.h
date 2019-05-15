@@ -403,7 +403,7 @@ void EventDriver::parse_command(char* packet_string){					// parses the command 
 
 		case 'O':
 		// flush index
-		parts.free_part_slot(packet.argument_int);
+		parts.remove_part(packet);
 		send_ack(packet);
 		break;
 

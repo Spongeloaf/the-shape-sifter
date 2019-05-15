@@ -293,6 +293,13 @@ def iterate_part_list(server: ServerInit):
         if part.server_status == 'mtm_done':
             if part.t_mtm == 0.0:
                 part.t_mtm = time.perf_counter()
+
+            # throw away parts that are actually just belt pictures
+            if part.category_name == 'belt':
+                send_bb_control_command(server, 'O', '0000', part.instance_id)
+                server.logger.info("Removed 'belt' part")
+                plist.remove(part)
+                continue
             send_cf(server, part)
             continue
 

@@ -28,6 +28,7 @@ public:
 	void print_part_single(unsigned int);
 	void tel_server_sorted(unsigned int);
 	void tel_server_lost(unsigned int);
+	void remove_part(SerialPacket&);
 	
 	
 private:
@@ -214,35 +215,54 @@ void PartTracker::print_list_header()
 }
 
 
-void PartTracker::tel_server_sorted(unsigned int part)
+void PartTracker::tel_server_sorted(unsigned int part_slot)
 {
 		// Sends a TEL command to notify the server that a part has been sorted.
 		
-		if (!(check_range(part)))
+		if (!(check_range(part_slot)))
 		{
 			Serial.println("Bad part index in tel_server_sorted");
 			return;
 		}
 		
 		Serial.print("[TEL-C-200-");
-		print_array(part_list[part].id);
+		print_array(part_list[part_slot].id);
 		Serial.println("-CSUM]");
 }
 
 
-void PartTracker::tel_server_lost(unsigned int part)
+void PartTracker::tel_server_lost(unsigned int part_slot)
 {
 	// Sends a TEL command to notify the server that a part has been sorted.
 	
-	if (!(check_range(part)))
+	if (!(check_range(part_slot)))
 	{
 		Serial.println("Bad part index in tel_server_sorted");
 		return;
 	}
 	
 	Serial.print("[TEL-F-200-");
-	print_array(part_list[part].id);
+	print_array(part_list[part_slot].id);
 	Serial.println("-CSUM]");
+}
+
+
+void PartTracker::remove_part(SerialPacket& packet)
+{
+	// searches the part list for a matching id number and removes it.
+	for (unsigned int i = 0; i < gp::part_list_length; i++)
+	{
+		if (memcmp(part_list[i].id, packet.payload, gp::payload_length) == 0)
+		{
+			free_part_slot(i);
+			packet.result = 200;
+			return;
+		}
+	}
+	
+	// No match found
+	packet.result = 404;
+	return;
 }
 
 
