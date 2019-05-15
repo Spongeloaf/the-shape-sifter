@@ -31,7 +31,7 @@ public:
 
 
 void ArrayPrint::array(char* to_be_printed){                    // prints an array of characters
-	for (int i = 0; i <= print_size; i++)
+	for (int i = 0; i <= gp::print_size; i++)
 	{
 		if (to_be_printed[i] == '\0')
 		{
@@ -44,7 +44,7 @@ void ArrayPrint::array(char* to_be_printed){                    // prints an arr
 
 
 void ArrayPrint::array(unsigned long* to_be_printed){                    // prints an array of characters
-	for (int i = 0; i <= print_size; i++)
+	for (int i = 0; i <= gp::print_size; i++)
 	{
 		if (to_be_printed[i] == '\0')
 		{

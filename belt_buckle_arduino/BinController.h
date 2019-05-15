@@ -49,16 +49,16 @@ private:
 	unsigned long bin_width;
 	
 	// stores the time that the airjet was turned on; used to turn them off after ::bin_airjet_time
-	unsigned long airjet_timers[number_of_bins + 1];
+	unsigned long airjet_timers[gp::number_of_bins + 1];
 	
 	// time in milliseconds that the air jet stays on
 	unsigned long bin_airjet_time;													 
 		
 	// stores distance ints for each bin location
-	unsigned long bin_distances[number_of_bins + 1];							 
+	unsigned long bin_distances[gp::number_of_bins + 1];							 
 	
 	// the bin output pin numbers. These are also unlikely to ever change.
-	const int bin_pindex[number_of_bins + 1] = {                                    
+	const int bin_pindex[gp::number_of_bins + 1] = {                                    
 		0,
 		22,
 		23,
@@ -93,7 +93,7 @@ void BinController::on_airjet(int bin)
 
 void BinController::off_airjets()
 {
-	for (int i = 0; i < number_of_bins; i++ )
+	for (int i = 0; i < gp::number_of_bins; i++ )
 	{
 		if (millis() > (airjet_timers[i] + bin_airjet_time))
 		{
@@ -107,7 +107,7 @@ void BinController::off_airjets()
 void BinController::test_outputs(int t)
 {
 	Serial.println("Testing outputs...");
-	for (int i = 1; i <= number_of_bins; i++ )							// setting up our bin outputs and writing values to HIGH.
+	for (int i = 1; i <= gp::number_of_bins; i++ )							// setting up our bin outputs and writing values to HIGH.
 	{
 		digitalWrite(bin_pindex[i], HIGH);
 		delay(t);
@@ -163,7 +163,7 @@ void BinController::set_bin_defaults()
 void BinController::init_pins()
 {
 	// setting up our bin outputs and writing values to LOW.
-	for (int i = 1; i <= number_of_bins; i++ )																	
+	for (int i = 1; i <= gp::number_of_bins; i++ )																	
 	{
 		pinMode(bin_pindex[i], OUTPUT);
 		digitalWrite(bin_pindex[i], LOW);

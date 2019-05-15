@@ -43,7 +43,7 @@ public:
 	{
 		encoder_stall = false;
 		lastDebounceTime = 0;
-		input_active[num_inputs];
+		input_active[gp::num_inputs];
 		input_previous_state = true;
 		init_inputs();
 	};
@@ -71,11 +71,11 @@ private:
 	unsigned long lastDebounceTime;				// for de-bouncing
 	bool input_previous_state;					// default to true because pull up resistors invert our logic
 	int  serial_str_index;						// the current index number of the read string
-	char serial_str[serial_str_len];			// stores the read chars.
+	char serial_str[gp::serial_str_len];			// stores the read chars.
 	char serial_char;							// the most recent char read from serial port
 	unsigned long loop_count = 0;				// used by the performance timer to track the number of loops the software has done.
 	bool timer_mode = false;					// turns the performance timer on and off.
-	bool input_active[num_inputs];				// stores the current state of each input - global
+	bool input_active[gp::num_inputs];				// stores the current state of each input - global
 
 	//  input name enum for readability
 	enum input_enum {
@@ -89,7 +89,7 @@ private:
 		button_4
 	};
 
-	int input_pins[num_inputs] = {			// storing the pin numbers in an array is clever.
+	int input_pins[gp::num_inputs] = {			// storing the pin numbers in an array is clever.
 		6,								//  stick_up
 		7,								//  stick_down
 		8,								//  stick_left
@@ -105,7 +105,7 @@ private:
 void EventDriver::init_inputs()
 {
 	// setup our pins using a loop, makes it easier to add new pins
-	for (int i = 0; i < num_inputs; i++)	
+	for (int i = 0; i < gp::num_inputs; i++)	
 	{
 		pinMode (input_pins[i], INPUT_PULLUP);
 		input_active[i] = true;						// Remember that using internal pull-up resistors causes our true/false to be inverted!
@@ -167,7 +167,7 @@ void EventDriver::read_serial_port(){
 
 void EventDriver::check_inputs(){                                                                // check the state of all inputs
 
-	 for (int i = 0; i < num_inputs; i++)                         // loop through the array of inputs
+	 for (int i = 0; i < gp::num_inputs; i++)                         // loop through the array of inputs
 	 {
 		 input_previous_state = input_active[i];                           // take the value from the previous loop and store it here
 		 input_active[i] = digitalRead(input_pins[i]);                           // read the current input state
@@ -176,7 +176,7 @@ void EventDriver::check_inputs(){                                               
 			 {
 				 if (input_active[i] != input_previous_state)                  // checks if the state changed from our last trip through the loop
 				 {
-					 if ((millis() - lastDebounceTime) > debounce_delay)          // We use the number of milliseconds the arduino has been running for to see if it's been more than X number of millis since we last pressed a input It doesn't necessarily stop all input bouncing, but it helps.
+					 if ((millis() - lastDebounceTime) > gp::debounce_delay)          // We use the number of milliseconds the arduino has been running for to see if it's been more than X number of millis since we last pressed a input It doesn't necessarily stop all input bouncing, but it helps.
 					 {
 						 lastDebounceTime = millis();                              // reset the debounce timer.
 						 switch (i)                                                // take action if a input is pressed.
@@ -244,7 +244,7 @@ void EventDriver::check_distances()
 	unsigned long travel_dist = 0;
 	
 	// loop through the main part array
-	for (unsigned int part = 0; part < part_list_length; part++)
+	for (unsigned int part = 0; part < gp::part_list_length; part++)
 	{
 		// gets the bin assigned to part_array[part].
 		bin = parts.get_bin(part);
@@ -297,8 +297,8 @@ void EventDriver::check_feeder()
 	// updates the feeder start phase.
 	if (feeder.get_delayed())
 	{
-		feeder.start_delayed();
-		return
+		feeder.start_delayed(gp::feeder_delay);
+		return;
 	}
 	
 	if (feeder.get_startup())
@@ -310,6 +310,8 @@ void EventDriver::check_feeder()
 
 void EventDriver::check_encoder()
 {
+	// TODO: Figure out why this doesn't work
+	
 	if (encoder.is_running()) return;
 	
 	// we are already aware that the encoder isn't running.
@@ -451,7 +453,7 @@ void EventDriver::construct_packet(char* packet_str)
 	extern SerialPacket packet;
 	
 	// check str len
-	if (strlen(packet_str) != packet_length)
+	if (strlen(packet_str) != gp::packet_length)
 	{
 		packet.result = 401;		// 401 == bad length
 		return;
@@ -467,7 +469,7 @@ void EventDriver::construct_packet(char* packet_str)
 	packet.command = packet_str[1];
 	
 	// sets up the argument array
-	for (int i = 0; i <= argument_length - 2; i++)              // argument length -2, because the last character is \0 and we are zero indexed
+	for (int i = 0; i <= gp::argument_length - 2; i++)              // argument length -2, because the last character is \0 and we are zero indexed
 	{
 		packet.argument_arr[i] = packet_str[i + 2];             //  the argument begins on the [2] char
 	}
@@ -475,11 +477,11 @@ void EventDriver::construct_packet(char* packet_str)
 	packet.argument_int = atoi(packet.argument_arr);			// the bin number is more useful as an int than an array. But now we have both.
 
 	// sets up the payload array
-	for (int i = 0; i <= payload_length - 2; i++)               // payload length -2, because the last character is \0 and we are zero indexed
+	for (int i = 0; i <= gp::payload_length - 2; i++)               // payload length -2, because the last character is \0 and we are zero indexed
 	{
 		packet.payload[i] = packet_str[i + 6];                  //  the argument begins on the [2] char
 	}
-	packet.payload[payload_length - 1] = '\0';
+	packet.payload[gp::payload_length - 1] = '\0';
 	
 	// convert payload to int, if possible. Remember that a failed conversion returns 0!
 	if (isdigit(packet.payload[0]) || packet.payload[0] == '-')
@@ -537,7 +539,7 @@ void EventDriver::set_param(SerialPacket& packet)
 		// Run: Start the belt and feeder.
 		case 1001:
 			belt.start();
-			feeder.start_delayed(feeder_delay);
+			feeder.start_delayed(gp::feeder_delay);
 		break;
 		
 		// Halt: Stop the belt and feeder.

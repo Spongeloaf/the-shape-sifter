@@ -32,6 +32,7 @@ class FeederController{
 	bool get_startup();
 	int get_speed();
 	void start_delayed(unsigned int);
+	bool get_delayed();
 	
 
 	private:
@@ -77,7 +78,7 @@ void FeederController::speed_up()
 	// only writes to analog output if the feeder is currently running, and not currently spinning up.
 	if (mode && (!(startup)))
 	{
-		analogWrite(hopper_pwm_pin, speed_array[speed_selector]);
+		analogWrite(gp::hopper_pwm_pin, speed_array[speed_selector]);
 	}
 }
 
@@ -98,7 +99,7 @@ void FeederController::speed_down()
 	// only writes to analog output if the feeder is currently running
 	if (mode && (!(startup)))
 	{
-		analogWrite(hopper_pwm_pin, speed_array[speed_selector]);
+		analogWrite(gp::hopper_pwm_pin, speed_array[speed_selector]);
 	}
 
 }
@@ -144,7 +145,7 @@ void FeederController::start()
 		if ((now_t - startup_t) > startup_delay)
 		{
 			startup = false;
-			analogWrite(hopper_pwm_pin, speed_array[speed_selector]);
+			analogWrite(gp::hopper_pwm_pin, speed_array[speed_selector]);
 			Serial.println("full speed");
 		}
 		return;
@@ -160,7 +161,7 @@ void FeederController::start()
 	startup_t = millis();
 	startup = true;
 	mode = true;
-	analogWrite(hopper_pwm_pin, 20);
+	analogWrite(gp::hopper_pwm_pin, 20);
 
 	Serial.println("startup");
 	return;
@@ -171,7 +172,7 @@ void FeederController::stop()
 {
 	mode = false;
 	startup = false;
-	analogWrite(hopper_pwm_pin, 0);
+	analogWrite(gp::hopper_pwm_pin, 0);
 }
 
 
@@ -201,7 +202,7 @@ void FeederController::start_delayed(unsigned int delay)
 	
 	if (delayed == false)
 	{
-		delayed = true
+		delayed = true;
 		delay_timer = now + delay;
 	}
 	

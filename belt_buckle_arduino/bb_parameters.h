@@ -10,7 +10,9 @@
 #ifndef BB_PARAMETERS_H_
 #define BB_PARAMETERS_H_
 
-namespace params {
+namespace gp {
+	// Global parameters used by almost all classes.
+	
 	// These globals are used for setting up pin numbers, and size parameters.
 	// They are all magic constants that may change. All of them are used in constructing the main controller objects.
 	// Magic constants which are unlikely to change exist within each class's constructor.
@@ -37,12 +39,12 @@ namespace params {
 
 // a struct to hold packet data
 struct SerialPacket {
-	char raw_default[packet_length + 1] = { '<','z','Z','Z','Z','z','z','z','z','z','z','z','z','z','z','z','z','z','C','S','U','M','>','\0' };
-	char raw_packet[packet_length + 1] = { '<','z','Z','Z','Z','z','z','z','z','z','z','z','z','z','z','z','z','z','C','S','U','M','>','\0' };
+	char raw_default[gp::packet_length + 1] = { '<','z','Z','Z','Z','z','z','z','z','z','z','z','z','z','z','z','z','z','C','S','U','M','>','\0' };
+	char raw_packet[gp::packet_length + 1] = { '<','z','Z','Z','Z','z','z','z','z','z','z','z','z','z','z','z','z','z','C','S','U','M','>','\0' };
 	char command = 'z';
 	unsigned int argument_int = 0;                               // int to store the packet argument
-	char argument_arr[argument_length] = { 'z' };                  // char array for parsing packet arguments
-	char payload[payload_length] = { 'z' };                        // char array for parsing packet payload
+	char argument_arr[gp::argument_length] = { 'z' };                  // char array for parsing packet arguments
+	char payload[gp::payload_length] = { 'z' };                        // char array for parsing packet payload
 	signed long payload_int = -1;								 // and integer version of the payload, converted by atoi(). -1 is default because most values used by this will be 0 or positive.
 	int result = 408;											 // Error messages are a letter designator matching the command, followed by a three digit number. Default is 408 "Status not set"
 };
@@ -72,7 +74,7 @@ class Parameters{
 struct TrackedPart {
 // holds one part
 bool occupied = false;		// false == this slot is available for use by a new part.
-char id[payload_length] = {'z','z','z','z','z','z','z','z','z','z','z','z','\0'};
+char id[gp::payload_length] = {'z','z','z','z','z','z','z','z','z','z','z','z','\0'};
 unsigned int bin = 0;
 unsigned long distance = 0;
 };

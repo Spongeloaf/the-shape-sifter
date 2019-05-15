@@ -32,7 +32,7 @@ public:
 	
 private:
 
-	TrackedPart part_list[part_list_length];
+	TrackedPart part_list[gp::part_list_length];
 	bool check_range(unsigned int);
 	void print_array(char*);
 	void print_slot(unsigned int);
@@ -44,9 +44,9 @@ private:
 int PartTracker::add_part(SerialPacket& packet, unsigned long dist){
 
 	// first check to see if this part number exists already
-	for (unsigned int i = 0; i < part_list_length; i++)
+	for (unsigned int i = 0; i < gp::part_list_length; i++)
 	{
-		if (memcmp(part_list[i].id, packet.payload, payload_length) == 0)
+		if (memcmp(part_list[i].id, packet.payload, gp::payload_length) == 0)
 		{
 			packet.result = 409;
 			return;
@@ -55,7 +55,7 @@ int PartTracker::add_part(SerialPacket& packet, unsigned long dist){
 	
 	// find a free slot in the part list.
 	int slot = -1;
-	for (unsigned int i = 0; i < part_list_length; i++)
+	for (unsigned int i = 0; i < gp::part_list_length; i++)
 	{
 		if (part_list[i].occupied == false)
 			{
@@ -73,7 +73,7 @@ int PartTracker::add_part(SerialPacket& packet, unsigned long dist){
 	}
 	
 	// Stores the received part index in the part_list
-	for (int i = 0; i < payload_length; i++)            
+	for (int i = 0; i < gp::payload_length; i++)            
 	{
 		part_list[slot].id[i] = packet.payload[i];
 	}
@@ -89,9 +89,9 @@ int PartTracker::add_part(SerialPacket& packet, unsigned long dist){
 int PartTracker::assign_bin(SerialPacket& packet){ 
 	            
 	// assign a part to a bin. loops through the payload array, returns 404 if the part isn't found
-	for (unsigned int i = 0; i < part_list_length; i++)
+	for (unsigned int i = 0; i < gp::part_list_length; i++)
 	{
-		if (memcmp(part_list[i].id, packet.payload, payload_length) == 0)
+		if (memcmp(part_list[i].id, packet.payload, gp::payload_length) == 0)
 		{
 			part_list[i].bin = packet.argument_int;
 			packet.result = 200;
@@ -140,7 +140,7 @@ bool PartTracker::get_occupied(unsigned int slot)
 inline bool PartTracker::check_range(unsigned int slot)
 {
 	// check if index is in range
-	if (slot >= part_list_length || slot < 0)
+	if (slot >= gp::part_list_length || slot < 0)
 	{
 		return false;
 	}
@@ -148,7 +148,7 @@ inline bool PartTracker::check_range(unsigned int slot)
 }
 
 
-void PartTracker::print_part_list(int count = part_list_length) 
+void PartTracker::print_part_list(int count = gp::part_list_length) 
 {
 	// Prints out the part list from 0 to count like this:
 	// Occ.  :   Dist   :   Bin   :  Id
@@ -157,9 +157,9 @@ void PartTracker::print_part_list(int count = part_list_length)
 	// bool  : 12345678 :     0   : 123456789012
 	
 	// Range checking. Print full list if out of range.
-	if (count < 1 || count > part_list_length)
+	if (count < 1 || count > gp::part_list_length)
 	{
-		count = part_list_length;
+		count = gp::part_list_length;
 	}
 
 	print_list_header();
@@ -184,7 +184,7 @@ void PartTracker::print_part_single(unsigned int slot)
 void PartTracker::print_array(char* to_be_printed)
 {                    
 	// prints an array of characters
-	for (int i = 0; i <= print_size; i++)
+	for (int i = 0; i <= gp::print_size; i++)
 	{
 		if (to_be_printed[i] == '\0')
 		{
@@ -218,7 +218,7 @@ void PartTracker::tel_server_sorted(unsigned int part)
 {
 		// Sends a TEL command to notify the server that a part has been sorted.
 		
-		if (!(check_range()))
+		if (!(check_range(part)))
 		{
 			Serial.println("Bad part index in tel_server_sorted");
 			return;
@@ -234,7 +234,7 @@ void PartTracker::tel_server_lost(unsigned int part)
 {
 	// Sends a TEL command to notify the server that a part has been sorted.
 	
-	if (!(check_range()))
+	if (!(check_range(part)))
 	{
 		Serial.println("Bad part index in tel_server_sorted");
 		return;

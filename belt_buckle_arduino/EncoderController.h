@@ -60,7 +60,7 @@ unsigned long EncoderController::get_dist()
 	unsigned long distance;
 	byte a,b,c,d;
 
-	Wire.requestFrom(wire_address, 4);																						
+	Wire.requestFrom(gp::wire_address, 4);																						
 	if (Wire.available() > 0)
 	{
 		a = Wire.read();
@@ -96,7 +96,7 @@ unsigned long EncoderController::enc_sim()
 {
 	// This method has not been protected from rollovers at all.
 	// That protection should be handled by whomever calls get_dist.
-	return sim_scaler * millis();
+	return gp::sim_scaler * millis();
 }
 
 

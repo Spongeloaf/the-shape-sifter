@@ -53,7 +53,7 @@
   <avrgcc.compiler.symbols.DefSymbols>
     <ListValues>
       <Value>__AVR_ATmega2560__</Value>
-      <Value>ARDUINO=10805</Value>
+      <Value>ARDUINO=10809</Value>
       <Value>ARDUINO_MAIN</Value>
       <Value>F_CPU=16000000L</Value>
       <Value>__AVR__</Value>
@@ -64,17 +64,17 @@
   <avrgcc.compiler.directories.IncludePaths>
     <ListValues>
       <Value>../../../belt_buckle_arduino</Value>
-      <Value>C:/Users/Development/AppData/Local/arduino15/packages/arduino/hardware/avr/1.6.23/libraries/Wire/src</Value>
+      <Value>C:/Program Files (x86)/Arduino/hardware/arduino/avr/libraries/Wire/src</Value>
       <Value>C:/Program Files (x86)/Arduino/libraries</Value>
-      <Value>C:/Users/Development/Documents/Arduino/libraries</Value>
-      <Value>C:/Users/Development/AppData/Local/arduino15/packages/arduino/hardware/avr/1.6.23/libraries</Value>
-      <Value>C:/Users/Development/AppData/Local/arduino15/packages/arduino/hardware/avr/1.6.23/cores/arduino</Value>
-      <Value>C:/Users/Development/AppData/Local/arduino15/packages/arduino/hardware/avr/1.6.23/variants/mega</Value>
-      <Value>C:/Users/Development/AppData/Local/arduino15/packages/arduino/tools/avr-gcc/5.4.0-atmel3.6.1-arduino2/avr/include</Value>
-      <Value>C:/Users/Development/AppData/Local/arduino15/packages/arduino/tools/avr-gcc/5.4.0-atmel3.6.1-arduino2/avr/include/avr</Value>
-      <Value>C:/Users/Development/AppData/Local/arduino15/packages/arduino/tools/avr-gcc/5.4.0-atmel3.6.1-arduino2/lib/gcc/avr/4.8.1/include</Value>
-      <Value>C:/Users/Development/AppData/Local/arduino15/packages/arduino/tools/avr-gcc/5.4.0-atmel3.6.1-arduino2/lib/gcc/avr/4.9.2/include</Value>
-      <Value>C:/Users/Development/AppData/Local/arduino15/packages/arduino/tools/avr-gcc/5.4.0-atmel3.6.1-arduino2/lib/gcc/avr/4.9.3/include</Value>
+      <Value>C:/Users/spongeloaf/Documents/Arduino/libraries</Value>
+      <Value>C:/Program Files (x86)/Arduino/hardware/arduino/avr/libraries</Value>
+      <Value>C:/Program Files (x86)/Arduino/hardware/arduino/avr/cores/arduino</Value>
+      <Value>C:/Program Files (x86)/Arduino/hardware/arduino/avr/variants/mega</Value>
+      <Value>C:/Program Files (x86)/Arduino/hardware/tools/avr/avr/include</Value>
+      <Value>C:/Program Files (x86)/Arduino/hardware/tools/avr/avr/include/avr</Value>
+      <Value>C:/Program Files (x86)/Arduino/hardware/tools/avr/lib/gcc/avr/4.8.1/include</Value>
+      <Value>C:/Program Files (x86)/Arduino/hardware/tools/avr/lib/gcc/avr/4.9.2/include</Value>
+      <Value>C:/Program Files (x86)/Arduino/hardware/tools/avr/lib/gcc/avr/4.9.3/include</Value>
     </ListValues>
   </avrgcc.compiler.directories.IncludePaths>
   <avrgcc.compiler.optimization.level>Optimize (-O1)</avrgcc.compiler.optimization.level>
@@ -88,7 +88,7 @@
   <avrgcccpp.compiler.symbols.DefSymbols>
     <ListValues>
       <Value>__AVR_ATmega2560__</Value>
-      <Value>ARDUINO=10805</Value>
+      <Value>ARDUINO=10809</Value>
       <Value>ARDUINO_MAIN</Value>
       <Value>F_CPU=16000000L</Value>
       <Value>__AVR__</Value>
@@ -99,17 +99,17 @@
   <avrgcccpp.compiler.directories.IncludePaths>
     <ListValues>
       <Value>../../../belt_buckle_arduino</Value>
-      <Value>C:/Users/Development/AppData/Local/arduino15/packages/arduino/hardware/avr/1.6.23/libraries/Wire/src</Value>
+      <Value>C:/Program Files (x86)/Arduino/hardware/arduino/avr/libraries/Wire/src</Value>
       <Value>C:/Program Files (x86)/Arduino/libraries</Value>
-      <Value>C:/Users/Development/Documents/Arduino/libraries</Value>
-      <Value>C:/Users/Development/AppData/Local/arduino15/packages/arduino/hardware/avr/1.6.23/libraries</Value>
-      <Value>C:/Users/Development/AppData/Local/arduino15/packages/arduino/hardware/avr/1.6.23/cores/arduino</Value>
-      <Value>C:/Users/Development/AppData/Local/arduino15/packages/arduino/hardware/avr/1.6.23/variants/mega</Value>
-      <Value>C:/Users/Development/AppData/Local/arduino15/packages/arduino/tools/avr-gcc/5.4.0-atmel3.6.1-arduino2/avr/include</Value>
-      <Value>C:/Users/Development/AppData/Local/arduino15/packages/arduino/tools/avr-gcc/5.4.0-atmel3.6.1-arduino2/avr/include/avr</Value>
-      <Value>C:/Users/Development/AppData/Local/arduino15/packages/arduino/tools/avr-gcc/5.4.0-atmel3.6.1-arduino2/lib/gcc/avr/4.8.1/include</Value>
-      <Value>C:/Users/Development/AppData/Local/arduino15/packages/arduino/tools/avr-gcc/5.4.0-atmel3.6.1-arduino2/lib/gcc/avr/4.9.2/include</Value>
-      <Value>C:/Users/Development/AppData/Local/arduino15/packages/arduino/tools/avr-gcc/5.4.0-atmel3.6.1-arduino2/lib/gcc/avr/4.9.3/include</Value>
+      <Value>C:/Users/spongeloaf/Documents/Arduino/libraries</Value>
+      <Value>C:/Program Files (x86)/Arduino/hardware/arduino/avr/libraries</Value>
+      <Value>C:/Program Files (x86)/Arduino/hardware/arduino/avr/cores/arduino</Value>
+      <Value>C:/Program Files (x86)/Arduino/hardware/arduino/avr/variants/mega</Value>
+      <Value>C:/Program Files (x86)/Arduino/hardware/tools/avr/avr/include</Value>
+      <Value>C:/Program Files (x86)/Arduino/hardware/tools/avr/avr/include/avr</Value>
+      <Value>C:/Program Files (x86)/Arduino/hardware/tools/avr/lib/gcc/avr/4.8.1/include</Value>
+      <Value>C:/Program Files (x86)/Arduino/hardware/tools/avr/lib/gcc/avr/4.9.2/include</Value>
+      <Value>C:/Program Files (x86)/Arduino/hardware/tools/avr/lib/gcc/avr/4.9.3/include</Value>
     </ListValues>
   </avrgcccpp.compiler.directories.IncludePaths>
   <avrgcccpp.compiler.optimization.level>Optimize (-O1)</avrgcccpp.compiler.optimization.level>
@@ -140,7 +140,7 @@
   <avrgcc.compiler.symbols.DefSymbols>
     <ListValues>
       <Value>__AVR_ATmega2560__</Value>
-      <Value>ARDUINO=10805</Value>
+      <Value>ARDUINO=10809</Value>
       <Value>ARDUINO_MAIN</Value>
       <Value>F_CPU=16000000L</Value>
       <Value>__AVR__</Value>
@@ -151,17 +151,17 @@
   <avrgcc.compiler.directories.IncludePaths>
     <ListValues>
       <Value>../../../belt_buckle_arduino</Value>
-      <Value>C:/Users/Development/AppData/Local/arduino15/packages/arduino/hardware/avr/1.6.23/libraries/Wire/src</Value>
+      <Value>C:/Program Files (x86)/Arduino/hardware/arduino/avr/libraries/Wire/src</Value>
       <Value>C:/Program Files (x86)/Arduino/libraries</Value>
-      <Value>C:/Users/Development/Documents/Arduino/libraries</Value>
-      <Value>C:/Users/Development/AppData/Local/arduino15/packages/arduino/hardware/avr/1.6.23/libraries</Value>
-      <Value>C:/Users/Development/AppData/Local/arduino15/packages/arduino/hardware/avr/1.6.23/cores/arduino</Value>
-      <Value>C:/Users/Development/AppData/Local/arduino15/packages/arduino/hardware/avr/1.6.23/variants/mega</Value>
-      <Value>C:/Users/Development/AppData/Local/arduino15/packages/arduino/tools/avr-gcc/5.4.0-atmel3.6.1-arduino2/avr/include</Value>
-      <Value>C:/Users/Development/AppData/Local/arduino15/packages/arduino/tools/avr-gcc/5.4.0-atmel3.6.1-arduino2/avr/include/avr</Value>
-      <Value>C:/Users/Development/AppData/Local/arduino15/packages/arduino/tools/avr-gcc/5.4.0-atmel3.6.1-arduino2/lib/gcc/avr/4.8.1/include</Value>
-      <Value>C:/Users/Development/AppData/Local/arduino15/packages/arduino/tools/avr-gcc/5.4.0-atmel3.6.1-arduino2/lib/gcc/avr/4.9.2/include</Value>
-      <Value>C:/Users/Development/AppData/Local/arduino15/packages/arduino/tools/avr-gcc/5.4.0-atmel3.6.1-arduino2/lib/gcc/avr/4.9.3/include</Value>
+      <Value>C:/Users/spongeloaf/Documents/Arduino/libraries</Value>
+      <Value>C:/Program Files (x86)/Arduino/hardware/arduino/avr/libraries</Value>
+      <Value>C:/Program Files (x86)/Arduino/hardware/arduino/avr/cores/arduino</Value>
+      <Value>C:/Program Files (x86)/Arduino/hardware/arduino/avr/variants/mega</Value>
+      <Value>C:/Program Files (x86)/Arduino/hardware/tools/avr/avr/include</Value>
+      <Value>C:/Program Files (x86)/Arduino/hardware/tools/avr/avr/include/avr</Value>
+      <Value>C:/Program Files (x86)/Arduino/hardware/tools/avr/lib/gcc/avr/4.8.1/include</Value>
+      <Value>C:/Program Files (x86)/Arduino/hardware/tools/avr/lib/gcc/avr/4.9.2/include</Value>
+      <Value>C:/Program Files (x86)/Arduino/hardware/tools/avr/lib/gcc/avr/4.9.3/include</Value>
     </ListValues>
   </avrgcc.compiler.directories.IncludePaths>
   <avrgcc.compiler.optimization.level>Optimize (-O1)</avrgcc.compiler.optimization.level>
@@ -175,7 +175,7 @@
   <avrgcccpp.compiler.symbols.DefSymbols>
     <ListValues>
       <Value>__AVR_ATmega2560__</Value>
-      <Value>ARDUINO=10805</Value>
+      <Value>ARDUINO=10809</Value>
       <Value>ARDUINO_MAIN</Value>
       <Value>F_CPU=16000000L</Value>
       <Value>__AVR__</Value>
@@ -186,17 +186,17 @@
   <avrgcccpp.compiler.directories.IncludePaths>
     <ListValues>
       <Value>../../../belt_buckle_arduino</Value>
-      <Value>C:/Users/Development/AppData/Local/arduino15/packages/arduino/hardware/avr/1.6.23/libraries/Wire/src</Value>
+      <Value>C:/Program Files (x86)/Arduino/hardware/arduino/avr/libraries/Wire/src</Value>
       <Value>C:/Program Files (x86)/Arduino/libraries</Value>
-      <Value>C:/Users/Development/Documents/Arduino/libraries</Value>
-      <Value>C:/Users/Development/AppData/Local/arduino15/packages/arduino/hardware/avr/1.6.23/libraries</Value>
-      <Value>C:/Users/Development/AppData/Local/arduino15/packages/arduino/hardware/avr/1.6.23/cores/arduino</Value>
-      <Value>C:/Users/Development/AppData/Local/arduino15/packages/arduino/hardware/avr/1.6.23/variants/mega</Value>
-      <Value>C:/Users/Development/AppData/Local/arduino15/packages/arduino/tools/avr-gcc/5.4.0-atmel3.6.1-arduino2/avr/include</Value>
-      <Value>C:/Users/Development/AppData/Local/arduino15/packages/arduino/tools/avr-gcc/5.4.0-atmel3.6.1-arduino2/avr/include/avr</Value>
-      <Value>C:/Users/Development/AppData/Local/arduino15/packages/arduino/tools/avr-gcc/5.4.0-atmel3.6.1-arduino2/lib/gcc/avr/4.8.1/include</Value>
-      <Value>C:/Users/Development/AppData/Local/arduino15/packages/arduino/tools/avr-gcc/5.4.0-atmel3.6.1-arduino2/lib/gcc/avr/4.9.2/include</Value>
-      <Value>C:/Users/Development/AppData/Local/arduino15/packages/arduino/tools/avr-gcc/5.4.0-atmel3.6.1-arduino2/lib/gcc/avr/4.9.3/include</Value>
+      <Value>C:/Users/spongeloaf/Documents/Arduino/libraries</Value>
+      <Value>C:/Program Files (x86)/Arduino/hardware/arduino/avr/libraries</Value>
+      <Value>C:/Program Files (x86)/Arduino/hardware/arduino/avr/cores/arduino</Value>
+      <Value>C:/Program Files (x86)/Arduino/hardware/arduino/avr/variants/mega</Value>
+      <Value>C:/Program Files (x86)/Arduino/hardware/tools/avr/avr/include</Value>
+      <Value>C:/Program Files (x86)/Arduino/hardware/tools/avr/avr/include/avr</Value>
+      <Value>C:/Program Files (x86)/Arduino/hardware/tools/avr/lib/gcc/avr/4.8.1/include</Value>
+      <Value>C:/Program Files (x86)/Arduino/hardware/tools/avr/lib/gcc/avr/4.9.2/include</Value>
+      <Value>C:/Program Files (x86)/Arduino/hardware/tools/avr/lib/gcc/avr/4.9.3/include</Value>
     </ListValues>
   </avrgcccpp.compiler.directories.IncludePaths>
   <avrgcccpp.compiler.optimization.level>Optimize (-O1)</avrgcccpp.compiler.optimization.level>
