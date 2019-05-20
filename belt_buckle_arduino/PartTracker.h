@@ -29,7 +29,7 @@ public:
 	void tel_server_sorted(unsigned int);
 	void tel_server_lost(unsigned int);
 	void remove_part(SerialPacket&);
-	
+	bool get_assigned(unsigned in);
 	
 private:
 
@@ -47,11 +47,16 @@ int PartTracker::add_part(SerialPacket& packet, unsigned long dist){
 	// first check to see if this part number exists already
 	for (unsigned int i = 0; i < gp::part_list_length; i++)
 	{
-		if (memcmp(part_list[i].id, packet.payload, gp::payload_length) == 0)
-		{
-			packet.result = 409;
-			return;
-		}
+		// skip slots not marked as occupied
+		if (part_list[i].occupied)
+		{		
+			//  compare part id's	
+			if (memcmp(part_list[i].id, packet.payload, gp::payload_length) == 0)
+			{
+				packet.result = 409;
+				return;
+			}
+		}	
 	}
 	
 	// find a free slot in the part list.
@@ -81,7 +86,7 @@ int PartTracker::add_part(SerialPacket& packet, unsigned long dist){
 	
 	part_list[slot].occupied = true;			// this slot is no longer free
 	part_list[slot].distance = dist;            // set the belt distance
-	part_list[slot].bin = 0;                    // bin is always 0 until the assign command
+	part_list[slot].bin = 0;                    // bin is always -1 until the assign command
 		
 	packet.result = 200;
 }
@@ -95,6 +100,7 @@ int PartTracker::assign_bin(SerialPacket& packet){
 		if (memcmp(part_list[i].id, packet.payload, gp::payload_length) == 0)
 		{
 			part_list[i].bin = packet.argument_int;
+			part_list[i].assigned = true;
 			packet.result = 200;
 			return;
 		}
@@ -107,6 +113,9 @@ int PartTracker::assign_bin(SerialPacket& packet){
 void PartTracker::free_part_slot(unsigned int slot)
 {
 	part_list[slot].occupied = false;
+	part_list[slot].assigned = false;
+	part_list[slot].bin = 0;
+	part_list[slot].distance = 0;
 }
 
 
@@ -189,7 +198,6 @@ void PartTracker::print_array(char* to_be_printed)
 	{
 		if (to_be_printed[i] == '\0')
 		{
-			Serial.print("\r\n");
 			return;
 		}
 		Serial.print(to_be_printed[i]);
@@ -201,17 +209,20 @@ void PartTracker::print_slot(unsigned int slot)
 {
 	Serial.print(part_list[slot].occupied);
 	Serial.print("      :     ");
+	Serial.print(part_list[slot].assigned);
+	Serial.print("      :     ");
 	Serial.print(part_list[slot].bin);
 	Serial.print("     :     ");
 	Serial.print(part_list[slot].distance);
 	Serial.print("  : ");
 	print_array(part_list[slot].id);
+	Serial.println("");
 }
 
 
 void PartTracker::print_list_header()
 {
-	Serial.println("Occ.   :    Bin    :    Dist   :   Id") ;
+	Serial.println("Occed   :  Asignd  :    Bin    :    Dist   :   Id") ;
 }
 
 
@@ -265,5 +276,11 @@ void PartTracker::remove_part(SerialPacket& packet)
 	return;
 }
 
+
+bool PartTracker::get_assigned(unsigned slot)
+{
+	// Returns the state of the assigned variable for a slot in the part_list.
+	return part_list[slot].assigned;
+}
 
 #endif /* PARTTRACKER_H_ */

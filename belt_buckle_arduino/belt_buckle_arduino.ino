@@ -21,7 +21,7 @@ void setup() {
 	Serial.begin(57600);
 	Serial.print("[BB_ONLINE]");
 	delay(100);																// This delay is to allow our serial read to timeout on the server.
-	Serial.print("[Belt Buckle v0.6.0]");			// display program name on boot
+	Serial.print("[Belt Buckle v0.6.1]");			// display program name on boot
 	encoder.init();														// Begin i2c
 }
 

@@ -175,6 +175,7 @@ int BinController::check_past_bin(int bin, unsigned long part_dist)
 {
 	// returns an int indicating where a part is relative to a bin.
 
+
 	// past the bin
 	if (part_dist > bin_distances[bin] + bin_width) return -1;
 
