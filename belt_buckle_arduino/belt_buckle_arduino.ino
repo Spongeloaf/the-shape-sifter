@@ -4,14 +4,14 @@
 
 
 // declare all primary control interfaces in the global scope so everyone can use them.
-BinController		bins{};
-ArrayPrint			aprint{};
-PartTracker			parts{};
-FeederController	feeder{};
-BeltController		belt{};
-EncoderController	encoder{};
-EventDriver			events{};
-SerialPacket		packet{};
+BinController				bins{};
+ArrayPrint					aprint{};
+PartTracker					parts{};
+FeederController		feeder{};
+BeltController			belt{};
+EncoderController		encoder{};
+EventDriver					events{};
+SerialPacket				packet{};
 
 
 
