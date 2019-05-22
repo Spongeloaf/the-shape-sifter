@@ -42,7 +42,7 @@ public:
 	void set_bin_dist(int bin, unsigned long dist);
 	void set_bin_defaults();
 	void init_pins();
-	int check_past_bin(int, unsigned long);
+	bool check_past_bin(int, unsigned long);
 
 private:
 	
@@ -171,19 +171,16 @@ void BinController::init_pins()
 }
 
 
-int BinController::check_past_bin(int bin, unsigned long part_dist)
+bool BinController::check_past_bin(int bin, unsigned long part_dist)
 {
-	// returns an int indicating where a part is relative to a bin.
+	// indicates whether or not a part has reached it's bin.
+	
+	if (part_dist > bin_distances[bin]) 
+	{
+		return true;
+	}
 
-
-	// past the bin
-	if (part_dist > bin_distances[bin] + bin_width) return -1;
-
-	// in front of the bin, ready for airjet
-	if (part_dist > bin_distances[bin]) return 1;
-
-	// not reached the bin yet.
-	return 0;
+	return false;
 }
 
 

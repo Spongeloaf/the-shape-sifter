@@ -260,45 +260,29 @@ void EventDriver::check_distances()
 		// checks the distance of the part relative to the bin position.
 		check = bins.check_past_bin(bin, travel_dist);
 		
-		switch (check)
+		// checks the distance of the part relative to the bin position.
+		if (bins.check_past_bin(bin, travel_dist) == false)
 		{
-			case 1:
-
-				// for parts that have not been assigned a bin, don't turn on airjets.
-				if (bin != 0)
-				{
-					bins.on_airjet(bin);
-				}
-				
-				// if a part is assigned a bin, TEL sorted.
-				if (parts.get_assigned(part))
-				{
-					parts.tel_server_sorted(part);
-				}
-				
-				// Otherwise, TEL lost. The part has gone off the end of the belt.
-				else
-				{
-					parts.tel_server_lost(part);
-				}
-				
-				parts.free_part_slot(part);
-			break;
-			
-			// This case occurs when a part passes by a bin before being assigned.
-			case -1:
-				Serial.println("Lost a part");
-				parts.tel_server_lost(part);
-				parts.free_part_slot(part);
-			break;
-			
-			case 0:
-			{
-				// Nothing to do, the part hasn't yet reached the bin.
-				// This case only included for explicitness.
-			}
-			break;
+			// part has not arrived at the bin yet, do nothing.
+			continue;
 		}
+
+		// remember that we only reach this logic if the part is in front of it's bin or off the end of the belt.
+		
+		// normal sort, TEL sorted.
+		if (parts.get_assigned(part))
+		{
+			bins.on_airjet(bin);
+			parts.tel_server_sorted(part);
+		}
+							
+		// Otherwise, TEL lost. The part has gone off the end of the belt.
+		else
+		{
+			parts.tel_server_lost(part);
+		}
+							
+		parts.free_part_slot(part);
 	}
 }
 
