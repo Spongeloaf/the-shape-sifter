@@ -189,7 +189,6 @@ void PartTracker::print_array(char* to_be_printed)
 	{
 		if (to_be_printed[i] == '\0')
 		{
-			Serial.print("\r\n");
 			return;
 		}
 		Serial.print(to_be_printed[i]);
@@ -206,6 +205,7 @@ void PartTracker::print_slot(unsigned int slot)
 	Serial.print(part_list[slot].distance);
 	Serial.print("  : ");
 	print_array(part_list[slot].id);
+	Serial.print("\r\n");
 }
 
 

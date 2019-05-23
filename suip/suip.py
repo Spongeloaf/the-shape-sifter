@@ -18,6 +18,7 @@ class SuipWindow(QMainWindow, ):
 
         # load settings.ini
         self.tick_rate = params.tick_rate
+        self.list_len = params.list_len
 
         # pipes
         self.pipe_send = params.pipe_send
@@ -26,6 +27,7 @@ class SuipWindow(QMainWindow, ):
 
         # part list init
         self.part_list = [PartInstance]
+        self.list_column_count = 0
 
         # windows parameters
         self.setObjectName("MainWindow")
@@ -159,6 +161,8 @@ class SuipWindow(QMainWindow, ):
             column_names.append(var)
             column_count += 1
 
+        self.list_column_count = column_count
+
         # Create table
         tableWidget = QTableWidget(self.tab_active_parts)
         tableWidget.setRowCount(64)
@@ -181,40 +185,29 @@ class SuipWindow(QMainWindow, ):
             return
 
         part_list: list[PartInstance] = self.pipe_part_list.recv()
-        row = 0
 
-        if len(part_list) == 0:
-            return
+        for row in range(self.list_len):
+            if row < len(part_list):
+                column = 0
+                for attr, value in part_list[row].__dict__.items():
+                    value = str(value)
+                    self.table_active_parts.setItem(row, column, QTableWidgetItem(value))
+                    column += 1
+            else:
+                column = 0
+                for column in range(self.list_column_count):
+                    self.table_active_parts.setItem(row, column, QTableWidgetItem(''))
 
-        for part in part_list:
-            column = 0
-            for attr, value in part.__dict__.items():
-                value = str(value)
-                self.table_active_parts.setItem(row, column, QTableWidgetItem(value))
-                column += 1
-            row += 1
-            if row > 64:
-                print("Suip part table overflow in update_active_part_table()")
-                break
-
-        # # We begin by initializing a row count at 0 because I haven't found a way to loop through rows in pyQT.
-        # row_num = 0
-        #
-        # # loop through the whole DB
-        # for row in self.sql_curr.execute("SELECT * FROM active_part_db"):
-        #
-        #     # the row returned from sql is a tuple, so we convert to a list, and drop the first item using slice notation
-        #     row = list(row[1:])
-        #
-        #     # we need to fill each column of the GUI row individually, so we get the number of columns
-        #     column = len(row)
-        #
-        #     # loop through the columns adding each value individually.
-        #     for column in range(0, column, 1):
-        #         value = str(row[column])
-        #         self.table_active_parts.setItem(row_num, column, QTableWidgetItem(value))
-        #
-        #     row_num += 1
+        # for part in part_list:
+        #     column = 0
+        #     for attr, value in part.__dict__.items():
+        #         value = str(value)
+        #         self.table_active_parts.setItem(row, column, QTableWidgetItem(value))
+        #         column += 1
+        #     row += 1
+        #     if row > 64:
+        #         print("Suip part table overflow in update_active_part_table()")
+        #         break
 
 
     def click_server_control_halt(self):

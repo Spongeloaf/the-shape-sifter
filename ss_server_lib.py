@@ -69,6 +69,7 @@ class ServerInit:
         self.cf_log_level = self.server_config['cf']['log_level']
 
         self.suip_log_level = self.server_config['suip']['log_level']
+        self.suip_list_len = int(self.server_config['suip']['list_len'])
 
         self.bb_com_port = self.server_config['bb']['com_port']
         self.bb_baud_rate = self.server_config['bb']['baud_rate']
@@ -181,6 +182,7 @@ class ClientParams:
             self.pipe_recv = server_init.pipe_suip_recv
             self.pipe_send = server_init.pipe_suip_send
             self.pipe_part_list = server_init.pipe_part_list_recv
+            self.list_len = server_init.suip_list_len
 
 
 class ServerMode:
@@ -307,7 +309,8 @@ def iterate_part_list(server: ServerInit):
         if part.server_status == 'cf_done':
             if part.t_cf == 0.0:
                 part.t_cf = time.perf_counter()
-            send_bb_part_command(server, part, 'B', part.bin_assignment)
+            if part.bb_status == 'added':
+                send_bb_part_command(server, part, 'B', part.bin_assignment)
             continue
 
 
@@ -427,6 +430,18 @@ def bb_parse_packet(server: ServerInit, packet: ss.BbPacket):
         if packet.command == 'A':
             bb_update_part(server, packet, 'added')
             return
+
+        # ...a part has been removed from the tracker
+        if packet.command == 'O':
+            for part in server.part_list:
+                if part.instance_id == packet.payload:
+                    server.part_list.remove(part)
+                    return
+            return
+
+        # ...an M command has been acknowledged. We don't need to do anything.
+        if packet.command == 'M':
+            pass
 
         else:
             server.logger.error("slib.bb_parse_packet failed. Invalid response to an ACK: {}".format(packet.serial_string))

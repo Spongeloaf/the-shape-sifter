@@ -12,6 +12,7 @@
 #define FEEDERCONTROLLER_H_
 #include "bb_parameters.h"
 
+
 class FeederController{
 	// This object provides a control interface to the part feeder.
 	// This class ensures that the motor operates safely.
@@ -42,23 +43,24 @@ class FeederController{
 	unsigned long startup_t = 0;															// tracks when the motor began to spin. Used by start() to limit current draw of stationary motor.
 	unsigned long startup_delay = 2000;														// delay in milliseconds to keep the motor in the startup phase.
 	const int num_speeds = 12;																// The number of speeds the feeder has. Used to unsure speed_selector doesn't go out of bounds.
-	const int speed_array[13] = {										// hold the PWM output speeds for the feeder.
-		20,
-		30,
-		40,
-		50,
-		60,
-		75,
-		100,
-		125,
-		150,
-		175,
-		200,
-		225,
-		255
-	};
 	bool delayed = false;																	// Bool to control startup delay
 	unsigned int delay_timer = 0;															// time in ms when the startup delay will be over.
+	const int speed_array[13] = {															// holds the PWM output speeds for the feeder.
+		60,
+		75,
+		90,
+		105,
+		130,
+		145,
+		160,
+		175,
+		190,
+		205,
+		220,
+		245,
+		255
+	};
+
 };
 
 
@@ -196,17 +198,16 @@ int FeederController::get_speed()
 
 void FeederController::start_delayed(unsigned int delay)
 {
-	// sets a delay in ms before the feeder spins up.
-	
-	unsigned int now = millis();
-	
+	// sets a delay in ms before the feeder spins up.	
 	if (delayed == false)
 	{
-		delayed = true;
+		unsigned int now = millis();
 		delay_timer = now + delay;
+		delayed = true;
+		return;
 	}
 	
-	if (millis > delay_timer)
+	if (millis() > delay_timer)
 	{
 		delayed = false;
 		start();

@@ -45,7 +45,6 @@ class PartInstance:
         self.t_assigned = t_assigned
 
 
-
 class SuipLadle:
     """An object class for sending and receiving commands from the SUIP"""
     def __init__(self, command: str = '', info: str = '', payload=None):
@@ -112,7 +111,7 @@ class BbPacket:
                     # More checks can be added the same way going forward. A simple IF statement followed by a status code change.
 
                     if serial_split[0] == 'ACK':
-                        serial_string = serial_string
+                        # serial_string = serial_string
                         self.type = serial_split[0]
                         self.command = serial_split[1]
                         self.response = serial_split[2]
@@ -121,6 +120,8 @@ class BbPacket:
                         if len(serial_string) != 29:
                             self.status_code = '401'
                             self.status_string = 'Bad Packet length'
+                        else:
+                            print('wtf')
 
                     elif serial_split[0] == 'TEL':
                         self.type = serial_split[0]
@@ -128,7 +129,7 @@ class BbPacket:
                         self.argument = serial_split[2]
                         self.payload = serial_split[3]
                         self.status_code = '200'
-                        if len(serial_string) != 30:
+                        if len(serial_string) != 29:
                             self.status_code = '401'
                             self.status_string = 'Bad Packet length'
 

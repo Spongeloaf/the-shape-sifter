@@ -134,7 +134,7 @@ void BinController::set_bin_dist(int bin, unsigned long dist)
 
 void BinController::set_bin_defaults()
 {
-	bin_airjet_time = 200;
+	bin_airjet_time = 400;
 	
 	bin_width = 4158;
 	
