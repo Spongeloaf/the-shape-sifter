@@ -21,7 +21,9 @@ class FeederController{
 	// Afterwards, the speed will be increased to the user's desired amount.
 	// In the main loop, event_tick() will update the motor speed once the startup cycle is complete.
 	public:
-	FeederController() {};
+	FeederController() {
+		pinMode(gp::feeder_start_pin, OUTPUT);
+	};
 	
 	// please see function definitions for documentation.
 	void speed_up();
@@ -41,7 +43,7 @@ class FeederController{
 	bool mode = false;																		// bool to control the current speed of the belt, so we can turn it off without changing speed.
 	bool startup = false;																	// true during speed limited startup phase.
 	unsigned long startup_t = 0;															// tracks when the motor began to spin. Used by start() to limit current draw of stationary motor.
-	unsigned long startup_delay = 2000;														// delay in milliseconds to keep the motor in the startup phase.
+	unsigned long startup_delay = 3000;														// delay in milliseconds to keep the motor in the startup phase.
 	const int num_speeds = 12;																// The number of speeds the feeder has. Used to unsure speed_selector doesn't go out of bounds.
 	bool delayed = false;																	// Bool to control startup delay
 	unsigned int delay_timer = 0;															// time in ms when the startup delay will be over.
@@ -80,7 +82,7 @@ void FeederController::speed_up()
 	// only writes to analog output if the feeder is currently running, and not currently spinning up.
 	if (mode && (!(startup)))
 	{
-		analogWrite(gp::hopper_pwm_pin, speed_array[speed_selector]);
+		analogWrite(gp::feeder_pwm_pin, speed_array[speed_selector]);
 	}
 }
 
@@ -101,7 +103,7 @@ void FeederController::speed_down()
 	// only writes to analog output if the feeder is currently running
 	if (mode && (!(startup)))
 	{
-		analogWrite(gp::hopper_pwm_pin, speed_array[speed_selector]);
+		analogWrite(gp::feeder_pwm_pin, speed_array[speed_selector]);
 	}
 
 }
@@ -147,7 +149,8 @@ void FeederController::start()
 		if ((now_t - startup_t) > startup_delay)
 		{
 			startup = false;
-			analogWrite(gp::hopper_pwm_pin, speed_array[speed_selector]);
+			digitalWrite(gp::feeder_start_pin, HIGH);
+			analogWrite(gp::feeder_pwm_pin, speed_array[speed_selector]);
 			Serial.println("full speed");
 		}
 		return;
@@ -163,7 +166,7 @@ void FeederController::start()
 	startup_t = millis();
 	startup = true;
 	mode = true;
-	analogWrite(gp::hopper_pwm_pin, 20);
+	analogWrite(gp::feeder_pwm_pin, 255);
 
 	Serial.println("startup");
 	return;
@@ -174,7 +177,8 @@ void FeederController::stop()
 {
 	mode = false;
 	startup = false;
-	analogWrite(gp::hopper_pwm_pin, 0);
+	digitalWrite(gp::feeder_start_pin, LOW);
+	analogWrite(gp::feeder_pwm_pin, 0);
 }
 
 

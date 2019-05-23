@@ -246,48 +246,43 @@ void EventDriver::check_distances()
 	// loop through the main part array
 	for (unsigned int part = 0; part < gp::part_list_length; part++)
 	{
-		// gets the bin assigned to part_array[part].
-		bin = parts.get_bin(part);
-		
 		// skips unassigned part slots.
 		if (parts.get_occupied(part) == false)
 		{
 			continue;
 		}
+		
+		// gets the bin assigned to part_list[part].
+		bin = parts.get_bin(part);
 
 		travel_dist = current_dist - parts.get_dist(part);
 		
 		// checks the distance of the part relative to the bin position.
 		check = bins.check_past_bin(bin, travel_dist);
 		
-		switch (check)
+		// checks the distance of the part relative to the bin position.
+		if (bins.check_past_bin(bin, travel_dist) == false)
 		{
-			case 1:
-				// TODO: Add server response indicating a successful sort.
-				
-				// for parts that have not been assigned a bin, don't turn on airjets.
-				if (bin != 0)
-				{
-					bins.on_airjet(bin);
-				}
-				parts.tel_server_sorted(part);
-				parts.free_part_slot(part);
-			break;
-			
-			case -1:
-				// TODO: Notify events that a part missed its' bin.
-				Serial.println("Lost a part");
-				parts.tel_server_lost(part);
-				parts.free_part_slot(part);
-			break;
-			
-			case 0:
-			{
-				// Nothing to do, the part hasn't yet reached the bin.
-				// This case only included for explicitness.
-			}
-			break;
+			// part has not arrived at the bin yet, do nothing.
+			continue;
 		}
+
+		// remember that we only reach this logic if the part is in front of it's bin or off the end of the belt.
+		
+		// normal sort, TEL sorted.
+		if (parts.get_assigned(part))
+		{
+			bins.on_airjet(bin);
+			parts.tel_server_sorted(part);
+		}
+							
+		// Otherwise, TEL lost. The part has gone off the end of the belt.
+		else
+		{
+			parts.tel_server_lost(part);
+		}
+							
+		parts.free_part_slot(part);
 	}
 }
 

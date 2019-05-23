@@ -10,13 +10,15 @@
 #ifndef BB_PARAMETERS_H_
 #define BB_PARAMETERS_H_
 
-namespace gp {
-	// Global parameters used by almost all classes.
+
+// Global parameters used by almost all classes.
+namespace gp {	
 	
 	// These globals are used for setting up pin numbers, and size parameters.
 	// They are all magic constants that may change. All of them are used in constructing the main controller objects.
 	// Magic constants which are unlikely to change exist within each class's constructor.
-	constexpr int hopper_pwm_pin = 3;						// PWM pin number of the hopper. Should be 3.
+	constexpr int feeder_start_pin = 2;						// Startup control pin of the hopper.
+	constexpr int feeder_pwm_pin = 3;						// PWM pin number of the hopper. Should be 3.
 	constexpr int belt_control_pin = 52;					// Pin connected to belt drive relay.
 	constexpr int wire_address = 2;							// I2C address of the belt encoder. This is the address we read from.
 	constexpr int part_list_length = 64;                        // the number of parts we can keep track of - global
@@ -27,6 +29,7 @@ namespace gp {
 	unsigned long sim_scaler = 1;							// scales the output of millis() for use in the packet sim. See trello for details.
 	constexpr unsigned int feeder_delay = 750;				// milliseconds to wait before starting the feeder.
 
+
 	// These cannot be changed without modifying the packet structure and parts of event driver.
 	// They are used in the parsing of packets.
 	// DO NOT CHANGE THEM UNLESS YOU KNOW EXACTLY WHAT YOU ARE DOING!
@@ -36,6 +39,7 @@ namespace gp {
 	constexpr int payload_length = 13;						// number of bytes in the packet payload
 	constexpr int serial_str_len = 24;				// length in bytes of a packet string plus null terminator.
 }
+
 
 // a struct to hold packet data
 struct SerialPacket {
@@ -50,33 +54,14 @@ struct SerialPacket {
 };
 
 
-/*
-class Parameters{
- TODO: One day, whenever Half Life 3 or the new Tool album is released,
- I'm going to migrate all of the global variables into this class.
- I will then use a map or some custom data structure to have the variable names and values
- set/get able by int values, so I can set/get them all form serial commands. 
-
- But it is not this day!  
-
- for now, we fake it with some simple functions in event driver.h 
- to handle basic stuff like running the performance timer
- or turning on the encoder simulator. 
-
- There's also a few concerns regarding constexprs, they can't be used inside a class.
- MAybe it will never happen, but it would be nice to somehow find a way to
- unclutter the global scope while still using compile-time variables 
- instead of run-time.
-};
-*/
-
-
+// holds one part in the part_list
 struct TrackedPart {
-// holds one part
-bool occupied = false;		// false == this slot is available for use by a new part.
+	
+bool occupied = false;				// false == this slot is available for use by a new part.
+bool assigned = false;				// false == part has not been assigned to a bin
+unsigned int bin = 0;					// destination bin, zero by default
+unsigned long distance = 0;		// belt encoder reading at the time of part being added.
 char id[gp::payload_length] = {'z','z','z','z','z','z','z','z','z','z','z','z','\0'};
-unsigned int bin = 0;
-unsigned long distance = 0;
 };
 
 

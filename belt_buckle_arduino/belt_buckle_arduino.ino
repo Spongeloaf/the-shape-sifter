@@ -4,14 +4,14 @@
 
 
 // declare all primary control interfaces in the global scope so everyone can use them.
-BinController		bins{};
-ArrayPrint			aprint{};
-PartTracker			parts{};
-FeederController	feeder{};
-BeltController		belt{};
-EncoderController	encoder{};
-EventDriver			events{};
-SerialPacket		packet{};
+BinController				bins{};
+ArrayPrint					aprint{};
+PartTracker					parts{};
+FeederController		feeder{};
+BeltController			belt{};
+EncoderController		encoder{};
+EventDriver					events{};
+SerialPacket				packet{};
 
 
 
@@ -21,7 +21,7 @@ void setup() {
 	Serial.begin(57600);
 	Serial.print("[BB_ONLINE]");
 	delay(100);																// This delay is to allow our serial read to timeout on the server.
-	Serial.print("[Belt Buckle v0.6.0]");			// display program name on boot
+	Serial.print("[Belt Buckle v0.6.2]");			// display program name on boot
 	encoder.init();														// Begin i2c
 }
 
