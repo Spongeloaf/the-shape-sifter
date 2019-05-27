@@ -238,6 +238,7 @@ def update_part_list(new_parts_list: List[PartParams], old_parts_list: List[Part
                 save_image(cropped_image, new_part.instance_id, params)
                 fastai_image = convert_to_fastai(cropped_image)
                 new_part.part_image = fastai_image
+                new_part.camera_offset = camera_offset(new_parts_list[i])
 
                 # Dispatch to server and BB, but not when running stand alone.
                 if __name__ != '__main__':
@@ -390,6 +391,10 @@ def make_new_part():
         serial_string='',
     )
     return part
+
+
+def camera_offset(part: PartParams):
+    pass
 
 
 def dispatch_part(params: TaxiParams, part: PartInstance):

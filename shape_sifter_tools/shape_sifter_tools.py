@@ -20,6 +20,7 @@ class PartInstance:
                  part_color: str ='',
                  category_name: str ='',
                  bin_assignment: int =0,
+                 camera_offset: int = -1,
                  server_status: str ='',
                  bb_status: str ='',
                  serial_string: str= '',
@@ -36,6 +37,7 @@ class PartInstance:
         self.part_color = part_color
         self.category_name = category_name
         self.bin_assignment = bin_assignment
+        self.camera_offset = camera_offset
         self.server_status = server_status
         self.bb_status = bb_status
         self.serial_string = serial_string
