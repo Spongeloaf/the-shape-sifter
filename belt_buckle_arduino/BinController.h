@@ -138,25 +138,25 @@ void BinController::set_bin_defaults()
 	
 	bin_width = 4158;
 	
-	bin_distances[0] = 23077;	// off the end of the belt
-	bin_distances[1] = 6445;
-	bin_distances[2] = 6445;
-	bin_distances[3] = 10603;
-	bin_distances[4] = 10603;
-	bin_distances[5] = 14761;
-	bin_distances[6] = 14761;
-	bin_distances[7] = 18919;
-	bin_distances[8] = 18919;
+	bin_distances[0] = 27077;	// off the end of the belt
+	bin_distances[1] = 9070;
+	bin_distances[2] = 9070;
+	bin_distances[3] = 13188;
+	bin_distances[4] = 13188;
+	bin_distances[5] = 17335;
+	bin_distances[6] = 17335;
+	bin_distances[7] = 21420;
+	bin_distances[8] = 21420;
 	
 	// off the end of the belt, if we're still using the original one.	
-	bin_distances[9] = 23077;
-	bin_distances[10] = 23077;
-	bin_distances[11] = 23077;
-	bin_distances[12] = 23077;
-	bin_distances[13] = 23077;
-	bin_distances[14] = 23077;
-	bin_distances[15] = 23077;
-	bin_distances[16] = 23077;
+	bin_distances[9] = 27077;
+	bin_distances[10] = 27077;
+	bin_distances[11] = 27077;
+	bin_distances[12] = 27077;
+	bin_distances[13] = 27077;
+	bin_distances[14] = 27077;
+	bin_distances[15] = 27077;
+	bin_distances[16] = 27077;
 }
 
 

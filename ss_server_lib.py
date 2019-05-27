@@ -287,7 +287,7 @@ def iterate_part_list(server: ServerInit):
         if part.server_status == 'new':
             if part.t_taxi == 0.0:
                 part.t_taxi = time.perf_counter()
-            send_bb_part_command(server, part, 'A')
+            send_bb_part_command(server, part, 'A', part.camera_offset)
             send_mtm(server, part)
             continue
 

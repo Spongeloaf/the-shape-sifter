@@ -155,10 +155,12 @@ class BbPacket:
 
             if self.type == 'BBC':
                 self.status_code = '200'
+                if isinstance(argument, float):
+                    argument = int(argument)
 
-                # TODO: Replace this line with a robust 0 padding formatter.
                 if isinstance(argument, int):
                     argument = str(argument)
+
                 self.argument = argument.zfill(4)
 
                 self.serial_string = '<{}{}{}CSUM>'.format(self.command, self.argument, self.payload)
