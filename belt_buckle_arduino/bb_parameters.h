@@ -28,7 +28,7 @@ namespace gp {
 	constexpr int print_size = 64;								// max array size to print. Increasing it will consume more memory.
 	unsigned long sim_scaler = 1;							// scales the output of millis() for use in the packet sim. See trello for details.
 	constexpr unsigned int feeder_delay = 750;				// milliseconds to wait before starting the feeder.
-
+	constexpr unsigned long distance_offset = 1000;
 
 	// These cannot be changed without modifying the packet structure and parts of event driver.
 	// They are used in the parsing of packets.

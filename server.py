@@ -34,6 +34,8 @@ if __name__ == '__main__':
     server = slib.ServerInit()
     mode = slib.ServerMode()
     clients = slib.start_clients(server)
+    perf_counter = 0
+    server.logger.critical("perf counter start")
 
     # main loop
     while True:
@@ -64,3 +66,8 @@ if __name__ == '__main__':
         t_duration = t_stop - t_start
         if t_duration < server.global_tick_rate:
             time.sleep(server.global_tick_rate - t_duration)
+
+        perf_counter += 1
+        if perf_counter > 3750:
+            server.logger.critical("perf counter end")
+            perf_counter = 0

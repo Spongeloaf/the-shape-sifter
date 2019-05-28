@@ -122,8 +122,6 @@ class BbPacket:
                         if len(serial_string) != 29:
                             self.status_code = '401'
                             self.status_string = 'Bad Packet length'
-                        else:
-                            print('wtf')
 
                     elif serial_split[0] == 'TEL':
                         self.type = serial_split[0]

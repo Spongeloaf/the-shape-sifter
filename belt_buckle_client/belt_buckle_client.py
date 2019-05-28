@@ -24,7 +24,7 @@ def main(params: ClientParams):
     bb_status = False
     serial_read_str = ''
     logger = ss.create_logger(params.log_fname_const, params.log_level, 'belt_buckle_client')
-
+    print("bb params.log_level: {}".format(params.log_level))
     # run without a com port. Dumps the pipe to nowhere. For development purposes only!
     if params.test_run:
         logger.info("Belt buckle is running in test mode. No hardware interaction!")
@@ -61,7 +61,7 @@ def main(params: ClientParams):
             if t_duration < 0.017:
                 time.sleep(0.017 - t_duration)
 
-    logger.info("bitch we runnin'")
+    logger.info("BB Online using {}".format(params.com_port))
 
     # main loop
     while True:
@@ -100,6 +100,7 @@ def main(params: ClientParams):
                         logger.debug('server > bb: {}'.format(server_command_received.byte_string))
 
                         ser.write(server_command_received.byte_string)
+                        logger.critical(server_command_received.byte_string)
                     else:
                         logger.error('received bad BbPacket from server:{}').format(vars(server_command_received))
 
@@ -120,11 +121,12 @@ def main(params: ClientParams):
         elif serial_read_char == ']':
             serial_read_str = serial_read_str + serial_read_char
             logger.debug("bb > server {}".format(serial_read_str))
+            logger.critical(serial_read_str)
             bb_command_receive = ss.BbPacket(serial_string=serial_read_str)
             if bb_command_receive.status_code == '200':
                 params.pipe_send.send(bb_command_receive)
             else:
-                logger.info('malformed packet received from belt buckle: {}'.format(vars(bb_command_receive)))
+                logger.error('malformed packet received from belt buckle: {}'.format(vars(bb_command_receive)))
             serial_read_str = ''
 
         elif serial_read_char != '':
@@ -132,5 +134,6 @@ def main(params: ClientParams):
 
         t_stop = time.perf_counter()
         t_duration = t_stop - t_start
+
         if t_duration < params.tick_rate:
             time.sleep(params.tick_rate - t_duration)

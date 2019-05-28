@@ -18,8 +18,8 @@ public:
 
 	PartTracker() {};
 
-	int add_part(SerialPacket&, unsigned long);
-	int assign_bin(SerialPacket&);
+	void add_part(SerialPacket&, unsigned long);
+	void assign_bin(SerialPacket&);
 	void free_part_slot(unsigned int);
 	int get_bin(unsigned int);
 	unsigned long  get_dist(unsigned int);
@@ -42,7 +42,7 @@ private:
 
 
 		
-int PartTracker::add_part(SerialPacket& packet, unsigned long dist){
+void PartTracker::add_part(SerialPacket& packet, unsigned long dist){
 
 	// first check to see if this part number exists already
 	for (unsigned int i = 0; i < gp::part_list_length; i++)
@@ -83,16 +83,17 @@ int PartTracker::add_part(SerialPacket& packet, unsigned long dist){
 	{
 		part_list[slot].id[i] = packet.payload[i];
 	}
-	
-	part_list[slot].occupied = true;			// this slot is no longer free
-	part_list[slot].distance = dist;            // set the belt distance
-	part_list[slot].bin = 0;                    // bin is always -1 until the assign command
 		
+	part_list[slot].occupied = true;								// this slot is no longer free
+	part_list[slot].distance = dist - packet.argument_int;          // set the belt distance
+	part_list[slot].bin = 0;										// bin is 0 until the assign command
+	part_list[slot].assigned = false;								// the part has not yet been assigned to a bin
+	
 	packet.result = 200;
 }
 
 
-int PartTracker::assign_bin(SerialPacket& packet){ 
+void PartTracker::assign_bin(SerialPacket& packet){ 
 	            
 	// assign a part to a bin. loops through the payload array, returns 404 if the part isn't found
 	for (unsigned int i = 0; i < gp::part_list_length; i++)
@@ -216,11 +217,7 @@ void PartTracker::print_slot(unsigned int slot)
 	Serial.print(part_list[slot].distance);
 	Serial.print("  : ");
 	print_array(part_list[slot].id);
-<<<<<<< HEAD
-	Serial.print("\r\n");
-=======
 	Serial.println("");
->>>>>>> 9ca1d17b67d0a69ec53e2e3591184e23bae32912
 }
 
 

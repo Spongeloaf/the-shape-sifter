@@ -254,7 +254,16 @@ void EventDriver::check_distances()
 		
 		// gets the bin assigned to part_list[part].
 		bin = parts.get_bin(part);
-
+		
+		/*
+		// True when the belt hasn't yet moved farther than the length of the camera box.
+		// There's no way a part could have passed a bin yet.
+		if (current_dist < parts.get_dist(part))
+		{
+			continue;
+		}
+		*/
+		
 		travel_dist = current_dist - parts.get_dist(part);
 		
 		// checks the distance of the part relative to the bin position.

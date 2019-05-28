@@ -39,7 +39,7 @@ class ServerInit:
         self.logger = ss.create_logger(self.server_log_file_const, 'DEBUG')
 
         # create sorting log
-        self.sort_log = ss.create_logger(self.server_sort_log_file_const, 'INFO')
+        self.sort_log = ss.create_logger(self.server_sort_log_file_const, 'INFO', "sort_log")
 
         # TODO: Move this somewhere else! Make a function out of it along with the next block below
         # if config file doesn't exist, create one. Defaults are in shape_sifter_tools.py

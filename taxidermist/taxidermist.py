@@ -47,10 +47,10 @@ class TaxiParams:
         self.video_source = init_params.video_source
         self.view_video = init_params.view_video
         if init_params.video_source == "cam":
-            self.logger.debug("params.video_source == cam")
+            self.logger.info("params.video_source == cam")
             self.video, self.video_shape = configure_webcam()
         elif init_params.video_source == "vid":
-            self.logger.debug("params.video_source == vid")
+            self.logger.info("params.video_source == vid")
             self.video, self.video_shape = self.configure_video_file()
         else:
             self.logger.critical("Invalid 'video_source' in parameter object. Expected 'cam' or 'vid', got {}. Check settings.ini".format(params.video_source))
@@ -342,7 +342,7 @@ def map_centers(old: List[PartParams], new: List[PartParams]):
             new[match].status = 'mapped'
 
         except ValueError:
-            print("value error in map centers()")
+            pass
 
     return
 
