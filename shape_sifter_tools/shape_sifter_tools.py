@@ -5,7 +5,7 @@
 import logging
 import configparser
 from fastai.vision import Image
-from sqlite3 import Binary
+
 
 
 class PartInstance:
@@ -216,11 +216,11 @@ def create_logger(log_file_const, log_level='DEBUG', log_name = 'a_logger_has_no
     # Create logger
     log = logging.getLogger(log_name)
     log.setLevel(logging.DEBUG)
-    fh = logging.FileHandler(log_file_const)    # file handler object for logger
-    ch = logging.StreamHandler()                # create console handler
+    fh = logging.FileHandler(log_file_const, mode='w')      # file handler object for logger
+    ch = logging.StreamHandler()                            # create console handler
 
-    ch.setLevel(logging.DEBUG)                  # default log levels set to debug in case config fails
-    fh.setLevel(logging.DEBUG)                  # default log levels set to debug in case config fails
+    ch.setLevel(logging.DEBUG)                              # default log levels set to debug in case config fails
+    fh.setLevel(logging.DEBUG)                              # default log levels set to debug in case config fails
 
     #set levels from config file
     if log_level == 'DEBUG':

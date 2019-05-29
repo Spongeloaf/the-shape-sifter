@@ -275,12 +275,12 @@ def iterate_part_list(server: ServerInit):
 
         # checks for any parts that were sorted by the belt buckle
         if part.bb_status == 'sorted':
-            server.sort_log.info('id:{}, bin{}, cat: {}, pnum: {}'.format(part.instance_id, part.bin_assignment, part.category_name, part.part_number))
+            server.sort_log.info('id:{}, bin{}, cat: {}, time: {}, {}, {}, {}'.format(part.instance_id, part.bin_assignment, part.category_name, part.t_taxi, part.t_mtm, part.t_cf, part.t_assigned))
             server.part_list.remove(part)
 
         # checks for parts that have been lost by the belt buckle. A part is lost if it misses it's bin and goes off the end of the belt.
         if part.bb_status == 'lost':
-            server.sort_log.info('id:{}, bin{}, cat: {}, pnum: {}, NOT SORTED!'.format(part.instance_id, part.bin_assignment, part.category_name, part.part_number))
+            server.sort_log.info('id:{}, bin{}, cat: {}, time: {}, {}, {}, {}, LOST!'.format(part.instance_id, part.bin_assignment, part.category_name, part.t_taxi, part.t_mtm, part.t_cf, part.t_assigned))
             server.part_list.remove(part)
 
         # server status = new; the part was just received from the taxidermist. Send it to the MTM
