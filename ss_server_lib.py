@@ -268,34 +268,24 @@ def iterate_part_list(server: ServerInit):
     # we may also want to take action based on server status codes too.
     for part in plist:
 
-        # checks for parts which have been assigned by the belt buckle and timestamps them.
-        if part.bb_status == 'assigned':
-            if part.t_assigned == 0.0:
-                part.t_assigned = time.perf_counter()
-
         # checks for any parts that were sorted by the belt buckle
         if part.bb_status == 'sorted':
-            server.sort_log.info('id:{}, bin{}, cat: {}, time: {}, {}, {}, {}'.format(part.instance_id, part.bin_assignment, part.category_name, part.t_taxi, part.t_mtm, part.t_cf, part.t_assigned))
+            server.sort_log.info('id:{}, bin{}, cat: {}, time: {}, {}, {}, {}, {}'.format(part.instance_id, part.bin_assignment, part.category_name, part.t_taxi, part.t_mtm, part.t_cf, part.t_added, part.t_assigned))
             server.part_list.remove(part)
 
         # checks for parts that have been lost by the belt buckle. A part is lost if it misses it's bin and goes off the end of the belt.
         if part.bb_status == 'lost':
-            server.sort_log.info('id:{}, bin{}, cat: {}, time: {}, {}, {}, {}, LOST!'.format(part.instance_id, part.bin_assignment, part.category_name, part.t_taxi, part.t_mtm, part.t_cf, part.t_assigned))
+            server.sort_log.info('id:{}, bin{}, cat: {}, time: {}, {}, {}, {}, {}, LOST!'.format(part.instance_id, part.bin_assignment, part.category_name, part.t_taxi, part.t_mtm, part.t_cf, part.t_added, part.t_assigned))
             server.part_list.remove(part)
 
         # server status = new; the part was just received from the taxidermist. Send it to the MTM
         if part.server_status == 'new':
-            if part.t_taxi == 0.0:
-                part.t_taxi = time.perf_counter()
             send_bb_part_command(server, part, 'A', part.camera_offset)
             send_mtm(server, part)
             continue
 
         # server status = mtm_done; the part was returned frm the MTMind, send it to the classifist.
         if part.server_status == 'mtm_done':
-            if part.t_mtm == 0.0:
-                part.t_mtm = time.perf_counter()
-
             # throw away parts that are actually just belt pictures
             if part.category_name == 'belt':
                 send_bb_control_command(server, 'O', '0000', part.instance_id)
@@ -307,8 +297,6 @@ def iterate_part_list(server: ServerInit):
 
         # server_status = cf_done; the part was returned from the classifist. Send the bin assignment to the belt buckle.
         if part.server_status == 'cf_done':
-            if part.t_cf == 0.0:
-                part.t_cf = time.perf_counter()
             if part.bb_status == 'added':
                 send_bb_part_command(server, part, 'B', part.bin_assignment)
             continue
@@ -348,6 +336,7 @@ def check_taxi(server: ServerInit):
     # checks if the taxidermist has anything for us. Sends the part to the MTM and the BB
     if server.pipe_server_recv_taxi.poll(0):
         read_part: ss.PartInstance = server.pipe_server_recv_taxi.recv()
+        read_part.t_taxi = time.perf_counter()
         server.part_list.append(read_part)
 
 
@@ -355,6 +344,7 @@ def check_mtm(server: ServerInit):
     """Checks the MT mind for parts"""
     if server.pipe_server_recv_mtm.poll(0):
         read_part: ss.PartInstance = server.pipe_server_recv_mtm.recv()
+        read_part.t_mtm = time.perf_counter()
 
         for part in server.part_list:
             if part.instance_id == read_part.instance_id:
@@ -369,6 +359,7 @@ def check_cf(server: ServerInit):
     """Checks the classifist for parts"""
     if server.pipe_server_recv_cf.poll(0):
         read_part: ss.PartInstance = server.pipe_server_recv_cf.recv()
+        read_part.t_cf = time.perf_counter()
 
         for part in server.part_list:
             if part.instance_id == read_part.instance_id:
@@ -388,6 +379,10 @@ def bb_update_part(server: ServerInit, packet: ss.BbPacket, status: str):
     for part in server.part_list:
         if packet.payload == part.instance_id:
             part.bb_status = status
+            if status == 'assigned':
+                part.t_assigned = time.perf_counter()
+            if status == 'added':
+                part.t_added = time.perf_counter()
 
 
 def bb_parse_packet(server: ServerInit, packet: ss.BbPacket):
@@ -397,7 +392,7 @@ def bb_parse_packet(server: ServerInit, packet: ss.BbPacket):
         server.logger.critical("Bad packet received from belt buckle: {0}".format(packet.serial_string))
 
     # TEL commands notify the server that...
-    if packet.type == 'TEL':
+    if packet.command_type == 'TEL':
 
         # ...a part has been sorted. Remove it from the part_list.
         if packet.command == 'C':
@@ -419,7 +414,7 @@ def bb_parse_packet(server: ServerInit, packet: ss.BbPacket):
             pass
 
     # ACK commands inform the server that a previous BBC command sent to the BB was received, understood, and executed. Any errors will be indicated by the response code
-    elif packet.type == 'ACK':
+    elif packet.command_type == 'ACK':
 
         # ...a part has been assigned to a bin
         if packet.command == 'B':
@@ -458,7 +453,7 @@ def send_mtm(server: ServerInit, part: ss.PartInstance):
 
 def send_bb_part_command(server: ServerInit, part: ss.PartInstance, command: str, arg='0000'):
     """Sends a part command to the belt buckle"""
-    packet = ss.BbPacket(command=command, payload=part.instance_id, argument=arg, type='BBC')
+    packet = ss.BbPacket(command=command, payload=part.instance_id, argument=arg, command_type='BBC')
     if packet.status_code == '200':
         part.serial_string = packet.serial_string
         part.bb_status = 'wait_ack'
@@ -470,7 +465,7 @@ def send_bb_part_command(server: ServerInit, part: ss.PartInstance, command: str
 
 def send_bb_control_command(server: ServerInit, command: str, arg: str= '0000', payload: str = '000000000000'):
     """Sends a control command to the belt buckle"""
-    packet = ss.BbPacket(command=command, argument=arg, payload=payload, type='BBC')
+    packet = ss.BbPacket(command=command, argument=arg, payload=payload, command_type='BBC')
     if packet.status_code == '200':
         server.pipe_server_send_bb.send(packet)
     else:

@@ -27,6 +27,7 @@ class PartInstance:
                  t_taxi: float = 0.0,
                  t_mtm: float = 0.0,
                  t_cf: float = 0.0,
+                 t_added: float = 0.0,
                  t_assigned: float = 0.0):
 
         self.instance_id = instance_id
@@ -44,6 +45,7 @@ class PartInstance:
         self.t_taxi = t_taxi
         self.t_mtm = t_mtm
         self.t_cf = t_cf
+        self.t_added = t_added
         self.t_assigned = t_assigned
 
 
@@ -68,7 +70,7 @@ class BbPacket:
                  payload: str = '',
                  csum: str = '',
                  serial_string: str = '',
-                 type: str = '',
+                 command_type: str = '',
                  status_code: str = '408',
                  status_string: str = '',
                  response: str = ''):
@@ -78,7 +80,7 @@ class BbPacket:
         self.payload = payload              # payload string
         self.csum = csum                    # calculated CSUM in bytes
         self.serial_string = serial_string  # a string of the entire command
-        self.type = type                    # type of command, ACK or TEL, or BBC. TEL is a command sent by the belt buckle, ACK is an acknowledgement, BBC is a command sent to the BB.
+        self.command_type = command_type                    # type of command, ACK or TEL, or BBC. TEL is a command sent by the belt buckle, ACK is an acknowledgement, BBC is a command sent to the BB.
         self.response = response          # a response code from the belt buckle - indicates if the BB processed the command correctly or not.
         self.status_code = status_code      # for internal error checking. Will be set with an error code if the parser fails for some reason.
         self.status_string = status_string  # a string to provide further error messages to
@@ -92,7 +94,7 @@ class BbPacket:
                     self.argument = serial_string[2:6]
                     self.payload = serial_string[6:18]
                     self.csum = serial_string[18:22]
-                    self.type = 'BBC'
+                    self.command_type = 'BBC'
                     self.status_code = '200'
 
                     if len(serial_string) != 23:
@@ -114,7 +116,7 @@ class BbPacket:
 
                     if serial_split[0] == 'ACK':
                         # serial_string = serial_string
-                        self.type = serial_split[0]
+                        self.command_type = serial_split[0]
                         self.command = serial_split[1]
                         self.response = serial_split[2]
                         self.payload = serial_split[3]
@@ -124,7 +126,7 @@ class BbPacket:
                             self.status_string = 'Bad Packet length'
 
                     elif serial_split[0] == 'TEL':
-                        self.type = serial_split[0]
+                        self.command_type = serial_split[0]
                         self.command = serial_split[1]
                         self.argument = serial_split[2]
                         self.payload = serial_split[3]
@@ -151,7 +153,7 @@ class BbPacket:
         # true if we did not receive a serial string. This happens when we are given a command, argument, and payload string.
         elif self.command != '':
 
-            if self.type == 'BBC':
+            if self.command_type == 'BBC':
                 self.status_code = '200'
                 if isinstance(argument, float):
                     argument = int(argument)
@@ -163,17 +165,17 @@ class BbPacket:
 
                 self.serial_string = '<{}{}{}CSUM>'.format(self.command, self.argument, self.payload)
 
-            elif self.type == 'TEL':
+            elif self.command_type == 'TEL':
                 self.status_code = '200'
                 self.serial_string = '[TEL-{}-{}-{}-CSUM]'.format(self.command, self.argument, self.payload)
 
-            elif self.type == 'ACK':
+            elif self.command_type == 'ACK':
                 self.status_code = '200'
                 self.serial_string = '[ACK-{}-{}-{}-CSUM]'.format(self.command, self.status_code, self.payload)
 
             else:
                 self.status_code = '407'
-                self.status_string = 'invalid or null packet type, expected BBC, ACK, or TEL, got: {}'.format(self.type)
+                self.status_string = 'invalid or null packet type, expected BBC, ACK, or TEL, got: {}'.format(self.command_type)
 
             if self.payload == '':
                 self.status_code = '409'
