@@ -25,15 +25,17 @@ So I am making the following TO DO conditional upon the software being released 
 import time
 
 # first party imports. Safe to use from x import *
+import ss_classes
 import ss_server_lib as slib    # slib contains all of our server loop and control functions
 
 
 # needed for multiprocessing
 if __name__ == '__main__':
 
-    server = slib.ServerInit()
-    mode = slib.ServerMode()
-    clients = slib.start_clients(server)
+    init = ss_classes.ServerInit()
+    clients, bb = init.start_clients()
+    mode = ss_classes.ServerMode()
+    server = slib.Server(init, bb)
 
     # main loop
     while True:
@@ -42,25 +44,25 @@ if __name__ == '__main__':
         t_start = time.perf_counter()
 
         if mode.check_taxi:
-            slib.check_taxi(server)
+            server.check_taxi()
 
         if mode.check_mtm:
-            slib.check_mtm(server)
+            server.check_mtm()
 
         if mode.check_cf:
-            slib.check_cf(server)
+            server.check_cf()
 
         if mode.check_bb:
-            slib.check_bb(server)
+            server.check_bb()
 
         if mode.iterate_active_part_db:
-            slib.iterate_part_list(server)
+            server.iterate_part_list()
 
-        slib.check_suip(server, mode)
-        slib.send_part_list_to_suip(server)
+        server.check_suip(mode)
+        server.send_part_list_to_suip()
 
         # global_tick_rate is the time in milliseconds of each loop, taken from settings.ini
         t_stop = time.perf_counter()
         t_duration = t_stop - t_start
-        if t_duration < server.global_tick_rate:
-            time.sleep(server.global_tick_rate - t_duration)
+        if t_duration < init.global_tick_rate:
+            time.sleep(init.global_tick_rate - t_duration)

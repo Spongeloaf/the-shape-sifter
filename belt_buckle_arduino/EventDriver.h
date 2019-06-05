@@ -333,7 +333,7 @@ void EventDriver::send_ack(SerialPacket& packet){
 	Serial.print(packet.payload);
 	Serial.print("-");
 	Serial.print("CSUM");
-	Serial.println("]");
+	Serial.print("]");
 }
 
 

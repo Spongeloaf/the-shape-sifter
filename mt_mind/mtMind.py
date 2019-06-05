@@ -5,7 +5,8 @@ import time
 
 # 1st party imports
 import shape_sifter_tools.shape_sifter_tools as ss
-from ss_server_lib import ClientParams, ServerInit
+import ss_classes
+from ss_classes import ServerInit, ClientParams
 
 
 def main(params: ClientParams):
@@ -24,7 +25,7 @@ def main(params: ClientParams):
 
         if params.pipe_recv.poll(0):
             # logger.debug("A {}".format(time.perf_counter()))
-            part: ss.PartInstance = params.pipe_recv.recv()
+            part: ss_classes.PartInstance = params.pipe_recv.recv()
             # logger.debug("B {}".format(time.perf_counter()))
             pred: Category = mtmind.predict(part.part_image)
             # logger.debug("C {}".format(time.perf_counter()))
@@ -54,7 +55,7 @@ def stand_alone(client_params: ClientParams):
     image2 = open_image("C:\\Users\Development\\Google Drive\\software_dev\\the_shape_sifter\\assets\\images\\wheels\\172616422709.png")
     image3 = open_image("C:\\Users\Development\\Google Drive\\software_dev\\the_shape_sifter\\assets\\images\\wheels\\172616422709.png")
 
-    ss.PartInstance()
+    ss_classes.PartInstance()
 
     input("Press Enter to continue...")
     t_start = time.perf_counter()

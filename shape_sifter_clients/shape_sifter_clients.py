@@ -6,8 +6,9 @@ import sqlite3
 
 # 1st party imports
 import shape_sifter_tools.shape_sifter_tools as ss
+import ss_classes
 import suip.suip as gui
-from ss_server_lib import ClientParams
+from ss_classes import ClientParams
 
 
 def mt_mind_sim(client_params: ClientParams):
@@ -59,10 +60,7 @@ def mt_mind_sim(client_params: ClientParams):
 def classifist(client_params: ClientParams):
     """Classi-FIST me baby!"""
 
-    # working_part_obj is read from the MM and compared to the last part, and dropped if it is different
-    # We will need to change this to accomodate timestamps in the future.
-    # If we dont use timestamps, consecutive parts of the same number will be dropped.
-    # print("part number:{0}\n".format(working_part_obj))
+    # TODO: Eliminate SQL and replace this with a config file.
 
     logger = ss.create_logger(client_params.log_fname_const, client_params.log_level, 'classifist')
     logger.info('classifist running! Log level set to {}'.format(client_params.log_level))
@@ -71,15 +69,11 @@ def classifist(client_params: ClientParams):
 
         if client_params.pipe_recv.poll(0):
 
-            read_part: ss.PartInstance = client_params.pipe_recv.recv()
-
-            # time to write a whole new loop using THE POWER OF SQLITE
-            # open connection to SQL
+            read_part: ss_classes.PartInstance = client_params.pipe_recv.recv()
             sqconn = sqlite3.connect(client_params.server_db_fname_const)
             sqcur = sqconn.cursor()
 
-            # TODO: Fix this to call fetchone() instead of calling an iterator on cursor.execute!    <------ why tho?
-            # TODO: Really though, looping fetchall isn't possible until we upgrade the venv
+
             # evaluate query
             for bin in sqcur.execute("SELECT * FROM table_bin_config"):
                 if bin[1] == 'part':
@@ -100,10 +94,7 @@ def classifist(client_params: ClientParams):
                 read_part.server_status = 'cf_done'
                 client_params.pipe_send.send(read_part)  # return results to server
 
-            sqconn.close()                # close SQL
-
-            # print('-------------\n\rFrom CF:\n\rpart {0}\n\rcategory {3} {2}\n\rassigned to bin {1}\n\r-------------'
-            # .format(read_part.part_number,read_part.bin_assignment,read_part.category_name, read_part.category_number))
+            sqconn.close()
 
         t_stop = time.perf_counter()
         t_duration = t_stop - t_start

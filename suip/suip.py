@@ -6,8 +6,9 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtWidgets import QMainWindow, QTableWidget, QTableWidgetItem, QApplication
 from PyQt5.QtCore import QTimer
 from PyQt5.QtGui import QPalette,QColor
-from shape_sifter_tools.shape_sifter_tools import PartInstance, SuipLadle, BbPacket
-from ss_server_lib import ClientParams
+
+import ss_classes
+from ss_classes import ClientParams, PartInstance, SuipLadle, BbPacket
 
 
 class SuipWindow(QMainWindow, ):
@@ -170,7 +171,7 @@ class SuipWindow(QMainWindow, ):
         tableWidget.setHorizontalHeaderLabels(column_names)
         tableWidget.move(0, 0)
         tableWidget.setObjectName("table_active_parts")
-        # tableWidget.doubleClicked.connect(self.on_click)
+        # tableWidget.doubleClicked.connect(ServerInit.on_click)
 
         return tableWidget
 
@@ -202,7 +203,7 @@ class SuipWindow(QMainWindow, ):
         #     column = 0
         #     for attr, value in part.__dict__.items():
         #         value = str(value)
-        #         self.table_active_parts.setItem(row, column, QTableWidgetItem(value))
+        #         ServerInit.table_active_parts.setItem(row, column, QTableWidgetItem(value))
         #         column += 1
         #     row += 1
         #     if row > 64:
@@ -211,12 +212,12 @@ class SuipWindow(QMainWindow, ):
 
 
     def click_server_control_halt(self):
-        ladle = ss.SuipLadle("server_control_halt", "")
+        ladle = ss_classes.SuipLadle("server_control_halt", "")
         self.pipe_send.send(ladle)
 
 
     def click_start_sorting(self):
-        ladle = ss.SuipLadle("server_control_run", "")
+        ladle = ss_classes.SuipLadle("server_control_run", "")
         self.pipe_send.send(ladle)
 
 

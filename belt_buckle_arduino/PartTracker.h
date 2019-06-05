@@ -239,7 +239,7 @@ void PartTracker::tel_server_sorted(unsigned int part_slot)
 		
 		Serial.print("[TEL-C-200-");
 		print_array(part_list[part_slot].id);
-		Serial.println("-CSUM]");
+		Serial.print("-CSUM]");
 }
 
 
@@ -255,7 +255,7 @@ void PartTracker::tel_server_lost(unsigned int part_slot)
 	
 	Serial.print("[TEL-F-200-");
 	print_array(part_list[part_slot].id);
-	Serial.println("-CSUM]");
+	Serial.print("-CSUM]");
 }
 
 

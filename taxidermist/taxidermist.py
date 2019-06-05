@@ -10,8 +10,9 @@ from datetime import datetime
 
 
 # 1st party imports
-from shape_sifter_tools.shape_sifter_tools import PartInstance, create_logger
-from ss_server_lib import ClientParams
+from shape_sifter_tools.shape_sifter_tools import create_logger
+from ss_classes import ClientParams, PartInstance
+
 
 # Todo: Add color detection via opencv
 
@@ -503,7 +504,8 @@ def taxi_sim(params: ClientParams):
 
 # Running standalone
 if __name__ == '__main__':
-    from ss_server_lib import ServerInit
+    from ss_classes import ServerInit, ClientParams, PartInstance
+
     server_init = ServerInit()
     params = ClientParams(server_init, 'taxi')
     main(params)
