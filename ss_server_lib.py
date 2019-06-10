@@ -46,13 +46,13 @@ class Server:
             # checks for any parts that were sorted by the belt buckle
             if part.bb_status == 'sorted':
                 self.sort_log.info('id:{}, bin{}, cat: {}, time: {}, {}, {}, {}, {}'.format(part.instance_id, part.bin_assignment, part.category_name, part.t_taxi, part.t_mtm, part.t_cf, part.t_added, part.t_assigned))
-                # self.part_list.remove(part)
+                self.part_list.remove(part)
                 part.server_status = 'removed'
 
             # checks for parts that have been lost by the belt buckle. A part is lost if it misses it's bin and goes off the end of the belt.
             if part.bb_status == 'lost':
                 self.sort_log.info('id:{}, bin{}, cat: {}, time: {}, {}, {}, {}, {}, LOST!'.format(part.instance_id, part.bin_assignment, part.category_name, part.t_taxi, part.t_mtm, part.t_cf, part.t_added, part.t_assigned))
-                #self.part_list.remove(part)
+                self.part_list.remove(part)
                 part.server_status = 'removed'
 
             # server status = new; the part was just received from the taxidermist. Send it to the MTM
@@ -68,7 +68,7 @@ class Server:
                     part.server_status = 'removed'
                     self.bb.send_command_o(part.instance_id)
                     self.logger.debug("Removed 'belt' part")
-                    #plist.remove(part)
+                    plist.remove(part)
                     continue
                 self.send_cf(part)
                 continue
@@ -143,8 +143,8 @@ class Server:
 
             for part in self.part_list:
                 if part.instance_id == read_part.instance_id:
-                    self.part_list.remove(part)
-                    self.part_list.append(read_part)
+                    part.category_name = read_part.category_name
+                    part.server_status = read_part.server_status
                     return
 
             self.logger.debug("No part list match when calling check_mtm(). Part: {}".format(vars(read_part)))
@@ -158,8 +158,8 @@ class Server:
 
             for part in self.part_list:
                 if part.instance_id == read_part.instance_id:
-                    self.part_list.remove(part)
-                    self.part_list.append(read_part)
+                    part.bin_assignment = read_part.bin_assignment
+                    part.server_status = read_part.server_status
 
 
     def send_mtm(self, part: ss_classes.PartInstance):
@@ -185,9 +185,14 @@ class Server:
                 part.bb_status = status
                 if status == 'assigned':
                     part.t_assigned = time.perf_counter()
+                    self.logger.critical('assigned {}'.format(part.instance_id))
+                    return
                 if status == 'added':
+                    self.logger.critical('added {}'.format(part.instance_id))
                     part.t_added = time.perf_counter()
+                    return
 
+        self.logger.info('no match in update parts')
 
     def bb_execute_packet(self, packet: ss_classes.BbPacket):
         """ Processes incoming packets from the belt buckle"""

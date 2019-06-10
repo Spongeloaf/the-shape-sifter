@@ -30,15 +30,16 @@ class TaxiParams:
         self.google_path = init_params.google_path
 
         # openCV Object detection properties
-        self.min_contour_size = 700                                   # the minimum contour size that will be included in the crop
+        self.min_contour_size = 1000                                   # the minimum contour size that will be included in the crop
         self.fg_bg = cv2.createBackgroundSubtractorMOG2()             # setup the background subtractor
         self.fg_learningRate = 0.002                                  # background subtractor learning rate
-        self.dilate_kernel = cv2.getStructuringElement(2, (7, 7))     # Dilation kernel
+        self.dilate_kernel = cv2.getStructuringElement(2, (4, 7))     # Dilation kernel
         self.font = cv2.FONT_HERSHEY_SIMPLEX                          # Font for drawing part numbers on camera feed
 
         # Edge mask for conveyor belt. Used to eliminate detection of the belt edges.
-        self.belt_mask = cv2.imread(init_params.belt_mask)                  # load image
-        self.belt_mask = cv2.cvtColor(self.belt_mask, cv2.COLOR_BGR2GRAY)   # gray scale it
+        mask = cv2.imread(init_params.belt_mask, cv2.IMREAD_GRAYSCALE)                  # load image
+        belt_mask = cv2.threshold(mask, 127, 255, cv2.THRESH_BINARY)[1]
+        self.belt_mask = np.int8(belt_mask)
 
         # path to video file, if we are not using the camera.
         # TODO: move this to settings.ini
@@ -107,6 +108,8 @@ class PartParams:
 
 def configure_webcam():
     """ Initialize webcam """
+    # cv2.ocl.setUseOpenCL(0)
+    # video = cv2.VideoCapture(cv2.CAP_DSHOW)  # opens video capture
     video = cv2.VideoCapture(0)  # opens video capture
 
     # camera settings
@@ -229,6 +232,12 @@ def update_part_list(new_parts_list: List[PartParams], old_parts_list: List[Part
         while i > -1:
             # dispatches parts to the BB when they are first seen
             if new_parts_list[i].status == "unknown":
+
+                if new_parts_list[i].center[1] > (params.video_shape[0] * 0.55):
+                    new_parts_list[i].status = 'gone'
+                    print("ignored")
+                    continue
+
                 new_parts_list[i].status = "mapped"
                 # new_parts_list[i].part_count = params.count Possibly depreciated
                 old_parts_list.append(new_parts_list[i])
@@ -236,7 +245,6 @@ def update_part_list(new_parts_list: List[PartParams], old_parts_list: List[Part
                 new_part = make_new_part()
 
                 cropped_image = crop_image(new_parts_list[i], frame)
-                save_image(cropped_image, new_part.instance_id, params)
                 fastai_image = convert_to_fastai(cropped_image)
                 new_part.part_image = fastai_image
                 new_part.camera_offset = camera_offset(new_parts_list[i].center[1])
@@ -244,8 +252,10 @@ def update_part_list(new_parts_list: List[PartParams], old_parts_list: List[Part
                 # Dispatch to server and BB, but not when running stand alone.
                 if __name__ != '__main__':
                     dispatch_part(params, new_part)
+                    save_image(cropped_image, new_part.instance_id, params)
                 else:
-                    params.logger.debug("Part not dispatched")
+                    print("__main__: not dispatched part")
+                    params.logger.debug("__main__: not dispatched part")
 
             # decrement i, so we move backwards through the list
             i -= 1
@@ -452,7 +462,7 @@ def main(client_params: ClientParams):
             if cv2.waitKey(1) & 0xFF == ord('q'):
                 break
 
-        # keeps the taxidermist ticking at 30hz. Measures the duration from the start of the loop (t_start) and waits until 17ms have passed.
+        # keeps the taxidermist ticking at 30hz.
         t_stop = time.perf_counter()
         t_duration = t_stop - t_start
         if t_duration < 0.032:
@@ -502,11 +512,66 @@ def taxi_sim(params: ClientParams):
             time.sleep(1 - t_duration)
 
 
+def main_new(taxi: TaxiParams):
+    # initialization
+
+    taxi.logger.debug(taxi.video_source)
+    old_list, new_list = [], []
+    taxi.logger.info("taxidermist started")
+
+    # main loop
+    while taxi.video.isOpened:
+
+        t_start = time.perf_counter()
+        t_frame_start = time.perf_counter()
+
+        ret, frame = taxi.video.read()
+
+        # Converting the image to grayscale.
+        gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+
+        # Using the Canny filter with different parameters
+        edges_high_thresh = cv2.Canny(gray, 20, 50)
+
+        masked = cv2.bitwise_and(edges_high_thresh, edges_high_thresh, mask=taxi.belt_mask)  # Applies a bitmask to the image which removes
+
+        dilated = cv2.dilate(masked, taxi.dilate_kernel)
+
+        contours = find_contours(dilated, taxi)
+
+        new_list = get_rects_and_centers(contours, taxi)
+        map_centers(old_list, new_list)
+        update_part_list(new_list, old_list, frame, taxi)
+
+        if taxi.view_video == "1":
+            t_frame_stop = time.perf_counter()
+            t_frame_time = t_frame_stop - t_frame_start
+
+            draw_rects_and_centers(frame, old_list, taxi)
+
+            cv2.putText(frame, 'process time: {0:3.3f}'.format(t_frame_time), (10, 700), taxi.font, 1, (255, 255, 255), 2, cv2.LINE_AA)
+            # cv2.imshow('raw_frame', frame)
+            cv2.imshow('fg_mask', frame)
+
+            # create a window for live viewing of frames
+            if cv2.waitKey(1) & 0xFF == ord('q'):
+                break
+
+        # keeps the taxidermist ticking at 30hz.
+        t_stop = time.perf_counter()
+        t_duration = t_stop - t_start
+        if t_duration < 0.032:
+            time.sleep(0.032 - t_duration)
+
+
+
+
 # Running standalone
 if __name__ == '__main__':
     from ss_classes import ServerInit, ClientParams, PartInstance
 
     server_init = ServerInit()
     params = ClientParams(server_init, 'taxi')
-    main(params)
+    Taxi = TaxiParams(params)
+    main_new(Taxi)
 

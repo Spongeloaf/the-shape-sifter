@@ -30,8 +30,9 @@ class BbClient:
     def __init__(self, params: ClientParams):
         self.params = params
         self.logger = ss.create_logger(params.log_fname_const, params.log_level, 'belt_buckle_client')
+        self.comlog = ss.create_logger(params.google_path + '\\log\\log_com.txt', params.log_level, 'belt_buckle_comlog')
         self.bb_status = False
-        self.serial_timeout = (params.bb_message_len / (params.baud_rate / 8)) + 0.001
+        self.serial_timeout = 0.01
         self.ser = serial.Serial(params.com_port, params.baud_rate, writeTimeout=0, timeout=0.004, inter_byte_timeout=0.0007)
 
         # give the Belt Buckle time to start
@@ -70,13 +71,17 @@ class BbClient:
             return ''
 
         serial_read_str = ''
+        self.comlog.critical('start check serial')
         t_start = time.perf_counter()
         while True:
             serial_read_byt = self.ser.read()
             serial_read_char = serial_read_byt.decode("utf-8")
+            self.comlog.debug(serial_read_char)
 
             if serial_read_char == '[':
                 serial_read_str = '['
+                self.comlog.debug('new packet')
+                t_start = time.perf_counter()
 
             elif serial_read_char == ']':
                 serial_read_str = serial_read_str + serial_read_char
@@ -89,6 +94,7 @@ class BbClient:
             t_loop = time.perf_counter()
 
             if (t_loop - t_start) > self.serial_timeout:
+                self.comlog.debug('time out')
                 return ''
 
 
