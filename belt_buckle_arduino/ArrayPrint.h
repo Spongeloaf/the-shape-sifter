@@ -23,14 +23,11 @@ public:
 	
 	void array(char*);
 	void array(unsigned long*);
-	// void array_2d();			Broke as fuck
-	//void part_index_full();
-	//void part_index_single();
-
 };
 
 
-void ArrayPrint::array(char* to_be_printed){                    // prints an array of characters
+// prints an array of char
+void ArrayPrint::array(char* to_be_printed){
 	for (int i = 0; i <= gp::print_size; i++)
 	{
 		if (to_be_printed[i] == '\0')
@@ -43,7 +40,8 @@ void ArrayPrint::array(char* to_be_printed){                    // prints an arr
 }
 
 
-void ArrayPrint::array(unsigned long* to_be_printed){                    // prints an array of characters
+// prints an array of unsigned long
+void ArrayPrint::array(unsigned long* to_be_printed){                    
 	for (int i = 0; i <= gp::print_size; i++)
 	{
 		if (to_be_printed[i] == '\0')
