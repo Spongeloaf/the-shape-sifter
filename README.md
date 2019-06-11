@@ -44,6 +44,9 @@ This project requires a significant hardware investment, so I don't expect many 
 
 In theory, you could run the program substituting a video file instead of a webcam and leave out the air jets and conveyor belt. 
 
+## License
+
+[AGPL-3.0-or-later](https://choosealicense.com/licenses/agpl-3.0/#). This code comes with no warranty, liabillities, or guarantees of any sort. Use at your own risk.
 
 ## How does it work?
 
