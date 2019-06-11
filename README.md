@@ -18,11 +18,11 @@ Video 1: [A quick look at the hardware](INSERT VIDEO HERE)
 
 Video 2: [The sorting machine in action](https://www.youtube.com/watch?v=0VHN3AZKY0E)
 
-And of course we've kept a blog of our progress here: https://mt_pages.silvrback.com
+Development blog: https://mt_pages.silvrback.com
 
 ## How does it work?
 
-A desktop PC runs the python program that watches the cpnveyor belt via a webcam. When a part passes the webcam, the Arduino begins to track it's movement along the conveyor belt. A Picture of the part is then passed to a neural network, which classififes it, and assigns it to a bin. Once the part passes in front of the bin, the Arduino activates a pneumatic valve, and blows the part into the bin.
+A desktop PC runs the python program that watches the conveyor belt via a webcam. When a part passes the webcam, the Arduino begins to track it's movement along the conveyor belt. A Picture of the part is then passed to a neural network, which classififes it, and assigns it to a bin. Once the part passes in front of the bin, the Arduino activates a pneumatic valve, and blows the part into the bin.
 
 If you'd like to checkout the code, you can start with the server by looking in `server.py`, or chekout the conveyor belt controller code in `belt_buckle_arduino.ino`. If you have ATmel Studio, you can open the solution file `belt_buckle_arduino.atsln` as well.
 
