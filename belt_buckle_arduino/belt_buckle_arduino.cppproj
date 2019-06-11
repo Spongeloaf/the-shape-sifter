@@ -65,6 +65,7 @@
     <ListValues>
       <Value>../../../belt_buckle_arduino</Value>
       <Value>C:/Program Files (x86)/Arduino/hardware/arduino/avr/libraries/Wire/src</Value>
+      <Value>C:/Program Files (x86)/Arduino/hardware/arduino/avr/libraries/Wire/src/utility</Value>
       <Value>C:/Program Files (x86)/Arduino/libraries</Value>
       <Value>C:/Users/spongeloaf/Documents/Arduino/libraries</Value>
       <Value>C:/Program Files (x86)/Arduino/hardware/arduino/avr/libraries</Value>
@@ -100,6 +101,7 @@
     <ListValues>
       <Value>../../../belt_buckle_arduino</Value>
       <Value>C:/Program Files (x86)/Arduino/hardware/arduino/avr/libraries/Wire/src</Value>
+      <Value>C:/Program Files (x86)/Arduino/hardware/arduino/avr/libraries/Wire/src/utility</Value>
       <Value>C:/Program Files (x86)/Arduino/libraries</Value>
       <Value>C:/Users/spongeloaf/Documents/Arduino/libraries</Value>
       <Value>C:/Program Files (x86)/Arduino/hardware/arduino/avr/libraries</Value>
@@ -152,6 +154,7 @@
     <ListValues>
       <Value>../../../belt_buckle_arduino</Value>
       <Value>C:/Program Files (x86)/Arduino/hardware/arduino/avr/libraries/Wire/src</Value>
+      <Value>C:/Program Files (x86)/Arduino/hardware/arduino/avr/libraries/Wire/src/utility</Value>
       <Value>C:/Program Files (x86)/Arduino/libraries</Value>
       <Value>C:/Users/spongeloaf/Documents/Arduino/libraries</Value>
       <Value>C:/Program Files (x86)/Arduino/hardware/arduino/avr/libraries</Value>
@@ -187,6 +190,7 @@
     <ListValues>
       <Value>../../../belt_buckle_arduino</Value>
       <Value>C:/Program Files (x86)/Arduino/hardware/arduino/avr/libraries/Wire/src</Value>
+      <Value>C:/Program Files (x86)/Arduino/hardware/arduino/avr/libraries/Wire/src/utility</Value>
       <Value>C:/Program Files (x86)/Arduino/libraries</Value>
       <Value>C:/Users/spongeloaf/Documents/Arduino/libraries</Value>
       <Value>C:/Program Files (x86)/Arduino/hardware/arduino/avr/libraries</Value>
@@ -229,10 +233,10 @@
     <Compile Include="bb_parameters.h">
       <SubType>compile</SubType>
     </Compile>
-    <Compile Include="BinController.h">
+    <Compile Include="BeltController.h">
       <SubType>compile</SubType>
     </Compile>
-    <Compile Include="BeltController.h">
+    <Compile Include="BinController.h">
       <SubType>compile</SubType>
     </Compile>
     <Compile Include="EncoderController.h">

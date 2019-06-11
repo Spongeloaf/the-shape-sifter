@@ -1,7 +1,6 @@
-# This file contains all of the function definitions for the shape sifter server.
-# this should be imported using "from shape_sifter_tools import *"
+""" Functions used by the server and the clients"""
 
-
+# 3rd party imports:
 import logging
 
 
@@ -19,7 +18,7 @@ def create_logger(log_file_const, log_level='DEBUG', log_name='a_logger_has_no_n
     ch.setLevel(logging.DEBUG)                              # default log levels set to debug in case config fails
     fh.setLevel(logging.DEBUG)                              # default log levels set to debug in case config fails
 
-    #set levels from config file
+    # set levels from config file
     if log_level == 'DEBUG':
         ch.setLevel(logging.DEBUG)
         fh.setLevel(logging.DEBUG)
@@ -55,11 +54,11 @@ def log_dump(obj, logger=None):
     """ Dump contents of an object for debugging. If no logger is supplied as a second arg, object is dumped to console."""
     if logger is None:
         for attr in dir(obj):
-            if hasattr( obj, attr ):
-                print( "obj.%s = %s" % (attr, getattr(obj, attr)))
+            if hasattr(obj, attr ):
+                print("obj.%s = %s" % (attr, getattr(obj, attr)))
                 return
     else:
         for attr in dir(obj):
-            if hasattr( obj, attr ):
-                logger.critical( "obj.%s = %s" % (attr, getattr(obj, attr)))
+            if hasattr(obj, attr ):
+                logger.critical("obj.%s = %s" % (attr, getattr(obj, attr)))
                 return

@@ -15,12 +15,11 @@
 
 
 class ArrayPrint{
-// A humble class to print arrays for deugging purposes.
+// A humble class to print arrays for debugging purposes.
 
 public:
 	
 	ArrayPrint() {};
-	
 	void array(char*);
 	void array(unsigned long*);
 };

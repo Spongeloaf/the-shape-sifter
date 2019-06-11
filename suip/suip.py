@@ -1,12 +1,12 @@
+# 3rd party imports
 from typing import List, Any
 from sys import argv
-import shape_sifter_tools.shape_sifter_tools as ss
-import sqlite3
 from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtWidgets import QMainWindow, QTableWidget, QTableWidgetItem, QApplication
 from PyQt5.QtCore import QTimer
 from PyQt5.QtGui import QPalette,QColor
 
+# 1st party imports
 import ss_classes
 from ss_classes import ClientParams, PartInstance, SuipLadle, BbPacket
 
@@ -165,15 +165,15 @@ class SuipWindow(QMainWindow, ):
         self.list_column_count = column_count
 
         # Create table
-        tableWidget = QTableWidget(self.tab_active_parts)
-        tableWidget.setRowCount(64)
-        tableWidget.setColumnCount(column_count)
-        tableWidget.setHorizontalHeaderLabels(column_names)
-        tableWidget.move(0, 0)
-        tableWidget.setObjectName("table_active_parts")
-        # tableWidget.doubleClicked.connect(ServerInit.on_click)
+        table_widget = QTableWidget(self.tab_active_parts)
+        table_widget.setRowCount(64)
+        table_widget.setColumnCount(column_count)
+        table_widget.setHorizontalHeaderLabels(column_names)
+        table_widget.move(0, 0)
+        table_widget.setObjectName("table_active_parts")
+        # table_widget.doubleClicked.connect(ServerInit.on_click)
 
-        return tableWidget
+        return table_widget
 
 
     def update_active_part_table(self):
@@ -212,12 +212,12 @@ class SuipWindow(QMainWindow, ):
 
 
     def click_server_control_halt(self):
-        ladle = ss_classes.SuipLadle("server_control_halt", "")
+        ladle = SuipLadle("server_control_halt", "")
         self.pipe_send.send(ladle)
 
 
     def click_start_sorting(self):
-        ladle = ss_classes.SuipLadle("server_control_run", "")
+        ladle = SuipLadle("server_control_run", "")
         self.pipe_send.send(ladle)
 
 

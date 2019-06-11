@@ -112,7 +112,7 @@ class ServerInit:
         # from taxidermist.taxidermist import taxi_sim as taxi
         # from shape_sifter_clients.shape_sifter_clients import mt_mind_sim
         from mt_mind.mtMind import main as mtmind
-        from shape_sifter_clients.shape_sifter_clients import classifist
+        from classifist.classifist import classifist
         from suip.suip import main as gui
         from belt_buckle_client.belt_buckle_client import BbClient
 

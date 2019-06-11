@@ -1,14 +1,9 @@
 # 1st party imports
-import shape_sifter_tools.shape_sifter_tools as ss
-import ss_classes
-from shape_sifter_tools import shape_sifter_tools as ss
 from ss_classes import *
 
 # 3rd party imports
 import serial
 import time
-import random
-from datetime import datetime
 
 
 class BbClient:
@@ -21,11 +16,8 @@ class BbClient:
     All logic relating to system operation is handled by the BB or server.
     """
 
-    # TODO: Change BB_init so that it simply waits for '[BB_ONLINE]' and follows a startup routine. This will handle BB reboots the same way as initial boot.
     # TODO: Add version number checking to BB_init
     # TODO: Add bin config downloading to BB_init
-    # TODO: re-work the client to have a slower loop, but more intelligent use of CPU time. Right now it loops too quickly
-
 
     def __init__(self, params: ClientParams):
         self.params = params
@@ -51,9 +43,8 @@ class BbClient:
 
         while True:
             t_start = time.perf_counter()
-            boot_read = self.ser.readline()
-            # boot_read = boot_read.decode("ascii")
 
+            boot_read = self.ser.readline()
             if boot_read == b'[BB_ONLINE]':
                 break
 
@@ -66,13 +57,14 @@ class BbClient:
 
 
     def check_serial(self):
-
+        """ Checks the serial port for any commands received """
         if self.ser.in_waiting < self.params.bb_message_len:
             return ''
 
         serial_read_str = ''
         self.comlog.critical('start check serial')
         t_start = time.perf_counter()
+
         while True:
             serial_read_byt = self.ser.read()
             serial_read_char = serial_read_byt.decode("utf-8")
@@ -127,7 +119,7 @@ class BbClient:
             except IndexError or AttributeError:
                 self.logger.debug('Bad serial_string in parse_serial_string(): {}'.format(serial_string))
                 packet.status = 'Index or Attribute error'
-        serial_string
+
         return packet
 
 

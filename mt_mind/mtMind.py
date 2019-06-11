@@ -1,4 +1,3 @@
-
 # 3rd party im ports
 from fastai.vision import *
 import time
@@ -24,19 +23,11 @@ def main(params: ClientParams):
         t_start = time.perf_counter()
 
         if params.pipe_recv.poll(0):
-            # logger.debug("A {}".format(time.perf_counter()))
             part: ss_classes.PartInstance = params.pipe_recv.recv()
-            # logger.debug("B {}".format(time.perf_counter()))
             pred: Category = mtmind.predict(part.part_image)
-            # logger.debug("C {}".format(time.perf_counter()))
             part.category_name = pred[0].obj
-            # logger.debug("D {}".format(time.perf_counter()))
             part.server_status = 'mtm_done'
-            # logger.debug("E {}".format(time.perf_counter()))
             params.pipe_send.send(part)
-            # logger.debug("F {}".format(time.perf_counter()))
-            # logger.info(vars(part))
-            # logger.debug("G {} \n".format(time.perf_counter()))
 
         t_stop = time.perf_counter()
         t_duration = t_stop - t_start
@@ -45,6 +36,8 @@ def main(params: ClientParams):
 
 
 def stand_alone(client_params: ClientParams):
+    """ Only used for performance testing """
+
     image_path = client_params.google_path + "mt_mind\\captured_images\\"
     print(image_path)
     logger = ss.create_logger(client_params.log_fname_const, client_params.log_level, 'mtmind')
@@ -101,8 +94,6 @@ def stand_alone(client_params: ClientParams):
 
 
 if __name__ == '__main__':
-
     init = ServerInit()
-    params = ClientParams(init, 'mtmind')
-
-    stand_alone(params)
+    parameters = ClientParams(init, 'mtmind')
+    stand_alone(parameters)

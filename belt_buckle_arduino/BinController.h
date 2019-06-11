@@ -17,13 +17,9 @@
 class BinController{
 
 /*
-
 A word about bin numbers: Bin 0 is a valid number. 
 Parts may be assigned to this bin to ensure they go off the end of the belt without triggering a any alarms.
 Therefore, some of the private functions which for-loop over the various bindexes start with i=1, instead of i=0.
-
-TODO: trigger an alarm when a part runs off the belt and wasn't assigned to do so.
-
 */
 
 

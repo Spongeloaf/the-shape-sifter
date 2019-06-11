@@ -165,21 +165,24 @@ void EventDriver::read_serial_port(){
 }
 
 
-void EventDriver::check_inputs(){                                                                // check the state of all inputs
+void EventDriver::check_inputs(){                                                                
 
-	 for (int i = 0; i < gp::num_inputs; i++)                         // loop through the array of inputs
+	 for (int i = 0; i < gp::num_inputs; i++)										
 	 {
-		 input_previous_state = input_active[i];                           // take the value from the previous loop and store it here
-		 input_active[i] = digitalRead(input_pins[i]);                           // read the current input state
 		 
-		 if (input_active[i] == false) {                                   // false here means input is active because of pull-up resistors!
+		 input_previous_state = input_active[i];
+		 input_active[i] = digitalRead(input_pins[i]);
+		 
+		 // false here means input is active because of pull-up resistors!
+		 if (input_active[i] == false) {                                   
 			 {
-				 if (input_active[i] != input_previous_state)                  // checks if the state changed from our last trip through the loop
+				 // Debounce the inputs
+				 if (input_active[i] != input_previous_state)                  
 				 {
-					 if ((millis() - lastDebounceTime) > gp::debounce_delay)          // We use the number of milliseconds the arduino has been running for to see if it's been more than X number of millis since we last pressed a input It doesn't necessarily stop all input bouncing, but it helps.
+					 if ((millis() - lastDebounceTime) > gp::debounce_delay)
 					 {
-						 lastDebounceTime = millis();                              // reset the debounce timer.
-						 switch (i)                                                // take action if a input is pressed.
+						 lastDebounceTime = millis();                              
+						 switch (i)                                                
 						 {
 							 case stick_up:
 							 feeder.speed_up();
@@ -195,7 +198,7 @@ void EventDriver::check_inputs(){                                               
 							 
 							 case stick_left:
 							 belt.toggle_mode();
-							 Serial.print("belt is: ");                         // replace this with a usable action at some point
+							 Serial.print("belt is: ");
 							 Serial.println(belt.get_mode());
 							 break;
 							 
@@ -204,26 +207,24 @@ void EventDriver::check_inputs(){                                               
 							 Serial.print("Mode: ");
 							 Serial.print(feeder.get_mode());
 							 Serial.print(" Speed: ");
-							 Serial.println(feeder.get_speed());                         // replace this with a usable action at some point
+							 Serial.println(feeder.get_speed());
 							 break;
 
 							 case button_1:
-							 Serial.println("button_run");                         // replace this with a usable action at some point
+							 Serial.println("button_run");
 							 break;
 
 							 case button_2:
-							 Serial.println("button_stop");                        // replace this with a usable action at some point
+							 Serial.println("button_stop");
 							 break;
 
 							 case button_3:
-							 Serial.println("button_belt");                         // replace this with a usable action at some point
+							 Serial.println("button_belt");
 							 break;
 
 							 case button_4:
-							 Serial.println("button_feeder");                         // replace this with a usable action at some point
+							 Serial.println("button_feeder");
 							 break;
-
-
 						 }
 					 }
 				 }
@@ -304,9 +305,7 @@ void EventDriver::check_feeder()
 
 
 void EventDriver::check_encoder()
-{
-	// TODO: Figure out why this doesn't work
-	
+{	
 	if (encoder.is_running()) return;
 	
 	// we are already aware that the encoder isn't running.
@@ -314,7 +313,7 @@ void EventDriver::check_encoder()
 	
 	// The encoder is not running, and we expect it to be.
 	encoder_stall = true;
-	// TODO: send events a warning message
+	// TODO: send a warning to the server that the belt is stopped.
 }
 
 
@@ -337,7 +336,8 @@ void EventDriver::send_ack(SerialPacket& packet){
 }
 
 
-void EventDriver::parse_command(char* packet_string){					// parses the command and then passes the relevant data off to wherever it needs to go.
+// parses the command and then passes the relevant data off to wherever it needs to go.
+void EventDriver::parse_command(char* packet_string){					
 
 	extern SerialPacket packet;
 	
@@ -361,7 +361,6 @@ void EventDriver::parse_command(char* packet_string){					// parses the command 
 		return;
 	}
 
-	
 	// switch case for all the different command types.
 	// see trello for a list of commands
 	switch (packet.command)

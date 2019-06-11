@@ -1,3 +1,5 @@
+""" Analyzes the webcam feed to find parts. """
+
 # 3rd party imports
 import cv2
 import time
@@ -75,17 +77,8 @@ class PartParams:
     """ parameters for each currently visible part on the belt. X and Y coordinates
     taken retrieved from opencv contours, plus the objects center X and Y.
 
-    Valid statuses are: !!! ALL OUTDATED!!!!
-
-    # TODO: UPDATE THIS LIST!!!
-
-    'new': will begin tracking and dispatch a message to the Belt Buckle
-    'known': Part has been dispatched, and we're waiting for it to leave the camera
-    'ignore': part is either moving off the bottom of the screen, or still entering from the top(meaning we don't have a full picture of it yet).
-
-    Part numbers are a simple int, starting from zero. They're used to identify and
-    track the parts from one frame to the next by mapping the previous parts' center
-    to the nearest center in this frame.
+    Part numbers identify and track the parts from one frame to the next by mapping
+    the previous parts' center to the nearest center in this frame.
     """
 
     index = 0
