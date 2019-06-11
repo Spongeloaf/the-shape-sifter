@@ -1,6 +1,5 @@
 # Third party imports
 import time
-import multiprocessing
 from typing import List
 
 # first party imports. Safe to use from x import *
