@@ -16,7 +16,7 @@ Here are a few videos of the machine, for the unbelievers:
 
 Video 1: [A quick look at the hardware](INSERT VIDEO HERE)
 
-Video 2: ![The sorting machine in action](https://www.youtube.com/watch?v=0VHN3AZKY0E)
+Video 2: [The sorting machine in action](https://www.youtube.com/watch?v=0VHN3AZKY0E)
 
 Development blog: https://mt_pages.silvrback.com
 
