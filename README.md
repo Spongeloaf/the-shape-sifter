@@ -44,6 +44,8 @@ This project requires a significant hardware investment, so I don't expect many 
 
 In theory, you could run the program substituting a video file instead of a webcam and leave out the air jets and conveyor belt. 
 
+The nueral network and the config files currently live on cloud storage due to their combined size. If you decide to try running a machine of your own, send me a message and I'll hook you up. 
+
 ## License
 
 [AGPL-3.0-or-later](https://choosealicense.com/licenses/agpl-3.0/#). This code comes with no warranty, liabillities, or guarantees of any sort. Use at your own risk.

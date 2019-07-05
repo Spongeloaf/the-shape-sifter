@@ -56,6 +56,7 @@ class Server:
 
             # server status = new; the part was just received from the taxidermist. Send it to the MTM
             if part.server_status == 'new':
+                part.bb_status = 'wait_A_ack'
                 self.bb.send_command_a(part.camera_offset, part.instance_id)
                 self.send_mtm(part)
                 continue
@@ -75,6 +76,7 @@ class Server:
             # server_status = cf_done; the part was returned from the classifist. Send the bin assignment to the belt buckle.
             if part.server_status == 'cf_done':
                 if part.bb_status == 'added':
+                    part.bb_status = 'wait_B_ack'
                     self.bb.send_command_b(part.bin_assignment, part.instance_id)
                 continue
 
