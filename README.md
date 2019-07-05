@@ -14,7 +14,7 @@ A screenshot of the UI:
 
 Here are a few videos of the machine, for the unbelievers:
 
-Video 1: [A quick look at the hardware](INSERT VIDEO HERE)
+Video 1: [A quick look at the hardware](https://youtu.be/ZOox_HX_6eo)
 
 Video 2: [The sorting machine in action](https://www.youtube.com/watch?v=0VHN3AZKY0E)
 
@@ -31,7 +31,7 @@ If you'd like to checkout the code, you can start with the server by looking in 
 * [Opencv](https://opencv.org) - Image and video manipulation library
 * [Fast.ai](https://www.fast.ai/) - Neural network framework built on Pytorch
 * [Arduino](https://www.arduino.cc/) - Open source hardware and software project for embedded devices
-* [Encoder](https://www.pjrc.com/teensy/td_libs_Encoder.html) Library - Arduino library for reading data from rotary encoders
+* [Encoder Library](https://www.pjrc.com/teensy/td_libs_Encoder.html) - Arduino library for reading data from rotary encoders
 * [Pyserial](https://github.com/pyserial/pyserial) - Serial communication library for python.
 * [QT](https://www.qt.io/) - UI authoring suite
 
