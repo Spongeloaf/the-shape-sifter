@@ -20,6 +20,7 @@ Video 2: [The sorting machine in action](https://www.youtube.com/watch?v=0VHN3AZ
 
 Development blog: https://mt_pages.silvrback.com
 
+Hardware controller: [Inside the belt buckle](https://mt_pages.silvrback.com/buckle-your-belts-2-electric-boogaloo)
 
 ## Under the hood
 
