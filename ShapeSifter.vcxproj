@@ -81,18 +81,20 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
-    <OutDir>$(SolutionDir)$\out</OutDir>
+    <OutDir>$(SolutionDir)out</OutDir>
     <IncludePath>$(ProjectDir)..\opencv\build\include;$(ProjectDir)include;$(IncludePath)</IncludePath>
     <LibraryPath>$(ProjectDir)opencv\build\x64\vc15\lib;$(ProjectDir)lib;$(LibraryPath)</LibraryPath>
+    <IntDir>$(SolutionDir)out\artifacts</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
-    <OutDir>$(SolutionDir)$\out</OutDir>
+    <OutDir>$(SolutionDir)out</OutDir>
     <IncludePath>$(ProjectDir)..\opencv\build\include;$(ProjectDir)include;$(IncludePath)</IncludePath>
     <LibraryPath>$(ProjectDir)opencv\build\x64\vc15\lib;$(ProjectDir)lib;$(LibraryPath)</LibraryPath>
+    <IntDir>$(SolutionDir)out\artifacts</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>

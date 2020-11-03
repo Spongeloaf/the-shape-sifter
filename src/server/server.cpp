@@ -21,6 +21,7 @@ bool Server::LoadConfig()
 		return false;
 	}
 	return true;
+	spdlog::set_level(spdlog::level::debug);
 	spdlog::info("Welcome to spdlog!");
 }
 
