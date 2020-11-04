@@ -1,9 +1,12 @@
 // This is the Shape Sifter server.
 
 #include "server.h"
+#include <thread> 
+#include "../photophile/photophile.h"
 
 Server::Server()
 {
+	m_iniReader = INIReader(m_configPath);
 	m_InitializeOK = LoadConfig();
 }
 
@@ -18,7 +21,7 @@ bool Server::LoadConfig()
 	try
 	{
 		// Create basic file logger (not rotated)
-		m_logger = spdlog::basic_logger_mt("serverLogger", "server.log", true);
+		m_logger = spdlog::basic_logger_mt("serverLogger", "server.log", true /* delete old logs */);
 		m_logger->set_level(spdlog::level::info);
 		m_logger->info("Server online");
 		m_logger->flush();
@@ -27,17 +30,16 @@ bool Server::LoadConfig()
 	{
 		std::cout << "Log initialization failed: " << ex.what() << std::endl;
 	}
-
-	INIReader reader(m_configPath);
-	if (reader.ParseError() != 0)
+	
+	if (m_iniReader.ParseError() != 0)
 	{
 		assert(!"Could not load config file! Aborting.");
 		m_logger->critical("Could not load config file: {}", m_configPath);
 		return false;
 	}
 
-	m_BbPacketTimeout = std::chrono::milliseconds(reader.GetInteger("server", "bb_ack_timeout", -1));
-	m_ServerTickInterval = std::chrono::milliseconds(reader.GetInteger("server", "global_tick_rate", -1));
+	m_BbPacketTimeout = std::chrono::milliseconds(m_iniReader.GetInteger("server", "bb_ack_timeout", -1));
+	m_ServerTickInterval = std::chrono::milliseconds(m_iniReader.GetInteger("server", "global_tick_rate", -1));
 
 	return true;
 }
@@ -47,6 +49,10 @@ int main()
 	Server server = Server();
 	if (!server.IsOK())
 		return -1;
+
+	// HANDLE myHandle = CreateThread(0, 0, RunPhotophile, &server.m_photoPhilePartBin; , 0, &myThreadID;);
+	ClientConfig photoPhileConfig{ server.GetLogLevel(), "PhotoPhile", server.GetAssetPath(), server.GetIniReader()};
+	std::thread thread_obj(RunPhotophile, photoPhileConfig, std::ref(server.m_photoPhilePartBin));
 
 	//	# 3rd party imports
 	//import time
@@ -64,6 +70,7 @@ int main()
 	//    mode = ss_classes.ServerMode()
 	//    server = slib.Server(init, bb)
 	//
+
 	// main loop
 	while (true)
 	{

@@ -20,6 +20,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\common\ss_classes.cpp" />
+    <ClCompile Include="src\photophile\photophile.cpp" />
     <ClCompile Include="src\server\server.cpp" />
   </ItemGroup>
   <ItemGroup>

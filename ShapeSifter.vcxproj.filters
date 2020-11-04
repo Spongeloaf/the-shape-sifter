@@ -30,6 +30,9 @@
     <ClCompile Include="src\common\ss_classes.cpp">
       <Filter>Source Files\common</Filter>
     </ClCompile>
+    <ClCompile Include="src\photophile\photophile.cpp">
+      <Filter>Source Files\photophile</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\server\server.h">
