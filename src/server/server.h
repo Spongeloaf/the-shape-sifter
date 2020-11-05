@@ -2,13 +2,8 @@
 
 #include <vector>
 #include "../common/ss_classes.h"
-#include <INIReader/INIReader.h>
-#include <spdlog/spdlog.h>
-#include <spdlog/sinks/basic_file_sink.h> 
-#include <chrono>
 #include <thread>
 #include <iostream>
-#include "../common/ss_classes.h"
 
 using namespace std::chrono_literals;
 

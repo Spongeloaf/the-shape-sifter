@@ -5,12 +5,13 @@
 #include <string>
 #include <chrono>
 #include <opencv2/core.hpp>
-#include <spdlog/spdlog.h>
 #include <INIReader/INIReader.h>
+#include <spdlog/spdlog.h>
+#include <spdlog/sinks/basic_file_sink.h> 
 
 using std::string;
 
-constexpr std::chrono::milliseconds kUpdateInterval(32);
+constexpr std::chrono::duration<double, std::milli> kUpdateInterval(1);
 constexpr char kStartPacket = '<';
 constexpr char kEndPacket = '>';
 constexpr int kArgumentLen = 4;
@@ -164,15 +165,26 @@ struct ClientConfig
 	INIReader* m_iniReader;
 };
 
-class ClientBase
+struct ClientBase
 {
-public:
-	ClientBase(ClientConfig config) : m_config(config), m_isOk(false), m_logLevel(spdlog::level::err){};
-	bool IsOk() { return m_isOk; };
+	ClientBase(ClientConfig config) : 
+		m_logLevel(config.m_logLevel), 
+		m_ClientName(config.m_ClientName),
+		m_assetPath(config.m_assetPath),
+		m_iniReader(config.m_iniReader),
+		m_isOk(false)
+		{
+			// Create basic file logger (not rotated)
+			m_logger = spdlog::basic_logger_mt(m_ClientName, "\\log\\" + m_ClientName + ".log", true /* delete old logs */);
+			m_logger->set_level(spdlog::level::info);
+			m_logger->info(m_ClientName + " online");
+			m_logger->flush();
+		};
 
-protected:
-	bool m_isOk = false;
-	ClientConfig m_config;
 	spdlog::level::level_enum m_logLevel;
 	string m_ClientName;
+	string m_assetPath;
+	INIReader* m_iniReader;
+	bool m_isOk;
+	std::shared_ptr<spdlog::logger> m_logger;
 };

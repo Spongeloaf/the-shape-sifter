@@ -3,8 +3,12 @@
 #pragma once
 
 #include "../common/ss_classes.h"
+#include <windows.h>
+#include <opencv2/core.hpp>
+#include <opencv2/videoio.hpp>
+#include "opencv2/opencv.hpp"
 
-void RunPhotophile(ClientConfig config, Parts::PartInstance& partBin);
+int Photophile(ClientConfig config, Parts::PartInstance& partBin);
 
 enum class VideoMode
 {
@@ -12,13 +16,13 @@ enum class VideoMode
 	file
 };
 
-class PhotoPhile : ClientBase
+struct PhotoPhileProperties : ClientBase
 {
-public:
-	PhotoPhile(ClientConfig config);
+	PhotoPhileProperties(ClientConfig config);
 
-private:
 	Parts::image m_beltMask; // should be converted to cv2 mat, probably.
 	VideoMode m_mode;
 	bool m_viewVideo;
+	string m_VideoPath;
+
 };
