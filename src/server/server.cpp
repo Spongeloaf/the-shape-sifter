@@ -1,7 +1,6 @@
 // This is the Shape Sifter server.
 
 #include "server.h"
-
 #include "../photophile/photophile.h"
 
 Server::Server()
@@ -51,8 +50,9 @@ int main()
 		return -1;
 
 	// HANDLE myHandle = CreateThread(0, 0, RunPhotophile, &server.m_photoPhilePartBin; , 0, &myThreadID;);
-	ClientConfig photoPhileConfig{ server.GetLogLevel(), "PhotoPhile", server.GetAssetPath(), server.GetIniReader()};
-	std::thread thread_obj(Photophile, photoPhileConfig, std::ref(server.m_photoPhilePartBin));
+	ClientConfig clientCfg{ server.GetLogLevel(), "PhotoPhile", server.GetAssetPath(), server.GetIniReader()};
+	PhotoPhile phile(clientCfg);
+	std::thread thread_obj(&PhotoPhile::Main, &phile);
 
 	//	# 3rd party imports
 	//import time
@@ -97,15 +97,12 @@ int main()
 		// global_tick_rate is the time in milliseconds of each loop, taken from settings.ini
 		auto end = std::chrono::system_clock::now();
 		std::chrono::duration<double, std::milli> elapsed = end - start;
-		std::cout << "elapsed: " << elapsed.count() << "\r\n";
 		if (elapsed < kUpdateInterval)
 		{
 			start = std::chrono::system_clock::now();
 			std::this_thread::sleep_for(kUpdateInterval - elapsed);
 			end = std::chrono::system_clock::now();
 			std::chrono::duration<double, std::milli> elapsed = end - start;
-			std::cout << "slept: " << elapsed.count() << "\r\n";
 		}
-		std::this_thread::sleep_for(1000ms);
 	}
 }

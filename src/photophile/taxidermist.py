@@ -32,7 +32,7 @@ class TaxiParams:
         self.google_path = init_params.google_path
 
         # openCV Object detection properties
-        self.min_contour_size = 1000                                   # the minimum contour size that will be included in the crop
+        self.min_contour_size = 1000                                  # the minimum contour size that will be included in the crop
         self.fg_bg = cv2.createBackgroundSubtractorMOG2()             # setup the background subtractor
         self.fg_learningRate = 0.002                                  # background subtractor learning rate
         self.dilate_kernel = cv2.getStructuringElement(2, (4, 7))     # Dilation kernel

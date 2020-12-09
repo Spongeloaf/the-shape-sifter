@@ -84,27 +84,27 @@
     <LinkIncremental>true</LinkIncremental>
     <IncludePath>$(ProjectDir)include;$(ProjectDir)..\opencv\build\include;$(IncludePath)</IncludePath>
     <LibraryPath>$(ProjectDir)opencv\build\x64\vc15\lib;$(ProjectDir)lib;$(LibraryPath)</LibraryPath>
-    <OutDir>$(SolutionDir)\out</OutDir>
-    <IntDir>$(ProjectDir)out\artifacts</IntDir>
+    <OutDir>$(SolutionDir)\out\debug</OutDir>
+    <IntDir>$(ProjectDir)out\debug\artifacts</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>true</LinkIncremental>
     <IncludePath>$(ProjectDir)include;$(ProjectDir)..\opencv\build\include;$(IncludePath)</IncludePath>
     <LibraryPath>$(ProjectDir)opencv\build\x64\vc15\lib;$(ProjectDir)lib;$(LibraryPath)</LibraryPath>
-    <OutDir>$(SolutionDir)\out</OutDir>
-    <IntDir>$(ProjectDir)out\artifacts</IntDir>
+    <OutDir>$(SolutionDir)\out\prod</OutDir>
+    <IntDir>$(ProjectDir)out\prod\artifacts</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
-    <IntDir>$(ProjectDir)out\artifacts</IntDir>
-    <OutDir>$(SolutionDir)\out</OutDir>
+    <IntDir>$(ProjectDir)out\debug\artifacts</IntDir>
+    <OutDir>$(SolutionDir)\out\debug</OutDir>
     <IncludePath>$(ProjectDir)include;$(ProjectDir)..\opencv\build\include;$(IncludePath)</IncludePath>
     <LibraryPath>$(ProjectDir)opencv\build\x64\vc15\lib;$(ProjectDir)lib;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>true</LinkIncremental>
-    <IntDir>$(ProjectDir)out\artifacts</IntDir>
-    <OutDir>$(SolutionDir)\out</OutDir>
+    <IntDir>$(ProjectDir)out\prod\artifacts</IntDir>
+    <OutDir>$(SolutionDir)\out\prod</OutDir>
     <IncludePath>$(ProjectDir)include;$(ProjectDir)..\opencv\build\include;$(IncludePath)</IncludePath>
     <LibraryPath>$(ProjectDir)opencv\build\x64\vc15\lib;$(ProjectDir)lib;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
@@ -114,6 +114,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -148,6 +149,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>

@@ -13,7 +13,7 @@
 
 using std::string;
 
-constexpr std::chrono::duration<double, std::milli> kUpdateInterval(1);
+constexpr std::chrono::duration<double, std::milli> kUpdateInterval(10);
 constexpr char kStartPacket = '<';
 constexpr char kEndPacket = '>';
 constexpr int kArgumentLen = 4;
@@ -82,7 +82,6 @@ enum class ServerMode
 namespace Parts
 {
 	typedef std::chrono::steady_clock::time_point timePoint;
-	typedef int image;
 
 	enum class ServerStatus
 	{
@@ -108,7 +107,7 @@ namespace Parts
 
 	struct PartInstance
 	{
-		PartInstance(string ID, timePoint captureTime, image img) : 
+		PartInstance(string ID, timePoint captureTime, cv::Mat img) : 
 			m_ID(ID), 
 			m_PartNumber(""),
 			m_CategoryNumber(""),
@@ -130,7 +129,7 @@ namespace Parts
 			m_PartNumber(""),
 			m_CategoryNumber(""),
 			m_CategoryName(""),
-			m_Image(0),
+			m_Image(),
 			m_BinNumber(0),
 			m_CameraOffset(0),
 			m_ServerStatus(ServerStatus::newPart),
@@ -146,7 +145,7 @@ namespace Parts
 		string m_PartNumber;
 		string m_CategoryNumber;
 		string m_CategoryName;
-		image m_Image;
+		cv::Mat m_Image;
 		unsigned int m_BinNumber;
 		int m_CameraOffset;
 		ServerStatus m_ServerStatus;

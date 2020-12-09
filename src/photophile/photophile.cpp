@@ -1,39 +1,59 @@
 // The PhotoPhile is a program that captures pictures of parts on the belt and sends them to the server.
+// shroud - An image taken from the camrea which is processed for part detection.
 
 #include "photophile.h"
 
-using namespace cv;
-
-int Photophile(ClientConfig config, Parts::PartInstance& partBin)
+int PhotoPhile::Main()
 {
-	PhotoPhileProperties ppProperties { config };
-	VideoCapture cap;
-	if (ppProperties.m_mode == VideoMode::camera)
-		cap = VideoCapture(0);
+	cv::VideoCapture cap;
+	if (m_mode == VideoMode::camera)
+		cap = cv::VideoCapture(0);
 	else
-		cap = VideoCapture(ppProperties.m_VideoPath);
+		cap = cv::VideoCapture(m_VideoPath);
 
 	// Check if camera opened successfully
 	if (!cap.isOpened())
 	{
-		ppProperties.m_logger->critical("Error opening video stream or file\n\r");
+		m_logger->critical("Error opening video stream or file\n\r");
 		return -1;
 	}
 	while (true)
 	{
-		Mat frame;
+		auto start = std::chrono::system_clock::now();
+
+		Mat image;
 		// Capture frame-by-frame
-		cap >> frame;
+		cap >> image;
 
 		// If the frame is empty, break immediately
-		if (frame.empty())
-			break;
+		if (image.empty())
+			continue;
+
+		// We need to preserve the original frame
+		Mat shroud = image.clone();
+		cv::dilate(shroud, shroud, m_dilateKernel);
+
+		// Background subtraction requires a grayscale image.
+		// Does it really need to be grayscale?
+		cv::cvtColor(shroud, shroud, cv::COLOR_BGR2GRAY);
+		
+		// blur the image to remove noise
+		cv::blur(shroud, shroud, cv::Size(7, 7));                     
+		m_BgSubtractor->apply(shroud, shroud, m_FgLearningRate); 
+		cv::bitwise_and(shroud, m_BeltMask, shroud);
+		
+		auto end = std::chrono::system_clock::now();
+		string elapsed = std::to_string(std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count());
+		cv::putText(image, "Process time (ms): " + elapsed, cv::Point(10, 700), m_Font, 1, (255, 255, 255), 2);
+		
+		// Display the resulting frame
+		cv::imshow("Frame Raw", image);
 
 		// Display the resulting frame
-		imshow("Frame", frame);
+		cv::imshow("Frame Shroud", shroud);
 
 		// Press  ESC on keyboard to exit
-		char c = (char)waitKey(25);
+		char c = (char)cv::waitKey(1);
 		if (c == 27)
 			break;
 	}
@@ -42,14 +62,14 @@ int Photophile(ClientConfig config, Parts::PartInstance& partBin)
 	cap.release();
 
 	// Closes all the frames
-	destroyAllWindows();
+	cv::destroyAllWindows();
 
 	return 0;
 }
 
 int PhotophileSimulator(ClientConfig config, Parts::PartInstance& partBin)
 {
-	PhotoPhileProperties ppProperties{ config };
+	PhotoPhile ppProperties( config );
 
 	std::random_device rd;     // only used once to initialise (seed) engine
 	std::mt19937 rng(rd());    // random-number engine used (Mersenne-Twister in this case)
@@ -65,9 +85,11 @@ int PhotophileSimulator(ClientConfig config, Parts::PartInstance& partBin)
 	}
 }
 
-PhotoPhileProperties::PhotoPhileProperties(ClientConfig config) : ClientBase(config) 
+PhotoPhile::PhotoPhile(ClientConfig config) : ClientBase(config) 
 {		
 	m_isOk = true;
+
+	m_ClientName = config.m_ClientName;
 
 	string mode = m_iniReader->Get(m_ClientName, "video_mode", "");
 	if (mode == "camera")
@@ -86,9 +108,17 @@ PhotoPhileProperties::PhotoPhileProperties(ClientConfig config) : ClientBase(con
 		m_isOk = false;
 	else
 	{
-		m_beltMask = 0; // = m_assetPath + maskFileName;
+		maskFileName = m_assetPath + maskFileName;
 	}
 
+	m_BgSubtractor = cv::createBackgroundSubtractorMOG2();
+	m_MinContourSize = 1000;
+	m_FgLearningRate = 0.002;
+	m_dilateKernel = cv::getStructuringElement(2, cv::Size(4, 7));
+	m_Font = cv::FONT_HERSHEY_SIMPLEX;
 
+	// Edge mask for conveyor belt. Used to eliminate detection of the belt edges.
+	m_BeltMask = cv::imread(maskFileName, cv::IMREAD_GRAYSCALE);
+	cv::threshold(m_BeltMask, m_BeltMask, 127, 255, cv::THRESH_BINARY);
 }
 
