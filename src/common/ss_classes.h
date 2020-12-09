@@ -1,5 +1,6 @@
 // Common classes for all Shape Sifter modules
-#pragma once
+#ifndef SS_CLASSES_H_11205B5C8C7047CAAA518874BA2C272C
+#define SS_CLASSES_H_11205B5C8C7047CAAA518874BA2C272C
 
 #include <array>
 #include <string>
@@ -8,6 +9,7 @@
 #include <INIReader/INIReader.h>
 #include <spdlog/spdlog.h>
 #include <spdlog/sinks/basic_file_sink.h> 
+#include <thread>
 
 using std::string;
 
@@ -188,3 +190,5 @@ struct ClientBase
 	bool m_isOk;
 	std::shared_ptr<spdlog::logger> m_logger;
 };
+
+#endif // !SS_CLASSES_H_11205B5C8C7047CAAA518874BA2C272C

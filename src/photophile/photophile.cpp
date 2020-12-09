@@ -47,6 +47,24 @@ int Photophile(ClientConfig config, Parts::PartInstance& partBin)
 	return 0;
 }
 
+int PhotophileSimulator(ClientConfig config, Parts::PartInstance& partBin)
+{
+	PhotoPhileProperties ppProperties{ config };
+
+	std::random_device rd;     // only used once to initialise (seed) engine
+	std::mt19937 rng(rd());    // random-number engine used (Mersenne-Twister in this case)
+	std::uniform_int_distribution<int> sleepTimer(kSleepMin, kSleepMax);
+
+	while (true)
+	{
+		std::cout << "Good Morning!\n\r";
+
+		auto random_integer = sleepTimer(rng);
+		std::chrono::duration<int, std::milli> tSleep(random_integer);
+		std::this_thread::sleep_for(tSleep);
+	}
+}
+
 PhotoPhileProperties::PhotoPhileProperties(ClientConfig config) : ClientBase(config) 
 {		
 	m_isOk = true;

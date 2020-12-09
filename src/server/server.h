@@ -1,4 +1,5 @@
-#pragma once
+#ifndef SERVER_H_E3C650C14FA146B6AA281A3CC17B52E2
+#define SERVER_H_E3C650C14FA146B6AA281A3CC17B52E2
 
 #include <vector>
 #include "../common/ss_classes.h"
@@ -25,9 +26,13 @@ private:
 	bool m_InitializeOK;
 	std::vector<Parts::PartInstance> m_ActivePartList;
 	string m_assetPath = "C:\\Users\\peter\\Google Drive\\software_dev\\the_shape_sifter";
-	string m_configPath =  m_assetPath + "\\settings.ini";
+	string m_configPath = m_assetPath + "\\settings.ini";
 	std::shared_ptr<spdlog::logger> m_logger;
 	std::chrono::milliseconds m_BbPacketTimeout = 50ms;
 	std::chrono::milliseconds m_ServerTickInterval = 32ms;
 	spdlog::level::level_enum m_logLevel = spdlog::level::level_enum::err;
 };
+
+#endif // !SERVER_H_E3C650C14FA146B6AA281A3CC17B52E2
+
+

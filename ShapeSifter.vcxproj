@@ -82,22 +82,30 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
+    <IncludePath>$(ProjectDir)include;$(ProjectDir)..\opencv\build\include;$(IncludePath)</IncludePath>
+    <LibraryPath>$(ProjectDir)opencv\build\x64\vc15\lib;$(ProjectDir)lib;$(LibraryPath)</LibraryPath>
+    <OutDir>$(SolutionDir)\out</OutDir>
+    <IntDir>$(ProjectDir)out\artifacts</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-    <LinkIncremental>false</LinkIncremental>
-    <OutDir>$(SolutionDir)out</OutDir>
-    <IntDir>$(SolutionDir)out\artifacts</IntDir>
-    <IncludePath>$(ProjectDir)..\opencv\build\include;$(ProjectDir)include;$(IncludePath)</IncludePath>
+    <LinkIncremental>true</LinkIncremental>
+    <IncludePath>$(ProjectDir)include;$(ProjectDir)..\opencv\build\include;$(IncludePath)</IncludePath>
     <LibraryPath>$(ProjectDir)opencv\build\x64\vc15\lib;$(ProjectDir)lib;$(LibraryPath)</LibraryPath>
+    <OutDir>$(SolutionDir)\out</OutDir>
+    <IntDir>$(ProjectDir)out\artifacts</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
+    <IntDir>$(ProjectDir)out\artifacts</IntDir>
+    <OutDir>$(SolutionDir)\out</OutDir>
+    <IncludePath>$(ProjectDir)include;$(ProjectDir)..\opencv\build\include;$(IncludePath)</IncludePath>
+    <LibraryPath>$(ProjectDir)opencv\build\x64\vc15\lib;$(ProjectDir)lib;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <LinkIncremental>false</LinkIncremental>
-    <OutDir>$(SolutionDir)out</OutDir>
-    <IntDir>$(SolutionDir)out\artifacts</IntDir>
-    <IncludePath>$(ProjectDir)..\opencv\build\include;$(ProjectDir)include;$(IncludePath)</IncludePath>
+    <LinkIncremental>true</LinkIncremental>
+    <IntDir>$(ProjectDir)out\artifacts</IntDir>
+    <OutDir>$(SolutionDir)\out</OutDir>
+    <IncludePath>$(ProjectDir)include;$(ProjectDir)..\opencv\build\include;$(IncludePath)</IncludePath>
     <LibraryPath>$(ProjectDir)opencv\build\x64\vc15\lib;$(ProjectDir)lib;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
@@ -110,6 +118,9 @@
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalLibraryDirectories>$(ProjectDir)..\opencv\build\x64\vc15\lib;$(ProjectDir)lib</AdditionalLibraryDirectories>
+      <ShowProgress>LinkVerboseLib</ShowProgress>
+      <AdditionalDependencies>opencv_world450d.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -126,7 +137,9 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>$(ProjectDir)lib;$(ProjectDir)..\opencv\build\x64\vc15\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(ProjectDir)..\opencv\build\x64\vc15\lib;$(ProjectDir)lib</AdditionalLibraryDirectories>
+      <ShowProgress>LinkVerboseLib</ShowProgress>
+      <AdditionalDependencies>opencv_world450.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -139,6 +152,9 @@
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalLibraryDirectories>$(ProjectDir)..\opencv\build\x64\vc15\lib;$(ProjectDir)lib</AdditionalLibraryDirectories>
+      <ShowProgress>LinkVerboseLib</ShowProgress>
+      <AdditionalDependencies>opencv_world450d.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -155,7 +171,9 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>$(ProjectDir)lib;$(ProjectDir)..\opencv\build\x64\vc15\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(ProjectDir)..\opencv\build\x64\vc15\lib;$(ProjectDir)lib</AdditionalLibraryDirectories>
+      <ShowProgress>LinkVerboseLib</ShowProgress>
+      <AdditionalDependencies>opencv_world450.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

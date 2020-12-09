@@ -1,7 +1,7 @@
 // This is the Shape Sifter server.
 
 #include "server.h"
-#include <thread> 
+
 #include "../photophile/photophile.h"
 
 Server::Server()
