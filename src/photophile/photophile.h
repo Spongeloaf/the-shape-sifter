@@ -36,6 +36,8 @@ private:
 	mat GetDetectedObjectMask(const mat& image);
 	void GetContours(const mat& image, cvContours& contours, cvHierarchy& hierarchy);
 	ppObjectList GetRects(const cvContours& contours);
+	void DrawRects(const ppObjectList& rects, mat& image);
+
 	string m_clientName;
 	mat m_beltMask;
 	VideoMode m_mode;

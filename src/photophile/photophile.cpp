@@ -3,6 +3,8 @@
 
 #include "photophile.h"
 
+const cv::Scalar kRed{ 255, 0, 0 };
+
 PhotoPhile::PhotoPhile(ClientConfig config) : ClientBase(config)
 {
 	m_isOk = true;
@@ -74,7 +76,9 @@ int PhotoPhile::Main()
 		cvHierarchy hier;
 		GetContours(shroud, conts, hier);
 
-		GetRects(conts);
+		ppObjectList rects = GetRects(conts);
+
+		DrawRects(rects, image);
 
 		auto end = std::chrono::system_clock::now();
 		string elapsed = std::to_string(std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count());
@@ -139,6 +143,10 @@ void PhotoPhile::GetContours(const mat& image, cvContours& OutConts, cvHierarchy
 	}
 }
 
+/****************************************
+Name:	PhotoPhile::GetRects
+Action:	Gets a list of rectangles from a contour list
+****************************************/
 ppObjectList PhotoPhile::GetRects(const cvContours& contours)
 {
 	ppObjectList list;
@@ -149,6 +157,14 @@ ppObjectList PhotoPhile::GetRects(const cvContours& contours)
 		list.push_back(r);
 	}
 	return list;
+}
+
+void PhotoPhile::DrawRects(const ppObjectList& rects, mat& image)
+{
+	for (auto r : rects)
+	{
+		cv::rectangle(image, r, kRed);
+	}
 }
 
 int PhotophileSimulator(ClientConfig config, Parts::PartInstance& partBin)
