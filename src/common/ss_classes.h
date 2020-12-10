@@ -161,7 +161,7 @@ namespace Parts
 struct ClientConfig
 {
 	spdlog::level::level_enum m_logLevel;
-	string m_ClientName;
+	string m_clientName;
 	string m_assetPath;
 	INIReader* m_iniReader;
 };
@@ -170,20 +170,20 @@ struct ClientBase
 {
 	ClientBase(ClientConfig config) : 
 		m_logLevel(config.m_logLevel), 
-		m_ClientName(config.m_ClientName),
+		m_clientName(config.m_clientName),
 		m_assetPath(config.m_assetPath),
 		m_iniReader(config.m_iniReader),
 		m_isOk(false)
 		{
 			// Create basic file logger (not rotated)
-			m_logger = spdlog::basic_logger_mt(m_ClientName, "\\log\\" + m_ClientName + ".log", true /* delete old logs */);
+			m_logger = spdlog::basic_logger_mt(m_clientName, "\\log\\" + m_clientName + ".log", true /* delete old logs */);
 			m_logger->set_level(spdlog::level::info);
-			m_logger->info(m_ClientName + " online");
+			m_logger->info(m_clientName + " online");
 			m_logger->flush();
 		};
 
 	spdlog::level::level_enum m_logLevel;
-	string m_ClientName;
+	string m_clientName;
 	string m_assetPath;
 	INIReader* m_iniReader;
 	bool m_isOk;

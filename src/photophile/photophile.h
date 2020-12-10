@@ -10,7 +10,11 @@
 #include "opencv2/opencv.hpp"
 #include <random>
 
-using Mat = cv::Mat;
+using mat = cv::Mat;
+using cvContours = std::vector<std::vector<cv::Point>>;
+using cvHierarchy = std::vector<cv::Vec4i>;
+using ppObjectList = std::vector<cv::Rect>;
+using rect = cv::Rect;
 
 // sleep time in milliseconds for simulator
 constexpr int kSleepMin = 500;
@@ -29,16 +33,20 @@ public:
 	int Main();
 
 private:
-	string m_ClientName;
-	Mat m_BeltMask;
+	mat GetDetectedObjectMask(const mat& image);
+	void GetContours(const mat& image, cvContours& contours, cvHierarchy& hierarchy);
+	ppObjectList GetRects(const cvContours& contours);
+	string m_clientName;
+	mat m_beltMask;
 	VideoMode m_mode;
 	bool m_viewVideo;
-	string m_VideoPath;
+	string m_videoPath;
+	rect m_videoRect;	// This cannot be set until we call Main and open a video. Do not use it before that!
 
 	// openCV Object detection and background subtraction properties.
-	int m_MinContourSize;
+	double m_MinContourSize;
 	cv::Ptr<cv::BackgroundSubtractorMOG2> m_BgSubtractor;
-	Mat m_dilateKernel;
+	mat m_dilateKernel;
 	cv::HersheyFonts m_Font;
 	double m_FgLearningRate;		// background subtractor learning rate
 };
