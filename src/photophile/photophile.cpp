@@ -3,7 +3,9 @@
 
 #include "photophile.h"
 
-const cv::Scalar kRed{ 255, 0, 0 };
+const cv::Scalar kRed{ 0, 0, 255 };
+const cv::Scalar kBlue{ 255, 0, 0 };
+constexpr int kNumberThickness = 3;
 
 PhotoPhile::PhotoPhile(ClientConfig config) : ClientBase(config)
 {
@@ -29,12 +31,18 @@ PhotoPhile::PhotoPhile(ClientConfig config) : ClientBase(config)
 		maskFileName = m_assetPath + maskFileName;
 	}
 
+	m_NextObjectId = 0;
 	m_BgSubtractor = cv::createBackgroundSubtractorMOG2();
-	m_MinContourSize = 2000.0;
-	m_FgLearningRate = 0.002;
-	m_dilateKernel = cv::getStructuringElement(cv::MorphShapes::MORPH_CROSS, cv::Size(4, 7));
+	m_MinContourSize = m_iniReader->GetFloat(m_clientName, "MinContourSize", 2000.0);
+	m_FgLearningRate = m_iniReader->GetFloat(m_clientName, "FgLearningRate", 0.002);
+	m_EdgeOfScreenThreshold = m_iniReader->GetInteger(m_clientName, "EdgeOfScreenThreshold", 20);
+
 	m_Font = cv::FONT_HERSHEY_SIMPLEX;
 
+	int kernelX = m_iniReader->GetInteger(m_clientName, "dilateKernelX", 4);
+	int kernelY = m_iniReader->GetInteger(m_clientName, "dilateKernelY", 7);
+	m_dilateKernel = cv::getStructuringElement(cv::MorphShapes::MORPH_RECT, cv::Size(kernelX, kernelY));
+	
 	// Edge mask for conveyor belt. Used to eliminate detection of the belt edges.
 	m_beltMask = cv::imread(maskFileName, cv::IMREAD_GRAYSCALE);
 	cv::threshold(m_beltMask, m_beltMask, 127, 255, cv::THRESH_BINARY);
@@ -78,12 +86,17 @@ int PhotoPhile::Main()
 
 		ppObjectList rects = GetRects(conts);
 
+		MapOldRectsToNew();
+
 		DrawRects(rects, image);
 
+		m_LastFrameObjectList = rects;
 		auto end = std::chrono::system_clock::now();
 		string elapsed = std::to_string(std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count());
 
-		cv::putText(image, "Process time (ms): " + elapsed, cv::Point(10, 700), m_Font, 1, (255, 255, 255), 2);
+		// Process time
+		cv::putText(image, "Parts: " + std::to_string(rects.size()), cv::Point(20, 650), m_Font, 1, kRed, 2);
+		cv::putText(image, "Time:  " + elapsed, cv::Point(10, 700), m_Font, 1, kRed, 2);
 
 		// Display the resulting frame
 		cv::imshow("Frame Raw", image);
@@ -143,29 +156,82 @@ void PhotoPhile::GetContours(const mat& image, cvContours& OutConts, cvHierarchy
 	}
 }
 
-/****************************************
+/********************************************************************************
 Name:	PhotoPhile::GetRects
-Action:	Gets a list of rectangles from a contour list
-****************************************/
+Action:	Creates a PhotoPhile Object list from the contours. Includes bounding boxes and object ID numbers
+********************************************************************************/
 ppObjectList PhotoPhile::GetRects(const cvContours& contours)
 {
 	ppObjectList list;
 	for (auto c : contours)
 	{
 		rect r = cv::boundingRect(c);
-		// if (r.tl().y >  )
-		list.push_back(r);
+		ppObject o{ r, GetObjectId(), FindObjectStatus(r) };
+		list.push_back(o);
 	}
 	return list;
 }
 
-void PhotoPhile::DrawRects(const ppObjectList& rects, mat& image)
+/********************************************************************************
+Name:	PhotoPhile::DrawRects
+Action:	Draws bounding boxes on the frame along with their object ID numbers
+********************************************************************************/
+void PhotoPhile::DrawRects(const ppObjectList& objects, mat& image)
 {
-	for (auto r : rects)
+	for (const ppObject& o : objects)
 	{
-		cv::rectangle(image, r, kRed);
+		cv::rectangle(image, o.rect, kRed);
+		cv::Point2f center = (o.rect.br() + o.rect.tl()) * 0.5;
+		cv::putText(image, std::to_string(o.objectId), center, m_Font, 1.0, kRed, kNumberThickness);
 	}
 }
+
+unsigned int PhotoPhile::GetObjectId()
+{
+	return m_NextObjectId++;
+}
+
+void PhotoPhile::MapOldRectsToNew(const ppObjectList& oldRects, ppObjectList& newRects)
+{
+	// loop through new rects
+	// Remove rects that are LeavingView.
+
+	// Any rect that is InView and used to be EnteringView should be dispatched to server
+	// Count number of EnteringView from last frame and EnteringView from this frame.
+	// If fewer EnteringView this frame, we must need to add a new part.
+	// Find the closest match to the part(s)  that are no longer EnteringView by distance to center.
+	
+	int newEntering = 0;
+	int oldEntering = 0;
+
+	auto newIt = newRects.begin();
+	while (newIt != newRects.end())
+	{
+		if (newIt->status == ppObjectStatus::LeavingView)
+		{
+			newIt = newRects.erase(newIt);
+			continue;
+		}
+		
+		if (newIt->status == ppObjectStatus::EnteringView)
+			newEntering++;
+	}
+
+	auto oldIt = oldRects.begin();
+	while (newIt != oldRects.end())
+	{
+		if (oldIt->status == ppObjectStatus::EnteringView)
+			oldEntering++;
+	}
+
+	if (newEntering < oldEntering)
+	{
+		// Match up those parts baby!
+		// There must be at least one part to match up!
+	}
+}
+
+
 
 int PhotophileSimulator(ClientConfig config, Parts::PartInstance& partBin)
 {
