@@ -31,9 +31,11 @@ PhotoPhile::PhotoPhile(ClientConfig config) : ClientBase(config)
 		maskFileName = m_assetPath + maskFileName;
 	}
 
+	// TODO: Make this read from config file
+	m_bgSubtractScale = m_iniReader->GetFloat(m_clientName, "BGSubtractScale", 0.5);
 	m_NextObjectId = 0;
 	m_BgSubtractor = cv::createBackgroundSubtractorMOG2();
-	m_MinContourSize = m_iniReader->GetFloat(m_clientName, "MinContourSize", 2000.0);
+	m_MinContourSize = m_iniReader->GetFloat(m_clientName, "MinContourSize", 2000.0) * m_bgSubtractScale;
 	m_FgLearningRate = m_iniReader->GetFloat(m_clientName, "FgLearningRate", 0.002);
 	m_EdgeOfScreenThreshold = m_iniReader->GetInteger(m_clientName, "EdgeOfScreenThreshold", 20);
 
@@ -45,6 +47,10 @@ PhotoPhile::PhotoPhile(ClientConfig config) : ClientBase(config)
 	
 	// Edge mask for conveyor belt. Used to eliminate detection of the belt edges.
 	m_beltMask = cv::imread(maskFileName, cv::IMREAD_GRAYSCALE);
+	cv::Size maskSize = m_beltMask.size();
+	maskSize.height *= m_bgSubtractScale;
+	maskSize.width *= m_bgSubtractScale;
+	cv::resize(m_beltMask, m_beltMask, maskSize, cv::InterpolationFlags::INTER_NEAREST);
 	cv::threshold(m_beltMask, m_beltMask, 127, 255, cv::THRESH_BINARY);
 }
 
@@ -63,7 +69,9 @@ int PhotoPhile::Main()
 		return -1;
 	}
 
-	m_videoRect = Rect(0, 0, cap.get(cv::CAP_PROP_FRAME_WIDTH), cap.get(cv::CAP_PROP_FRAME_HEIGHT));
+	m_halfNativeResolution.height = cap.get(cv::CAP_PROP_FRAME_HEIGHT) * m_bgSubtractScale;
+	m_halfNativeResolution.width = cap.get(cv::CAP_PROP_FRAME_WIDTH) * m_bgSubtractScale;
+
 
 	while (true)
 	{
@@ -86,7 +94,7 @@ int PhotoPhile::Main()
 
 		ppObjectList rects = GetRects(conts);
 
-		MapOldRectsToNew();
+		//MapOldRectsToNew();
 
 		DrawRects(rects, image);
 
@@ -125,8 +133,8 @@ Action:	Use the background subtractor to create black/white mask of any shapes i
 ****************************************/
 mat PhotoPhile::GetDetectedObjectMask(const mat& image)
 {
-	mat shroud = image.clone();
-	cv::dilate(shroud, shroud, m_dilateKernel);
+	mat shroud;
+	cv::resize(image, shroud, m_halfNativeResolution);
 
 	// Background subtraction requires a grayscale image.
 	// Does it really need to be grayscale?
@@ -136,6 +144,7 @@ mat PhotoPhile::GetDetectedObjectMask(const mat& image)
 	cv::blur(shroud, shroud, cv::Size(7, 7));
 	m_BgSubtractor->apply(shroud, shroud, m_FgLearningRate);
 	cv::bitwise_and(shroud, m_beltMask, shroud);
+	cv::dilate(shroud, shroud, m_dilateKernel);
 	return shroud;
 }
 
@@ -166,6 +175,13 @@ ppObjectList PhotoPhile::GetRects(const cvContours& contours)
 	for (auto c : contours)
 	{
 		Rect r = cv::boundingRect(c);
+
+		// The bgsubtractor works on scaled images for performance reasons. We need to scale these rects back up to their original size.
+		r.x = r.x / m_bgSubtractScale;
+		r.y = r.y / m_bgSubtractScale;
+		r.width = r.width / m_bgSubtractScale;
+		r.height = r.height / m_bgSubtractScale;
+
 		ppObject o{ r, GetObjectId(), FindObjectStatus(r) };
 		list.push_back(o);
 	}
@@ -240,6 +256,11 @@ void PhotoPhile::MapOldRectsToNew(const ppObjectList& oldRects, ppObjectList& ne
 
 		}
 	}
+}
+
+ppObjectStatus PhotoPhile::FindObjectStatus(const Rect& r)
+{
+	return ppObjectStatus();
 }
 
 cv::Point2i PhotoPhile::GetRectCenter(const Rect& r)

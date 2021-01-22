@@ -61,9 +61,9 @@ private:
 	ppObjectStatus FindObjectStatus(const Rect& r);
 	cv::Point2i GetRectCenter(const Rect& r);
 
+
 	bool m_viewVideo;
 	mat m_beltMask;
-	Rect m_videoRect;	// This cannot be set until we call Main and open a video. Do not use it before that!
 	string m_clientName;
 	string m_videoPath;
 	unsigned int m_NextObjectId;	// Never use this directly! Call GetObjectId()!
@@ -71,12 +71,16 @@ private:
 	ppObjectList m_LastFrameObjectList;
 
 	// openCV Object detection and background subtraction properties.
+	// Most of these are set in the constructor while reading from the config file.
 	cv::HersheyFonts m_Font;
 	cv::Ptr<cv::BackgroundSubtractorMOG2> m_BgSubtractor;
-	double m_FgLearningRate;		// background subtractor learning rate
-	double m_MinContourSize;
+	float m_FgLearningRate;		// background subtractor learning rate
+	float m_MinContourSize;
 	mat m_dilateKernel;
 	int m_EdgeOfScreenThreshold;
+	cv::Size m_VideoRes;
+	cv::Size m_halfNativeResolution;		// This cannot be set until we call Main and open a video. Do not use it before that!
+	float m_bgSubtractScale;
 };
 
 #endif // !PHOTOPHILE_H_9EEBDD8A14DB43B992C657E2C80DCD48
