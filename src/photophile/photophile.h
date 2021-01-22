@@ -37,7 +37,7 @@ using mat = cv::Mat;
 using cvContours = std::vector<std::vector<cv::Point>>;
 using cvHierarchy = std::vector<cv::Vec4i>;
 using ppObjectList = std::vector<ppObject>;
-using rect = cv::Rect;
+using Rect = cv::Rect;
 
 enum class VideoMode
 {
@@ -58,10 +58,12 @@ private:
 	void DrawRects(const ppObjectList& rects, mat& image);
 	unsigned int GetObjectId();
 	void MapOldRectsToNew(const ppObjectList& oldRects, ppObjectList& newRects);
-	ppObjectStatus FindObjectStatus(rect r);
+	ppObjectStatus FindObjectStatus(const Rect& r);
+	cv::Point2i GetRectCenter(const Rect& r);
+
 	bool m_viewVideo;
 	mat m_beltMask;
-	rect m_videoRect;	// This cannot be set until we call Main and open a video. Do not use it before that!
+	Rect m_videoRect;	// This cannot be set until we call Main and open a video. Do not use it before that!
 	string m_clientName;
 	string m_videoPath;
 	unsigned int m_NextObjectId;	// Never use this directly! Call GetObjectId()!

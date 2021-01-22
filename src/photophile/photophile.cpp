@@ -63,7 +63,7 @@ int PhotoPhile::Main()
 		return -1;
 	}
 
-	m_videoRect = rect(0, 0, cap.get(cv::CAP_PROP_FRAME_WIDTH), cap.get(cv::CAP_PROP_FRAME_HEIGHT));
+	m_videoRect = Rect(0, 0, cap.get(cv::CAP_PROP_FRAME_WIDTH), cap.get(cv::CAP_PROP_FRAME_HEIGHT));
 
 	while (true)
 	{
@@ -165,10 +165,14 @@ ppObjectList PhotoPhile::GetRects(const cvContours& contours)
 	ppObjectList list;
 	for (auto c : contours)
 	{
-		rect r = cv::boundingRect(c);
+		Rect r = cv::boundingRect(c);
 		ppObject o{ r, GetObjectId(), FindObjectStatus(r) };
 		list.push_back(o);
 	}
+
+	auto lowestY = [this](const ppObject& a, const ppObject& b) { return GetRectCenter(a.rect).y < GetRectCenter(b.rect).y; };
+	std::sort(list.begin(), list.end(), lowestY);
+	
 	return list;
 }
 
@@ -204,34 +208,44 @@ void PhotoPhile::MapOldRectsToNew(const ppObjectList& oldRects, ppObjectList& ne
 	int newEntering = 0;
 	int oldEntering = 0;
 
+	// Count how many objects are entering the frame
 	auto newIt = newRects.begin();
 	while (newIt != newRects.end())
 	{
+		if (newIt->status == ppObjectStatus::EnteringView)
+			newEntering++;
+
 		if (newIt->status == ppObjectStatus::LeavingView)
 		{
 			newIt = newRects.erase(newIt);
-			continue;
 		}
-		
-		if (newIt->status == ppObjectStatus::EnteringView)
-			newEntering++;
 	}
 
+	// Count how many we are already aware of
 	auto oldIt = oldRects.begin();
-	while (newIt != oldRects.end())
+	for (auto& old : oldRects)
 	{
-		if (oldIt->status == ppObjectStatus::EnteringView)
+		if (old.status == ppObjectStatus::EnteringView)
 			oldEntering++;
 	}
 
+	// For each newly entered object, dispatch a part to the server and track it.
 	if (newEntering < oldEntering)
 	{
 		// Match up those parts baby!
 		// There must be at least one part to match up!
+		int matches = oldEntering - newEntering;
+		for (int i = 0; i < matches; i++)
+		{
+
+		}
 	}
 }
 
-
+cv::Point2i PhotoPhile::GetRectCenter(const Rect& r)
+{
+	return (r.br() + r.tl()) * 0.5;
+}
 
 int PhotophileSimulator(ClientConfig config, Parts::PartInstance& partBin)
 {
