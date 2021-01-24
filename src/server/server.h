@@ -6,16 +6,23 @@
 #include <thread>
 #include <iostream>
 #include <opencv2/core.hpp>
+#include "../photophile/photophile.h"
 
 using namespace std::chrono_literals;
+
+struct ClientInterfaces
+{
+	PhotoPhile* phile;
+	PhotophileSimulator* phileSim;
+};
 
 class Server
 {
 public:
 	Server();
 	bool IsOK();
-
-	Parts::PartInstance m_photoPhilePartBin;
+	int Main(ClientInterfaces clients);
+	
 	spdlog::level::level_enum GetLogLevel() { return m_logLevel; };
 	string GetAssetPath() { return m_assetPath; };
 	INIReader* GetIniReader() { return &m_iniReader; };
@@ -25,6 +32,7 @@ private:
 
 	INIReader m_iniReader;
 	bool m_InitializeOK;
+	bool m_PhotophileSimulator;
 	std::vector<Parts::PartInstance> m_ActivePartList;
 	string m_assetPath = "C:\\Users\\peter\\Google Drive\\software_dev\\the_shape_sifter\\";
 	string m_configPath = m_assetPath + "settings.ini";

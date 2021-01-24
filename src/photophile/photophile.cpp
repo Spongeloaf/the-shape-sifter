@@ -3,9 +3,37 @@
 
 #include "photophile.h"
 
-const cv::Scalar kRed{ 0, 0, 255 };
-const cv::Scalar kBlue{ 255, 0, 0 };
-constexpr int kNumberThickness = 3;
+
+namespace
+{
+	unsigned int random_char() {
+		std::random_device rd;
+		std::mt19937 gen(rd());
+		std::uniform_int_distribution<> dis(0, 255);
+		return dis(gen);
+	}
+
+	/***************************************************************
+	GeneratePUID()
+
+	Creates a Part Unique IDentifier, which is a string of N length ASCII characters.
+***************************************************************/
+	std::string GeneratePUID(const unsigned int len) {
+		std::stringstream ss;
+
+		for (unsigned int i = 0; i < len; i++) {
+			const auto rc = random_char();
+			std::stringstream hexstream;
+			hexstream << std::hex << rc;
+			auto hex = hexstream.str();
+			if (hex.length() < 2)
+				ss << hex.at(0);
+			else
+				ss << hex.at(1);
+		}
+		return ss.str();
+	}
+};
 
 PhotoPhile::PhotoPhile(ClientConfig config) : ClientBase(config)
 {
@@ -36,10 +64,8 @@ PhotoPhile::PhotoPhile(ClientConfig config) : ClientBase(config)
 	m_NextObjectId = 0;
 	m_BgSubtractor = cv::createBackgroundSubtractorMOG2();
 	m_MinContourSize = m_iniReader->GetFloat(m_clientName, "MinContourSize", 2000.0) * m_bgSubtractScale;
-	m_FgLearningRate = m_iniReader->GetFloat(m_clientName, "FgLearningRate", 0.002);
+	m_FgLearningRate = m_iniReader->GetFloat(m_clientName, "FgLearningRate", 0.002f);
 	m_EdgeOfScreenThreshold = m_iniReader->GetInteger(m_clientName, "EdgeOfScreenThreshold", 20);
-
-	m_Font = cv::FONT_HERSHEY_SIMPLEX;
 
 	int kernelX = m_iniReader->GetInteger(m_clientName, "dilateKernelX", 4);
 	int kernelY = m_iniReader->GetInteger(m_clientName, "dilateKernelY", 7);
@@ -48,8 +74,9 @@ PhotoPhile::PhotoPhile(ClientConfig config) : ClientBase(config)
 	// Edge mask for conveyor belt. Used to eliminate detection of the belt edges.
 	m_beltMask = cv::imread(maskFileName, cv::IMREAD_GRAYSCALE);
 	cv::Size maskSize = m_beltMask.size();
-	maskSize.height *= m_bgSubtractScale;
-	maskSize.width *= m_bgSubtractScale;
+	maskSize.height = int(float(maskSize.height) * m_bgSubtractScale);				
+	maskSize.width = int(float(maskSize.width) * m_bgSubtractScale);;
+
 	cv::resize(m_beltMask, m_beltMask, maskSize, cv::InterpolationFlags::INTER_NEAREST);
 	cv::threshold(m_beltMask, m_beltMask, 127, 255, cv::THRESH_BINARY);
 }
@@ -68,10 +95,9 @@ int PhotoPhile::Main()
 		m_logger->critical("Error opening video stream or file\n\r");
 		return -1;
 	}
-
-	m_halfNativeResolution.height = cap.get(cv::CAP_PROP_FRAME_HEIGHT) * m_bgSubtractScale;
-	m_halfNativeResolution.width = cap.get(cv::CAP_PROP_FRAME_WIDTH) * m_bgSubtractScale;
-
+	
+	m_halfNativeResolution.height = int(float(cap.get(cv::CAP_PROP_FRAME_HEIGHT)) * m_bgSubtractScale);
+	m_halfNativeResolution.width = int(float(cap.get(cv::CAP_PROP_FRAME_WIDTH)) * m_bgSubtractScale);
 
 	while (true)
 	{
@@ -103,8 +129,8 @@ int PhotoPhile::Main()
 		string elapsed = std::to_string(std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count());
 
 		// Process time
-		cv::putText(image, "Parts: " + std::to_string(rects.size()), cv::Point(20, 650), m_Font, 1, kRed, 2);
-		cv::putText(image, "Time:  " + elapsed, cv::Point(10, 700), m_Font, 1, kRed, 2);
+		cv::putText(image, "Parts: " + std::to_string(rects.size()), cv::Point(20, 650), kFont, 1, kRed, 2);
+		cv::putText(image, "Time:  " + elapsed, cv::Point(10, 700), kFont, 1, kRed, 2);
 
 		// Display the resulting frame
 		cv::imshow("Frame Raw", image);
@@ -116,8 +142,18 @@ int PhotoPhile::Main()
 		char c = (char)cv::waitKey(1);
 		if (c == 27)
 			break;
-	}
 
+		//if (!rects.empty())
+		//{
+		//	if ((rects.front().objectId % 10) == 0)
+		//	{
+		//	Parts::PartInstance p = { GeneratePUID(kPUIDLength), std::chrono::system_clock::now(), mat() };
+		//	m_OutputLock.lock();
+		//	m_OutputBuffer.push_back(std::move(p));
+		//	m_OutputLock.unlock();
+		//	}
+		//}
+	}
 	// When everything done, release the video capture object
 	cap.release();
 
@@ -127,17 +163,17 @@ int PhotoPhile::Main()
 	return 0;
 }
 
-/****************************************
+/***************************************************************
 Name:	PhotoPhile::GetDetectedObjectMask
 Action:	Use the background subtractor to create black/white mask of any shapes in the image.
-****************************************/
+***************************************************************/
 mat PhotoPhile::GetDetectedObjectMask(const mat& image)
 {
 	mat shroud;
 	cv::resize(image, shroud, m_halfNativeResolution);
 
-	// Background subtraction requires a grayscale image.
-	// Does it really need to be grayscale?
+	 //Background subtraction requires a grayscale image.
+	 //Does it really need to be grayscale?
 	cv::cvtColor(shroud, shroud, cv::COLOR_BGR2GRAY);
 
 	// blur the image to remove noise
@@ -148,10 +184,10 @@ mat PhotoPhile::GetDetectedObjectMask(const mat& image)
 	return shroud;
 }
 
-/****************************************
+/***************************************************************
 Name:	PhotoPhile::GetContours
 Action:	Get contours from the image and drop any that are too small.
-****************************************/
+***************************************************************/
 void PhotoPhile::GetContours(const mat& image, cvContours& OutConts, cvHierarchy& hierarchy)
 {
 	cvContours workingConts;
@@ -176,13 +212,12 @@ ppObjectList PhotoPhile::GetRects(const cvContours& contours)
 	{
 		Rect r = cv::boundingRect(c);
 
-		// The bgsubtractor works on scaled images for performance reasons. We need to scale these rects back up to their original size.
-		r.x = r.x / m_bgSubtractScale;
-		r.y = r.y / m_bgSubtractScale;
-		r.width = r.width / m_bgSubtractScale;
-		r.height = r.height / m_bgSubtractScale;
-
-		ppObject o{ r, GetObjectId(), FindObjectStatus(r) };
+		// The BG Subtractor works on scaled images for performance reasons. We need to scale these rects back up to their original size.
+		r.x = int(float(r.x) / m_bgSubtractScale);
+		r.y = int(float(r.y) / m_bgSubtractScale);
+		r.width = int(float(r.width) / m_bgSubtractScale);
+		r.height = int(float(r.height) / m_bgSubtractScale);
+		ppObject o{ r, GetObjectIndexNumber(), FindObjectStatus(r) };
 		list.push_back(o);
 	}
 
@@ -202,11 +237,11 @@ void PhotoPhile::DrawRects(const ppObjectList& objects, mat& image)
 	{
 		cv::rectangle(image, o.rect, kRed);
 		cv::Point2f center = (o.rect.br() + o.rect.tl()) * 0.5;
-		cv::putText(image, std::to_string(o.objectId), center, m_Font, 1.0, kRed, kNumberThickness);
+		cv::putText(image, std::to_string(o.objectId), center, kFont, 1.0, kRed, kNumberThickness);
 	}
 }
 
-unsigned int PhotoPhile::GetObjectId()
+unsigned int PhotoPhile::GetObjectIndexNumber()
 {
 	return m_NextObjectId++;
 }
@@ -268,20 +303,33 @@ cv::Point2i PhotoPhile::GetRectCenter(const Rect& r)
 	return (r.br() + r.tl()) * 0.5;
 }
 
-int PhotophileSimulator(ClientConfig config, Parts::PartInstance& partBin)
+void PhotoPhile::GetPartInstanceId(string& s)
 {
-	PhotoPhile ppProperties( config );
+	std::chrono::system_clock::time_point now = std::chrono::system_clock::now();
+	std::time_t now_c = std::chrono::system_clock::to_time_t(now);
+	std::tm now_tm = *std::localtime(&now_c);
 
+	char idNum[12];
+	strftime(idNum, sizeof idNum, "%H%M%S", &now_tm);
+	s += idNum;
+}
+
+int PhotophileSimulator::Main()
+{
 	std::random_device rd;     // only used once to initialise (seed) engine
 	std::mt19937 rng(rd());    // random-number engine used (Mersenne-Twister in this case)
 	std::uniform_int_distribution<int> sleepTimer(kSleepMin, kSleepMax);
 
 	while (true)
 	{
-		std::cout << "Good Morning!\n\r";
-
 		auto random_integer = sleepTimer(rng);
-		std::chrono::duration<int, std::milli> tSleep(random_integer);
+		//std::chrono::duration<int, std::milli> tSleep(random_integer);
+		std::chrono::duration<int, std::milli> tSleep(1000);
 		std::this_thread::sleep_for(tSleep);
+
+		Parts::PartInstance p = { GeneratePUID(kPUIDLength), std::chrono::system_clock::now(), mat() };
+		m_OutputLock.lock();
+		m_OutputBuffer.push_back(std::move(p));
+		m_OutputLock.unlock();
 	}
 }

@@ -15,3 +15,18 @@ namespace BeltBuckleInterface
 	}
 }	//namespace BeltBuckleInterface
 
+void ClientBase::GetParts(std::vector<Parts::PartInstance>& partList)
+{
+	if (m_OutputBuffer.empty())
+		return;
+
+	if (m_OutputLock.try_lock())
+	{
+		for (auto& part : m_OutputBuffer)
+		{
+			partList.push_back(std::move(part));
+		}
+		m_OutputBuffer.clear();
+	m_OutputLock.unlock();
+	}
+}

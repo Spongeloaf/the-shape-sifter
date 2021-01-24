@@ -1,7 +1,28 @@
 // This is the Shape Sifter server.
 
 #include "server.h"
-#include "../photophile/photophile.h"
+
+
+// Execution Entry point
+int main()
+{
+	Server server = Server();
+	if (!server.IsOK())
+		return -1;
+
+	// HANDLE myHandle = CreateThread(0, 0, RunPhotophile, &server.m_photoPhilePartBin; , 0, &myThreadID;);
+	//ClientConfig phileCfg{ server.GetLogLevel(), "PhotoPhile", server.GetAssetPath(), server.GetIniReader() };
+	ClientConfig phileSimCfg{ server.GetLogLevel(), "PhotoPhileSim", server.GetAssetPath(), server.GetIniReader() };
+
+	// TODO: This is kind of a hack. I should find a better way to creaate only a photophilr or a simulator.
+	//PhotoPhile phile(phileCfg);
+	PhotophileSimulator phileSim(phileSimCfg);
+	std::thread threadPhileSim(&PhotophileSimulator::Main, &phileSim);
+	//std::thread threadPhile(&PhotoPhile::Main, &phile);
+	ClientInterfaces clients{ nullptr, &phileSim };
+
+	server.Main(clients);
+}
 
 Server::Server()
 {
@@ -39,21 +60,14 @@ bool Server::LoadConfig()
 
 	m_BbPacketTimeout = std::chrono::milliseconds(m_iniReader.GetInteger("server", "bb_ack_timeout", -1));
 	m_ServerTickInterval = std::chrono::milliseconds(m_iniReader.GetInteger("server", "global_tick_rate", -1));
+	m_PhotophileSimulator = m_iniReader.GetBoolean("server", "photophileSimulator", false);
 
 	return true;
 }
 
-int main()
+int Server::Main(ClientInterfaces clients)
 {
-	Server server = Server();
-	if (!server.IsOK())
-		return -1;
-
-	// HANDLE myHandle = CreateThread(0, 0, RunPhotophile, &server.m_photoPhilePartBin; , 0, &myThreadID;);
-	ClientConfig clientCfg{ server.GetLogLevel(), "PhotoPhile", server.GetAssetPath(), server.GetIniReader()};
-	PhotoPhile phile(clientCfg);
-	std::thread thread_obj(&PhotoPhile::Main, &phile);
-
+	
 	//	# 3rd party imports
 	//import time
 	//
@@ -76,8 +90,9 @@ int main()
 	{
 		// loop timer
 		auto start = std::chrono::system_clock::now();
-		//if mode.check_taxi:
-		//    server.check_taxi()
+		
+		if (clients.phileSim)
+			clients.phileSim->GetParts(m_ActivePartList);
 		//
 		//if mode.check_mtm:
 		//    server.check_mtm()
@@ -97,6 +112,12 @@ int main()
 		// global_tick_rate is the time in milliseconds of each loop, taken from settings.ini
 		auto end = std::chrono::system_clock::now();
 		std::chrono::duration<double, std::milli> elapsed = end - start;
+
+		if (elapsed > kLockTimeout)
+		{
+			m_logger->debug("Took too long to lock a thread. Milliseconds: {}", elapsed.count());
+		}
+
 		if (elapsed < kUpdateInterval)
 		{
 			start = std::chrono::system_clock::now();
@@ -104,5 +125,6 @@ int main()
 			end = std::chrono::system_clock::now();
 			std::chrono::duration<double, std::milli> elapsed = end - start;
 		}
+
 	}
 }

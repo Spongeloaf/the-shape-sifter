@@ -9,10 +9,17 @@
 #include <opencv2/videoio.hpp>
 #include "opencv2/opencv.hpp"
 #include <random>
+#include <time.h>
 
 // sleep time in milliseconds for simulator
 constexpr int kSleepMin = 500;
 constexpr int kSleepMax = 5000;
+
+// OpenCV colors and fonts
+const cv::Scalar kRed{ 0, 0, 255 };
+const cv::Scalar kBlue{ 255, 0, 0 };
+constexpr int kNumberThickness = 3;
+constexpr cv::HersheyFonts kFont = cv::FONT_HERSHEY_SIMPLEX;
 
 // Statuses track where the part is in the frame.
 // EnteringView - Coming in from the top, one edge of the rect touching the top of the frame
@@ -45,7 +52,7 @@ enum class VideoMode
 	file
 };
 
-class PhotoPhile : ClientBase
+class PhotoPhile : public ClientBase
 {
 public:
 	PhotoPhile(ClientConfig config);
@@ -56,11 +63,11 @@ private:
 	void GetContours(const mat& image, cvContours& contours, cvHierarchy& hierarchy);
 	ppObjectList GetRects(const cvContours& contours);
 	void DrawRects(const ppObjectList& rects, mat& image);
-	unsigned int GetObjectId();
+	unsigned int GetObjectIndexNumber();
 	void MapOldRectsToNew(const ppObjectList& oldRects, ppObjectList& newRects);
 	ppObjectStatus FindObjectStatus(const Rect& r);
 	cv::Point2i GetRectCenter(const Rect& r);
-
+	void GetPartInstanceId(string& s);
 
 	bool m_viewVideo;
 	mat m_beltMask;
@@ -72,7 +79,7 @@ private:
 
 	// openCV Object detection and background subtraction properties.
 	// Most of these are set in the constructor while reading from the config file.
-	cv::HersheyFonts m_Font;
+
 	cv::Ptr<cv::BackgroundSubtractorMOG2> m_BgSubtractor;
 	float m_FgLearningRate;		// background subtractor learning rate
 	float m_MinContourSize;
@@ -81,6 +88,13 @@ private:
 	cv::Size m_VideoRes;
 	cv::Size m_halfNativeResolution;		// This cannot be set until we call Main and open a video. Do not use it before that!
 	float m_bgSubtractScale;
+};
+
+class PhotophileSimulator : public ClientBase
+{
+public:
+	PhotophileSimulator(ClientConfig config) : ClientBase(config) {};
+	int Main() override;
 };
 
 #endif // !PHOTOPHILE_H_9EEBDD8A14DB43B992C657E2C80DCD48

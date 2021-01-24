@@ -10,14 +10,17 @@
 #include <spdlog/spdlog.h>
 #include <spdlog/sinks/basic_file_sink.h> 
 #include <thread>
+#include <mutex>
 
 using std::string;
 
 constexpr std::chrono::duration<double, std::milli> kUpdateInterval(10);
+constexpr std::chrono::duration<double, std::milli> kLockTimeout(100);
+constexpr int kPUIDLength = 12;
 constexpr char kStartPacket = '<';
 constexpr char kEndPacket = '>';
 constexpr int kArgumentLen = 4;
-constexpr int kPayloadLen = 12;
+constexpr int kPayloadLen = kPUIDLength;
 constexpr int kCsumLen = 4;
 
 namespace BeltBuckleInterface
@@ -81,7 +84,7 @@ enum class ServerMode
 
 namespace Parts
 {
-	typedef std::chrono::steady_clock::time_point timePoint;
+	typedef std::chrono::system_clock::time_point timePoint;
 
 	enum class ServerStatus
 	{
@@ -107,6 +110,9 @@ namespace Parts
 
 	struct PartInstance
 	{
+		// You CANNOT make a part instance without some data and a PUID.
+		PartInstance() = delete;
+
 		PartInstance(string ID, timePoint captureTime, cv::Mat img) : 
 			m_ID(ID), 
 			m_PartNumber(""),
@@ -122,23 +128,6 @@ namespace Parts
 			m_TimeCF(captureTime),
 			m_TimeAdded(captureTime),
 			m_TimeAssigned(captureTime)
-		{};
-
-		PartInstance() : 
-			m_ID(""),
-			m_PartNumber(""),
-			m_CategoryNumber(""),
-			m_CategoryName(""),
-			m_Image(),
-			m_BinNumber(0),
-			m_CameraOffset(0),
-			m_ServerStatus(ServerStatus::newPart),
-			m_PartStatus(PartStatus::newPart),
-			m_TimeCaptured(std::chrono::high_resolution_clock::now()),
-			m_TimeTaxi(std::chrono::high_resolution_clock::now()),
-			m_TimeCF(std::chrono::high_resolution_clock::now()),
-			m_TimeAdded(std::chrono::high_resolution_clock::now()),
-			m_TimeAssigned(std::chrono::high_resolution_clock::now())
 		{};
 		
 		string m_ID;
@@ -166,8 +155,12 @@ struct ClientConfig
 	INIReader* m_iniReader;
 };
 
-struct ClientBase
+class ClientBase
 {
+public:
+	virtual int Main() = 0;
+	void GetParts(std::vector<Parts::PartInstance>& partList);
+
 	ClientBase(ClientConfig config) : 
 		m_logLevel(config.m_logLevel), 
 		m_clientName(config.m_clientName),
@@ -182,12 +175,15 @@ struct ClientBase
 			m_logger->flush();
 		};
 
+protected:
 	spdlog::level::level_enum m_logLevel;
 	string m_clientName;
 	string m_assetPath;
 	INIReader* m_iniReader;
 	bool m_isOk;
 	std::shared_ptr<spdlog::logger> m_logger;
+	std::mutex m_OutputLock;
+	std::vector<Parts::PartInstance> m_OutputBuffer;
 };
 
 #endif // !SS_CLASSES_H_11205B5C8C7047CAAA518874BA2C272C
