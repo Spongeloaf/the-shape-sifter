@@ -8,17 +8,33 @@ int main()
 	if (!server.IsOK())
 		return -1;
 
-	// HANDLE myHandle = CreateThread(0, 0, RunPhotophile, &server.m_photoPhilePartBin; , 0, &myThreadID;);
-	ClientConfig phileCfg{ server.GetLogLevel(), "PhotoPhile", server.GetAssetPath(), server.GetIniReader() };
-	//ClientConfig phileSimCfg{ server.GetLogLevel(), "PhotoPhileSim", server.GetAssetPath(), server.GetIniReader() };
 
-	// TODO: This is kind of a hack. I should find a better way to creaate only a photophilr or a simulator.
-	PhotoPhile phile(phileCfg);
-	//PhotophileSimulator phileSim(phileSimCfg);
-	//std::thread threadPhileSim(&PhotophileSimulator::Main, &phileSim);
-	std::thread threadPhile(&PhotoPhile::Main, &phile);
+	// TODO: This is kind of a hack. I should find a better way to create only a photophile or a simulator.
+	string sPhotophile = "PhotoPhile";
+	string sPhotophileSim = "PhotoPhileSim";
 
-	ClientInterfaces clients{ &phile, nullptr };
+	INIReader* iniRead = server.GetIniReader();
+
+	bool simulatePhotoPhile = iniRead->GetBoolean(sPhotophile, "simulation", false);
+	
+	PhotoPhile* phile = nullptr;
+	std::thread* threadPhile = nullptr;
+
+	PhotophileSimulator* phileSim = nullptr;
+	std::thread* threadPhileSim = nullptr;
+
+	if (simulatePhotoPhile)
+	{
+		phileSim = new PhotophileSimulator{ server.GetLogLevel(), sPhotophileSim, server.GetAssetPath(), server.GetIniReader() };
+		threadPhileSim = new std::thread(&PhotophileSimulator::Main, &phileSim);
+	}
+	else
+	{
+		phile = new PhotoPhile{ server.GetLogLevel(), sPhotophile, server.GetAssetPath(), server.GetIniReader() };
+		threadPhile = new std::thread(&PhotoPhile::Main, &phile);
+	}
+
+	ClientInterfaces clients{ phile, phileSim };
 
 	server.Main(clients);
 }

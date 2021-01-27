@@ -21,22 +21,10 @@ const cv::Scalar kBlue{ 255, 0, 0 };
 constexpr int kNumberThickness = 3;
 constexpr cv::HersheyFonts kFont = cv::FONT_HERSHEY_SIMPLEX;
 
-// Statuses track where the part is in the frame.
-// EnteringView - Coming in from the top, one edge of the rect touching the top of the frame
-// InView - Neither top nor bottom of the shae is touching the top or bottom of the frame
-// LeavingView - Bottom of rect is touching bottom of frame
-enum class ppObjectStatus
-{
-	EnteringView,
-	InView,
-	LeavingView,
-};
-
 struct ppObject
 {
 	cv::Rect rect;
 	unsigned int objectId;
-	ppObjectStatus status;
 };
 
 using mat = cv::Mat;
@@ -54,7 +42,7 @@ enum class VideoMode
 class PhotoPhile : public ClientBase
 {
 public:
-	PhotoPhile(ClientConfig config);
+	PhotoPhile(spdlog::level::level_enum logLevel, string clientName, string assetPath, INIReader* iniReader);
 	int Main();
 
 private:
@@ -64,15 +52,16 @@ private:
 	void DrawRects(mat& image);
 	unsigned int GetObjectIndexNumber();
 	void MapOldRectsToNew();
-	ppObjectStatus FindObjectStatus(const Rect& r);
-	bool MatchNewRectToOldRect(ppObject r);
-	void DispatchPart(ppObject part);
+	bool IsObjectTouchingEdgeOfFrame(const Rect& r);
+	bool MatchNewRectToOldRect(ppObject& r);
+	void DispatchPart(const ppObject& part);
 
 	bool m_viewVideo;
 	mat m_beltMask;
 	string m_clientName;
 	string m_videoPath;
 	unsigned int m_NextObjectId;	// Never use this directly! Call GetObjectId()!
+	unsigned int m_partCount;
 	VideoMode m_mode;
 	ppObjectList m_LastFrameObjectList;
 	ppObjectList m_ThisFrameObjectList;
@@ -85,7 +74,7 @@ private:
 	float m_FgLearningRate;		// background subtractor learning rate
 	float m_MinContourSize;
 	mat m_dilateKernel;
-	int m_EdgeOfScreenThreshold;
+	int m_rectanglePadding;
 	cv::Size m_VideoRes;
 	cv::Size m_halfNativeResolution;		// This cannot be set until we call Main and open a video. Do not use it before that!
 	float m_bgSubtractScale;

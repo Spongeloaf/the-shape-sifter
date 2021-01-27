@@ -46,10 +46,10 @@ namespace
 
 };	//namespace
 
-PhotoPhile::PhotoPhile(ClientConfig config) : ClientBase(config)
+PhotoPhile::PhotoPhile(spdlog::level::level_enum logLevel, string clientName, string assetPath, INIReader* iniReader) : ClientBase(logLevel, clientName, assetPath, iniReader)
 {
 	m_isOk = true;
-	m_clientName = config.m_clientName;
+	m_clientName = clientName;
 
 	string mode = m_iniReader->Get(m_clientName, "video_mode", "");
 	if (mode == "camera")
@@ -72,11 +72,10 @@ PhotoPhile::PhotoPhile(ClientConfig config) : ClientBase(config)
 
 	// TODO: Make this read from config file
 	m_bgSubtractScale = m_iniReader->GetFloat(m_clientName, "BGSubtractScale", 0.5);
-	m_NextObjectId = 0;
 	m_BgSubtractor = cv::createBackgroundSubtractorMOG2();
 	m_MinContourSize = m_iniReader->GetFloat(m_clientName, "MinContourSize", 2000.0) * m_bgSubtractScale;
 	m_FgLearningRate = m_iniReader->GetFloat(m_clientName, "FgLearningRate", 0.002f);
-	m_EdgeOfScreenThreshold = m_iniReader->GetInteger(m_clientName, "EdgeOfScreenThreshold", 20);
+	m_rectanglePadding = m_iniReader->GetInteger(m_clientName, "rectanglePadding", 20);
 
 	int kernelX = m_iniReader->GetInteger(m_clientName, "dilateKernelX", 4);
 	int kernelY = m_iniReader->GetInteger(m_clientName, "dilateKernelY", 7);
@@ -111,17 +110,12 @@ int PhotoPhile::Main()
 	m_VideoRes.width = cap.get(cv::CAP_PROP_FRAME_WIDTH);
 	m_halfNativeResolution.height = int(float(cap.get(cv::CAP_PROP_FRAME_HEIGHT)) * m_bgSubtractScale);
 	m_halfNativeResolution.width = int(float(cap.get(cv::CAP_PROP_FRAME_WIDTH)) * m_bgSubtractScale);
-
-	int counter = 0;
+	m_NextObjectId = 0;
+	m_partCount = 0;
 
 	while (true)
 	{
 		auto start = std::chrono::system_clock::now();
-
-		if (counter > 177)
-		{
-			int i = 0;
-		}
 
 		// Capture frame-by-frame
 		cap >> m_CurrentFrame;
@@ -148,7 +142,7 @@ int PhotoPhile::Main()
 		string elapsed = std::to_string(std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count());
 
 		// Process time
-		cv::putText(m_CurrentFrame, "Parts: " + std::to_string(m_ThisFrameObjectList.size()), cv::Point(20, 650), kFont, 1, kRed, 2);
+		cv::putText(m_CurrentFrame, "Parts: " + std::to_string(m_partCount), cv::Point(20, 650), kFont, 1, kRed, 2);
 		cv::putText(m_CurrentFrame, "Time:  " + elapsed, cv::Point(10, 700), kFont, 1, kRed, 2);
 
 		// Display the resulting frame
@@ -162,7 +156,6 @@ int PhotoPhile::Main()
 		if (c == 27)
 			break;
 
-		counter++;
 		//if (!rects.empty())
 		//{
 		//	if ((rects.front().objectId % 10) == 0)
@@ -239,8 +232,10 @@ ppObjectList PhotoPhile::GetRects(const cvContours& contours)
 		r.width = int(float(r.width) / m_bgSubtractScale);
 		r.height = int(float(r.height) / m_bgSubtractScale);
 
-		ppObject o{ r, GetObjectIndexNumber(), FindObjectStatus(r) };
-		list.push_back(o);
+		if (IsObjectTouchingEdgeOfFrame(r))
+			continue;
+
+		list.push_back({ r, GetObjectIndexNumber() });
 	}
 
 	std::sort(list.begin(), list.end(), &lowestY);
@@ -277,40 +272,29 @@ void PhotoPhile::MapOldRectsToNew()
 	// If fewer EnteringView this frame, we must need to add a new part.
 	// Find the closest match to the part(s)  that are no longer EnteringView by distance to center.
 	
-	// Remove coming and going items
-	auto newIt = m_ThisFrameObjectList.begin();
-	while (newIt != m_ThisFrameObjectList.end())
-	{
-		if (newIt->status == ppObjectStatus::LeavingView || newIt->status == ppObjectStatus::EnteringView)
-		{
-			newIt = m_ThisFrameObjectList.erase(newIt);
-		}
-		else
-			++newIt;
-	}
+	if (m_ThisFrameObjectList.size() == 0)
+		return;
 
 	for (auto& obj : m_ThisFrameObjectList)
 	{
 		if (MatchNewRectToOldRect(obj))
 			continue;
 
+		obj.objectId = m_partCount;
 		DispatchPart(obj);
 	}
 }
 
-ppObjectStatus PhotoPhile::FindObjectStatus(const Rect& rect)
+// Returns True if the top or bottom edge of the rect is touching ther top or bottom edge of the frame.
+bool PhotoPhile::IsObjectTouchingEdgeOfFrame(const Rect& rect)
 {
-	if (rect.tl().y < m_EdgeOfScreenThreshold)
-	{
-		return ppObjectStatus::EnteringView;
-	}
+	if (rect.tl().y < m_rectanglePadding)
+		return true;
 
-	if (rect.tl().y > (m_VideoRes.height - m_EdgeOfScreenThreshold))
-	{
-		return ppObjectStatus::LeavingView;
-	}
+	if (rect.br().y > (m_VideoRes.height - m_rectanglePadding))
+		return true;
 
-	return ppObjectStatus::InView;
+	return false;
 }
 
 int PhotophileSimulator::Main()
@@ -333,15 +317,19 @@ int PhotophileSimulator::Main()
 	}
 }
 
-bool 	PhotoPhile::MatchNewRectToOldRect(ppObject r)
+bool 	PhotoPhile::MatchNewRectToOldRect(ppObject& r)
 {
 	// Return true if a matching rect was found. Delete the matched rect from the old list.
 	// This list is kept sorted by lowest Y value, and objects are deleted as they are matched. Therefore we can assume that the first item is the best candidate for matching.
 	for (auto iter = m_LastFrameObjectList.begin(); iter != m_LastFrameObjectList.end(); iter++)
 	{
-		if (GetRectCenter(iter->rect).y >= GetRectCenter(r.rect).y)
+		// The padding ensures that objects don't get missed from one frame to the next. Sometimes the bbox fluctuate between frames.
+		int lastY = GetRectCenter(iter->rect).y - m_rectanglePadding;
+		int thisY = GetRectCenter(r.rect).y;
+		if (lastY <= thisY)
 		{
 			// We have a match!
+			r.objectId = iter->objectId;
 			m_LastFrameObjectList.erase(iter);
 			return true;
 		}
@@ -349,13 +337,15 @@ bool 	PhotoPhile::MatchNewRectToOldRect(ppObject r)
 	return false;
 }
 
-void PhotoPhile::DispatchPart(ppObject part)
+void PhotoPhile::DispatchPart(const ppObject& part)
 {
-	cv::Mat partImg = m_CurrentFrame(part.rect);
+	cv::Mat partImg(part.rect.width, part.rect.height, m_CurrentFrame.type());
+	m_CurrentFrame(part.rect).copyTo(partImg);
 	std::chrono::system_clock::time_point now = std::chrono::system_clock::now();
 	Parts::PartInstance newPart(GeneratePUID(), now, partImg);
 	
-	std::cout << "Part dispatched!";
+	std::cout << "Part dispatched!\n\r";
+	m_partCount++;
 
 	m_OutputLock.lock();
 	m_OutputBuffer.push_back(std::move(newPart));

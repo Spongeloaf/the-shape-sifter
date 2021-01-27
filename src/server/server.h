@@ -12,6 +12,11 @@ using namespace std::chrono_literals;
 
 struct ClientInterfaces
 {
+	~ClientInterfaces()
+	{
+		delete phile;
+		delete phileSim;
+	};
 	PhotoPhile* phile;
 	PhotophileSimulator* phileSim;
 };
@@ -30,12 +35,12 @@ public:
 private:
 	bool LoadConfig();
 
-	INIReader m_iniReader;
-	bool m_InitializeOK;
-	bool m_PhotophileSimulator;
 	std::vector<Parts::PartInstance> m_ActivePartList;
 	string m_assetPath = "C:\\Users\\peter\\Google Drive\\software_dev\\the_shape_sifter\\";
 	string m_configPath = m_assetPath + "settings.ini";
+	INIReader m_iniReader;
+	bool m_InitializeOK;
+	bool m_PhotophileSimulator;
 	std::shared_ptr<spdlog::logger> m_logger;
 	std::chrono::milliseconds m_BbPacketTimeout = 50ms;
 	std::chrono::milliseconds m_ServerTickInterval = 32ms;

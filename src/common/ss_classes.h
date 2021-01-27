@@ -11,11 +11,12 @@
 #include <spdlog/sinks/basic_file_sink.h> 
 #include <thread>
 #include <mutex>
+#include <iostream>
 
 using std::string;
 
 constexpr std::chrono::duration<double, std::milli> kUpdateInterval(10);
-constexpr std::chrono::duration<double, std::milli> kLockTimeout(100);
+constexpr std::chrono::duration<double, std::milli> kLockTimeout(kUpdateInterval * 10);
 constexpr unsigned int kPUIDLength = 12;
 constexpr char kStartPacket = '<';
 constexpr char kEndPacket = '>';
@@ -80,8 +81,6 @@ enum class ServerMode
 	idle,
 };
 
-
-
 namespace Parts
 {
 	enum class ServerStatus
@@ -145,25 +144,17 @@ namespace Parts
 	};
 };	// namespace Parts
 
-struct ClientConfig
-{
-	spdlog::level::level_enum m_logLevel;
-	string m_clientName;
-	string m_assetPath;
-	INIReader* m_iniReader;
-};
-
 class ClientBase
 {
 public:
 	virtual int Main() = 0;
 	void GetParts(std::vector<Parts::PartInstance>& partList);
 
-	ClientBase(ClientConfig config) : 
-		m_logLevel(config.m_logLevel), 
-		m_clientName(config.m_clientName),
-		m_assetPath(config.m_assetPath),
-		m_iniReader(config.m_iniReader),
+	ClientBase(spdlog::level::level_enum logLevel, string clientName, string assetPath, INIReader* iniReader) :
+		m_logLevel(logLevel), 
+		m_clientName(clientName),
+		m_assetPath(assetPath),
+		m_iniReader(iniReader),
 		m_isOk(false)
 		{
 			// Create basic file logger (not rotated)
