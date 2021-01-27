@@ -2,8 +2,6 @@
 
 #include "server.h"
 
-
-// Execution Entry point
 int main()
 {
 	Server server = Server();
@@ -11,15 +9,16 @@ int main()
 		return -1;
 
 	// HANDLE myHandle = CreateThread(0, 0, RunPhotophile, &server.m_photoPhilePartBin; , 0, &myThreadID;);
-	//ClientConfig phileCfg{ server.GetLogLevel(), "PhotoPhile", server.GetAssetPath(), server.GetIniReader() };
-	ClientConfig phileSimCfg{ server.GetLogLevel(), "PhotoPhileSim", server.GetAssetPath(), server.GetIniReader() };
+	ClientConfig phileCfg{ server.GetLogLevel(), "PhotoPhile", server.GetAssetPath(), server.GetIniReader() };
+	//ClientConfig phileSimCfg{ server.GetLogLevel(), "PhotoPhileSim", server.GetAssetPath(), server.GetIniReader() };
 
 	// TODO: This is kind of a hack. I should find a better way to creaate only a photophilr or a simulator.
-	//PhotoPhile phile(phileCfg);
-	PhotophileSimulator phileSim(phileSimCfg);
-	std::thread threadPhileSim(&PhotophileSimulator::Main, &phileSim);
-	//std::thread threadPhile(&PhotoPhile::Main, &phile);
-	ClientInterfaces clients{ nullptr, &phileSim };
+	PhotoPhile phile(phileCfg);
+	//PhotophileSimulator phileSim(phileSimCfg);
+	//std::thread threadPhileSim(&PhotophileSimulator::Main, &phileSim);
+	std::thread threadPhile(&PhotoPhile::Main, &phile);
+
+	ClientInterfaces clients{ &phile, nullptr };
 
 	server.Main(clients);
 }
@@ -93,6 +92,9 @@ int Server::Main(ClientInterfaces clients)
 		
 		if (clients.phileSim)
 			clients.phileSim->GetParts(m_ActivePartList);
+
+		if (clients.phile)
+			clients.phile->GetParts(m_ActivePartList);
 		//
 		//if mode.check_mtm:
 		//    server.check_mtm()

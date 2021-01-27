@@ -16,7 +16,7 @@ using std::string;
 
 constexpr std::chrono::duration<double, std::milli> kUpdateInterval(10);
 constexpr std::chrono::duration<double, std::milli> kLockTimeout(100);
-constexpr int kPUIDLength = 12;
+constexpr unsigned int kPUIDLength = 12;
 constexpr char kStartPacket = '<';
 constexpr char kEndPacket = '>';
 constexpr int kArgumentLen = 4;
@@ -84,8 +84,6 @@ enum class ServerMode
 
 namespace Parts
 {
-	typedef std::chrono::system_clock::time_point timePoint;
-
 	enum class ServerStatus
 	{
 		newPart,
@@ -113,7 +111,7 @@ namespace Parts
 		// You CANNOT make a part instance without some data and a PUID.
 		PartInstance() = delete;
 
-		PartInstance(string ID, timePoint captureTime, cv::Mat img) : 
+		PartInstance(string ID, std::chrono::system_clock::time_point captureTime, cv::Mat img) :
 			m_ID(ID), 
 			m_PartNumber(""),
 			m_CategoryNumber(""),
@@ -139,11 +137,11 @@ namespace Parts
 		int m_CameraOffset;
 		ServerStatus m_ServerStatus;
 		PartStatus m_PartStatus;
-		timePoint m_TimeCaptured;
-		timePoint m_TimeTaxi;
-		timePoint m_TimeCF;
-		timePoint m_TimeAdded;
-		timePoint m_TimeAssigned;
+		std::chrono::system_clock::time_point m_TimeCaptured;
+		std::chrono::system_clock::time_point m_TimeTaxi;
+		std::chrono::system_clock::time_point m_TimeCF;
+		std::chrono::system_clock::time_point m_TimeAdded;
+		std::chrono::system_clock::time_point m_TimeAssigned;
 	};
 };	// namespace Parts
 

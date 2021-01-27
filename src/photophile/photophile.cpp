@@ -18,10 +18,10 @@ namespace
 
 	Creates a Part Unique IDentifier, which is a string of N length ASCII characters.
 ***************************************************************/
-	std::string GeneratePUID(const unsigned int len) {
+	std::string GeneratePUID() {
 		std::stringstream ss;
 
-		for (unsigned int i = 0; i < len; i++) {
+		for (unsigned int i = 0; i < kPUIDLength; i++) {
 			const auto rc = random_char();
 			std::stringstream hexstream;
 			hexstream << std::hex << rc;
@@ -33,7 +33,18 @@ namespace
 		}
 		return ss.str();
 	}
-};
+
+	cv::Point2i GetRectCenter(const Rect& r)
+	{
+		return (r.br() + r.tl()) * 0.5;
+	}
+
+	bool lowestY(const ppObject& a, const ppObject& b)
+	{
+		return GetRectCenter(a.rect).y < GetRectCenter(b.rect).y;
+	}
+
+};	//namespace
 
 PhotoPhile::PhotoPhile(ClientConfig config) : ClientBase(config)
 {
@@ -96,44 +107,52 @@ int PhotoPhile::Main()
 		return -1;
 	}
 	
+	m_VideoRes.height = cap.get(cv::CAP_PROP_FRAME_HEIGHT);
+	m_VideoRes.width = cap.get(cv::CAP_PROP_FRAME_WIDTH);
 	m_halfNativeResolution.height = int(float(cap.get(cv::CAP_PROP_FRAME_HEIGHT)) * m_bgSubtractScale);
 	m_halfNativeResolution.width = int(float(cap.get(cv::CAP_PROP_FRAME_WIDTH)) * m_bgSubtractScale);
+
+	int counter = 0;
 
 	while (true)
 	{
 		auto start = std::chrono::system_clock::now();
 
-		mat image;
+		if (counter > 177)
+		{
+			int i = 0;
+		}
+
 		// Capture frame-by-frame
-		cap >> image;
+		cap >> m_CurrentFrame;
 
 		// If the frame is empty, break immediately
-		if (image.empty())
+		if (m_CurrentFrame.empty())
 			continue;
 
 		// We need to preserve the original frame
-		mat shroud = GetDetectedObjectMask(image);
+		mat shroud = GetDetectedObjectMask(m_CurrentFrame);
 
 		cvContours conts;
 		cvHierarchy hier;
 		GetContours(shroud, conts, hier);
 
-		ppObjectList rects = GetRects(conts);
+		m_ThisFrameObjectList = GetRects(conts);
 
-		//MapOldRectsToNew();
+		MapOldRectsToNew();
 
-		DrawRects(rects, image);
+		DrawRects(m_CurrentFrame);
 
-		m_LastFrameObjectList = rects;
+		m_LastFrameObjectList = m_ThisFrameObjectList;
 		auto end = std::chrono::system_clock::now();
 		string elapsed = std::to_string(std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count());
 
 		// Process time
-		cv::putText(image, "Parts: " + std::to_string(rects.size()), cv::Point(20, 650), kFont, 1, kRed, 2);
-		cv::putText(image, "Time:  " + elapsed, cv::Point(10, 700), kFont, 1, kRed, 2);
+		cv::putText(m_CurrentFrame, "Parts: " + std::to_string(m_ThisFrameObjectList.size()), cv::Point(20, 650), kFont, 1, kRed, 2);
+		cv::putText(m_CurrentFrame, "Time:  " + elapsed, cv::Point(10, 700), kFont, 1, kRed, 2);
 
 		// Display the resulting frame
-		cv::imshow("Frame Raw", image);
+		cv::imshow("Frame Raw", m_CurrentFrame);
 
 		// Display the resulting frame
 		cv::imshow("Frame Shroud", shroud);
@@ -143,6 +162,7 @@ int PhotoPhile::Main()
 		if (c == 27)
 			break;
 
+		counter++;
 		//if (!rects.empty())
 		//{
 		//	if ((rects.front().objectId % 10) == 0)
@@ -201,6 +221,7 @@ void PhotoPhile::GetContours(const mat& image, cvContours& OutConts, cvHierarchy
 	}
 }
 
+
 /********************************************************************************
 Name:	PhotoPhile::GetRects
 Action:	Creates a PhotoPhile Object list from the contours. Includes bounding boxes and object ID numbers
@@ -217,12 +238,12 @@ ppObjectList PhotoPhile::GetRects(const cvContours& contours)
 		r.y = int(float(r.y) / m_bgSubtractScale);
 		r.width = int(float(r.width) / m_bgSubtractScale);
 		r.height = int(float(r.height) / m_bgSubtractScale);
+
 		ppObject o{ r, GetObjectIndexNumber(), FindObjectStatus(r) };
 		list.push_back(o);
 	}
 
-	auto lowestY = [this](const ppObject& a, const ppObject& b) { return GetRectCenter(a.rect).y < GetRectCenter(b.rect).y; };
-	std::sort(list.begin(), list.end(), lowestY);
+	std::sort(list.begin(), list.end(), &lowestY);
 	
 	return list;
 }
@@ -231,9 +252,9 @@ ppObjectList PhotoPhile::GetRects(const cvContours& contours)
 Name:	PhotoPhile::DrawRects
 Action:	Draws bounding boxes on the frame along with their object ID numbers
 ********************************************************************************/
-void PhotoPhile::DrawRects(const ppObjectList& objects, mat& image)
+void PhotoPhile::DrawRects(mat& image)
 {
-	for (const ppObject& o : objects)
+	for (const ppObject& o : m_ThisFrameObjectList)
 	{
 		cv::rectangle(image, o.rect, kRed);
 		cv::Point2f center = (o.rect.br() + o.rect.tl()) * 0.5;
@@ -246,7 +267,7 @@ unsigned int PhotoPhile::GetObjectIndexNumber()
 	return m_NextObjectId++;
 }
 
-void PhotoPhile::MapOldRectsToNew(const ppObjectList& oldRects, ppObjectList& newRects)
+void PhotoPhile::MapOldRectsToNew()
 {
 	// loop through new rects
 	// Remove rects that are LeavingView.
@@ -256,62 +277,40 @@ void PhotoPhile::MapOldRectsToNew(const ppObjectList& oldRects, ppObjectList& ne
 	// If fewer EnteringView this frame, we must need to add a new part.
 	// Find the closest match to the part(s)  that are no longer EnteringView by distance to center.
 	
-	int newEntering = 0;
-	int oldEntering = 0;
-
-	// Count how many objects are entering the frame
-	auto newIt = newRects.begin();
-	while (newIt != newRects.end())
+	// Remove coming and going items
+	auto newIt = m_ThisFrameObjectList.begin();
+	while (newIt != m_ThisFrameObjectList.end())
 	{
-		if (newIt->status == ppObjectStatus::EnteringView)
-			newEntering++;
-
-		if (newIt->status == ppObjectStatus::LeavingView)
+		if (newIt->status == ppObjectStatus::LeavingView || newIt->status == ppObjectStatus::EnteringView)
 		{
-			newIt = newRects.erase(newIt);
+			newIt = m_ThisFrameObjectList.erase(newIt);
 		}
+		else
+			++newIt;
 	}
 
-	// Count how many we are already aware of
-	auto oldIt = oldRects.begin();
-	for (auto& old : oldRects)
+	for (auto& obj : m_ThisFrameObjectList)
 	{
-		if (old.status == ppObjectStatus::EnteringView)
-			oldEntering++;
-	}
+		if (MatchNewRectToOldRect(obj))
+			continue;
 
-	// For each newly entered object, dispatch a part to the server and track it.
-	if (newEntering < oldEntering)
+		DispatchPart(obj);
+	}
+}
+
+ppObjectStatus PhotoPhile::FindObjectStatus(const Rect& rect)
+{
+	if (rect.tl().y < m_EdgeOfScreenThreshold)
 	{
-		// Match up those parts baby!
-		// There must be at least one part to match up!
-		int matches = oldEntering - newEntering;
-		for (int i = 0; i < matches; i++)
-		{
-
-		}
+		return ppObjectStatus::EnteringView;
 	}
-}
 
-ppObjectStatus PhotoPhile::FindObjectStatus(const Rect& r)
-{
-	return ppObjectStatus();
-}
+	if (rect.tl().y > (m_VideoRes.height - m_EdgeOfScreenThreshold))
+	{
+		return ppObjectStatus::LeavingView;
+	}
 
-cv::Point2i PhotoPhile::GetRectCenter(const Rect& r)
-{
-	return (r.br() + r.tl()) * 0.5;
-}
-
-void PhotoPhile::GetPartInstanceId(string& s)
-{
-	std::chrono::system_clock::time_point now = std::chrono::system_clock::now();
-	std::time_t now_c = std::chrono::system_clock::to_time_t(now);
-	std::tm now_tm = *std::localtime(&now_c);
-
-	char idNum[12];
-	strftime(idNum, sizeof idNum, "%H%M%S", &now_tm);
-	s += idNum;
+	return ppObjectStatus::InView;
 }
 
 int PhotophileSimulator::Main()
@@ -327,9 +326,38 @@ int PhotophileSimulator::Main()
 		std::chrono::duration<int, std::milli> tSleep(1000);
 		std::this_thread::sleep_for(tSleep);
 
-		Parts::PartInstance p = { GeneratePUID(kPUIDLength), std::chrono::system_clock::now(), mat() };
+		Parts::PartInstance p = { GeneratePUID(), std::chrono::system_clock::now(), mat() };
 		m_OutputLock.lock();
 		m_OutputBuffer.push_back(std::move(p));
 		m_OutputLock.unlock();
 	}
+}
+
+bool 	PhotoPhile::MatchNewRectToOldRect(ppObject r)
+{
+	// Return true if a matching rect was found. Delete the matched rect from the old list.
+	// This list is kept sorted by lowest Y value, and objects are deleted as they are matched. Therefore we can assume that the first item is the best candidate for matching.
+	for (auto iter = m_LastFrameObjectList.begin(); iter != m_LastFrameObjectList.end(); iter++)
+	{
+		if (GetRectCenter(iter->rect).y >= GetRectCenter(r.rect).y)
+		{
+			// We have a match!
+			m_LastFrameObjectList.erase(iter);
+			return true;
+		}
+	}
+	return false;
+}
+
+void PhotoPhile::DispatchPart(ppObject part)
+{
+	cv::Mat partImg = m_CurrentFrame(part.rect);
+	std::chrono::system_clock::time_point now = std::chrono::system_clock::now();
+	Parts::PartInstance newPart(GeneratePUID(), now, partImg);
+	
+	std::cout << "Part dispatched!";
+
+	m_OutputLock.lock();
+	m_OutputBuffer.push_back(std::move(newPart));
+	m_OutputLock.unlock();
 }

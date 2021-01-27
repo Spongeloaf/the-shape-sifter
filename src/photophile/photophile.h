@@ -27,7 +27,6 @@ constexpr cv::HersheyFonts kFont = cv::FONT_HERSHEY_SIMPLEX;
 // LeavingView - Bottom of rect is touching bottom of frame
 enum class ppObjectStatus
 {
-	Unclassified,
 	EnteringView,
 	InView,
 	LeavingView,
@@ -62,12 +61,12 @@ private:
 	mat GetDetectedObjectMask(const mat& image);
 	void GetContours(const mat& image, cvContours& contours, cvHierarchy& hierarchy);
 	ppObjectList GetRects(const cvContours& contours);
-	void DrawRects(const ppObjectList& rects, mat& image);
+	void DrawRects(mat& image);
 	unsigned int GetObjectIndexNumber();
-	void MapOldRectsToNew(const ppObjectList& oldRects, ppObjectList& newRects);
+	void MapOldRectsToNew();
 	ppObjectStatus FindObjectStatus(const Rect& r);
-	cv::Point2i GetRectCenter(const Rect& r);
-	void GetPartInstanceId(string& s);
+	bool MatchNewRectToOldRect(ppObject r);
+	void DispatchPart(ppObject part);
 
 	bool m_viewVideo;
 	mat m_beltMask;
@@ -76,6 +75,8 @@ private:
 	unsigned int m_NextObjectId;	// Never use this directly! Call GetObjectId()!
 	VideoMode m_mode;
 	ppObjectList m_LastFrameObjectList;
+	ppObjectList m_ThisFrameObjectList;
+	mat m_CurrentFrame;
 
 	// openCV Object detection and background subtraction properties.
 	// Most of these are set in the constructor while reading from the config file.
