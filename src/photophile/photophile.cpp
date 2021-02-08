@@ -106,8 +106,8 @@ int PhotoPhile::Main()
 		return -1;
 	}
 	
-	m_VideoRes.height = cap.get(cv::CAP_PROP_FRAME_HEIGHT);
-	m_VideoRes.width = cap.get(cv::CAP_PROP_FRAME_WIDTH);
+	m_VideoRes.height = int(cap.get(cv::CAP_PROP_FRAME_HEIGHT));
+	m_VideoRes.width = int(cap.get(cv::CAP_PROP_FRAME_WIDTH));
 	m_halfNativeResolution.height = int(float(cap.get(cv::CAP_PROP_FRAME_HEIGHT)) * m_bgSubtractScale);
 	m_halfNativeResolution.width = int(float(cap.get(cv::CAP_PROP_FRAME_WIDTH)) * m_bgSubtractScale);
 	m_NextObjectId = 0;

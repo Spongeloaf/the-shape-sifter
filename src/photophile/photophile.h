@@ -83,7 +83,8 @@ private:
 class PhotophileSimulator : public ClientBase
 {
 public:
-	PhotophileSimulator(ClientConfig config) : ClientBase(config) {};
+	PhotophileSimulator(spdlog::level::level_enum logLevel, string clientName, string assetPath, INIReader* iniReader) 
+		: ClientBase(logLevel, clientName, assetPath, iniReader) {};
 	int Main() override;
 };
 

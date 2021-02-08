@@ -7,6 +7,7 @@
 #include <iostream>
 #include <opencv2/core.hpp>
 #include "../photophile/photophile.h"
+#include "../suip/suipClient.h"
 
 using namespace std::chrono_literals;
 
@@ -16,9 +17,11 @@ struct ClientInterfaces
 	{
 		delete phile;
 		delete phileSim;
+		delete suip;
 	};
 	PhotoPhile* phile;
 	PhotophileSimulator* phileSim;
+	SUIP* suip;
 };
 
 class Server

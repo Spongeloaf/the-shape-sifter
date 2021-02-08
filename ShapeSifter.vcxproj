@@ -22,11 +22,18 @@
     <ClCompile Include="src\common\ss_classes.cpp" />
     <ClCompile Include="src\photophile\photophile.cpp" />
     <ClCompile Include="src\server\server.cpp" />
+    <ClCompile Include="src\suip\suipClient.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\common\ss_classes.h" />
     <ClInclude Include="src\photophile\photophile.h" />
     <ClInclude Include="src\server\server.h" />
+    <ClInclude Include="src\suip\suipClient.h" />
+    <ClInclude Include="src\suip\suipUI.h" />
+    <ClInclude Include="suip.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="src\suip\suip_v3.ui" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>
@@ -82,15 +89,15 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>$(ProjectDir)include;$(ProjectDir)..\opencv\build\include;$(IncludePath)</IncludePath>
-    <LibraryPath>$(ProjectDir)opencv\build\x64\vc15\lib;$(ProjectDir)lib;$(LibraryPath)</LibraryPath>
+    <IncludePath>$(ProjectDir)\include;$(ProjectDir)..\opencv\build\include;$(QT_DIR)\include\;$(IncludePath)</IncludePath>
+    <LibraryPath>$(ProjectDir)opencv\build\x64\vc15\lib;$(ProjectDir)lib;$(QT_DIR)\lib;$(LibraryPath)</LibraryPath>
     <OutDir>$(SolutionDir)\out\debug</OutDir>
     <IntDir>$(ProjectDir)out\debug\artifacts</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>$(ProjectDir)include;$(ProjectDir)..\opencv\build\include;$(IncludePath)</IncludePath>
-    <LibraryPath>$(ProjectDir)opencv\build\x64\vc15\lib;$(ProjectDir)lib;$(LibraryPath)</LibraryPath>
+    <IncludePath>$(ProjectDir)include;$(ProjectDir)..\opencv\build\include;$(QT_DIR)\include;$(IncludePath)</IncludePath>
+    <LibraryPath>$(ProjectDir)opencv\build\x64\vc15\lib;$(ProjectDir)lib;$(QT_DIR)\lib;$(LibraryPath)</LibraryPath>
     <OutDir>$(SolutionDir)\out\prod</OutDir>
     <IntDir>$(ProjectDir)out\prod\artifacts</IntDir>
   </PropertyGroup>
@@ -98,15 +105,15 @@
     <LinkIncremental>true</LinkIncremental>
     <IntDir>$(ProjectDir)out\debug\artifacts</IntDir>
     <OutDir>$(SolutionDir)\out\debug</OutDir>
-    <IncludePath>$(ProjectDir)include;$(ProjectDir)..\opencv\build\include;$(IncludePath)</IncludePath>
-    <LibraryPath>$(ProjectDir)opencv\build\x64\vc15\lib;$(ProjectDir)lib;$(LibraryPath)</LibraryPath>
+    <IncludePath>$(ProjectDir)\include;$(ProjectDir)..\opencv\build\include;$(QT_DIR)\include\;$(IncludePath)</IncludePath>
+    <LibraryPath>$(ProjectDir)opencv\build\x64\vc15\lib;$(ProjectDir)lib;$(QT_DIR)\lib;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>true</LinkIncremental>
     <IntDir>$(ProjectDir)out\prod\artifacts</IntDir>
     <OutDir>$(SolutionDir)\out\prod</OutDir>
-    <IncludePath>$(ProjectDir)include;$(ProjectDir)..\opencv\build\include;$(IncludePath)</IncludePath>
-    <LibraryPath>$(ProjectDir)opencv\build\x64\vc15\lib;$(ProjectDir)lib;$(LibraryPath)</LibraryPath>
+    <IncludePath>$(ProjectDir)include;$(ProjectDir)..\opencv\build\include;$(QT_DIR)\include;$(IncludePath)</IncludePath>
+    <LibraryPath>$(ProjectDir)opencv\build\x64\vc15\lib;$(ProjectDir)lib;$(QT_DIR)\lib;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -114,14 +121,15 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <LanguageStandard>stdcpplatest</LanguageStandard>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>$(ProjectDir)..\opencv\build\x64\vc15\lib;$(ProjectDir)lib</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(ProjectDir)..\opencv\build\x64\vc15\lib;$(ProjectDir)lib;$(QT_DIR)\lib</AdditionalLibraryDirectories>
       <ShowProgress>LinkVerboseLib</ShowProgress>
       <AdditionalDependencies>opencv_world450d.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalOptions>"$(QT_DIR)\lib\*.lib" %(AdditionalOptions)</AdditionalOptions>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -132,15 +140,17 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>$(ProjectDir)..\opencv\build\x64\vc15\lib;$(ProjectDir)lib</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(ProjectDir)..\opencv\build\x64\vc15\lib;$(ProjectDir)lib;$(QT_DIR)\lib</AdditionalLibraryDirectories>
       <ShowProgress>LinkVerboseLib</ShowProgress>
       <AdditionalDependencies>opencv_world450.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalOptions>"$(QT_DIR)\lib\*.lib" %(AdditionalOptions)</AdditionalOptions>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -149,14 +159,15 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <LanguageStandard>stdcpplatest</LanguageStandard>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>$(ProjectDir)..\opencv\build\x64\vc15\lib;$(ProjectDir)lib</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(ProjectDir)..\opencv\build\x64\vc15\lib;$(ProjectDir)lib;$(QT_DIR)\lib</AdditionalLibraryDirectories>
       <ShowProgress>LinkVerboseLib</ShowProgress>
       <AdditionalDependencies>opencv_world450d.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalOptions>"$(QT_DIR)\lib\*.lib" %(AdditionalOptions)</AdditionalOptions>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -167,15 +178,17 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>$(ProjectDir)..\opencv\build\x64\vc15\lib;$(ProjectDir)lib</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(ProjectDir)..\opencv\build\x64\vc15\lib;$(ProjectDir)lib;$(QT_DIR)\lib</AdditionalLibraryDirectories>
       <ShowProgress>LinkVerboseLib</ShowProgress>
       <AdditionalDependencies>opencv_world450.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalOptions>"$(QT_DIR)\lib\*.lib" %(AdditionalOptions)</AdditionalOptions>
     </Link>
   </ItemDefinitionGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

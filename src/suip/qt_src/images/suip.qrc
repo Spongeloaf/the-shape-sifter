@@ -1,7 +1,0 @@
-<RCC>
-  <qresource prefix="led">
-    <file>green_led.bmp</file>
-    <file>red_led.bmp</file>
-    <file>yellow_led.bmp</file>
-  </qresource>
-</RCC>

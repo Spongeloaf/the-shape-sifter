@@ -22,6 +22,9 @@
     <Filter Include="Source Files\common">
       <UniqueIdentifier>{c3e1020e-8e1b-417d-88bf-a5ae5a8b08ef}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\SUIP">
+      <UniqueIdentifier>{b25ab310-2f33-4a26-b21b-70f8f857814f}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\server\server.cpp">
@@ -32,6 +35,9 @@
     </ClCompile>
     <ClCompile Include="src\photophile\photophile.cpp">
       <Filter>Source Files\photophile</Filter>
+    </ClCompile>
+    <ClCompile Include="src\suip\suipClient.cpp">
+      <Filter>Source Files\SUIP</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -44,5 +50,19 @@
     <ClInclude Include="src\common\ss_classes.h">
       <Filter>Source Files\common</Filter>
     </ClInclude>
+    <ClInclude Include="suip.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\suip\suipClient.h">
+      <Filter>Source Files\SUIP</Filter>
+    </ClInclude>
+    <ClInclude Include="src\suip\suipUI.h">
+      <Filter>Source Files\SUIP</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="src\suip\suip_v3.ui">
+      <Filter>Source Files\SUIP</Filter>
+    </None>
   </ItemGroup>
 </Project>

@@ -10,31 +10,39 @@ int main()
 
 
 	// TODO: This is kind of a hack. I should find a better way to create only a photophile or a simulator.
-	string sPhotophile = "PhotoPhile";
-	string sPhotophileSim = "PhotoPhileSim";
+	string sPhotophileName = "PhotoPhile";
+	string sPhotophileSimName = "PhotoPhileSim";
+	string sSuipName = "PhotoPhileSim";
 
 	INIReader* iniRead = server.GetIniReader();
 
-	bool simulatePhotoPhile = iniRead->GetBoolean(sPhotophile, "simulation", false);
-	
-	PhotoPhile* phile = nullptr;
-	std::thread* threadPhile = nullptr;
+	//bool simulatePhotoPhile = iniRead->GetBoolean(sPhotophileName, "simulation", false);
+	//
+	//PhotoPhile* phile = nullptr;
+	//std::thread* threadPhile = nullptr;
 
-	PhotophileSimulator* phileSim = nullptr;
-	std::thread* threadPhileSim = nullptr;
+	//PhotophileSimulator* phileSim = nullptr;
+	//std::thread* threadPhileSim = nullptr;
 
-	if (simulatePhotoPhile)
-	{
-		phileSim = new PhotophileSimulator{ server.GetLogLevel(), sPhotophileSim, server.GetAssetPath(), server.GetIniReader() };
-		threadPhileSim = new std::thread(&PhotophileSimulator::Main, &phileSim);
-	}
-	else
-	{
-		phile = new PhotoPhile{ server.GetLogLevel(), sPhotophile, server.GetAssetPath(), server.GetIniReader() };
-		threadPhile = new std::thread(&PhotoPhile::Main, &phile);
-	}
+	//if (simulatePhotoPhile)
+	//{
+	//	phileSim = new PhotophileSimulator{ server.GetLogLevel(), sPhotophileSimName, server.GetAssetPath(), server.GetIniReader() };
+	//	threadPhileSim = new std::thread(&PhotophileSimulator::Main, &phileSim);
+	//}
+	//else
+	//{
+	//	phile = new PhotoPhile{ server.GetLogLevel(), sPhotophileName, server.GetAssetPath(), server.GetIniReader() };
+	//	threadPhile = new std::thread(&PhotoPhile::Main, &phile);
+	//}
 
-	ClientInterfaces clients{ phile, phileSim };
+	PhotoPhile phile { server.GetLogLevel(), sPhotophileName, server.GetAssetPath(), server.GetIniReader() };
+	std::thread threadPhile(&PhotoPhile::Main, &phile);
+
+	SUIP suip{server.GetLogLevel(), sSuipName, server.GetAssetPath(), server.GetIniReader()};
+	std::thread threadSUIP(&SUIP::Main, &suip);
+
+
+	ClientInterfaces clients{ &phile, nullptr, &suip };
 
 	server.Main(clients);
 }
