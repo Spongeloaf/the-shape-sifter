@@ -312,7 +312,7 @@ int PhotophileSimulator::Main()
 
 		Parts::PartInstance p = { GeneratePUID(), std::chrono::system_clock::now(), mat() };
 		m_OutputLock.lock();
-		m_OutputBuffer.push_back(std::move(p));
+		m_OutputBuffer.insert(std::make_pair(p.m_ID, std::move(p)));
 		m_OutputLock.unlock();
 	}
 }
@@ -348,6 +348,6 @@ void PhotoPhile::DispatchPart(const ppObject& part)
 	m_partCount++;
 
 	m_OutputLock.lock();
-	m_OutputBuffer.push_back(std::move(newPart));
+	m_OutputBuffer.insert(std::make_pair(newPart.m_ID, std::move(newPart)));
 	m_OutputLock.unlock();
 }

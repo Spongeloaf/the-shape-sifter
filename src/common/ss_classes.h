@@ -14,7 +14,6 @@
 #include <iostream>
 
 using std::string;
-
 constexpr std::chrono::duration<double, std::milli> kUpdateInterval(10);
 constexpr std::chrono::duration<double, std::milli> kLockTimeout(kUpdateInterval * 10);
 constexpr unsigned int kPUIDLength = 12;
@@ -23,6 +22,8 @@ constexpr char kEndPacket = '>';
 constexpr int kArgumentLen = 4;
 constexpr int kPayloadLen = kPUIDLength;
 constexpr int kCsumLen = 4;
+constexpr int kPartTableRows = 64;
+constexpr int kPartTableColumns = 13;
 
 namespace BeltBuckleInterface
 {
@@ -75,12 +76,6 @@ namespace BeltBuckleInterface
 	};
 }	// BeltBuckleInterface
 
-enum class ServerMode
-{
-	run,
-	idle,
-};
-
 namespace Parts
 {
 	enum class ServerStatus
@@ -107,8 +102,7 @@ namespace Parts
 
 	struct PartInstance
 	{
-		// You CANNOT make a part instance without some data and a PUID.
-		PartInstance() = delete;
+		PartInstance(){};
 
 		PartInstance(string ID, std::chrono::system_clock::time_point captureTime, cv::Mat img) :
 			m_ID(ID), 
@@ -126,29 +120,50 @@ namespace Parts
 			m_TimeAdded(captureTime),
 			m_TimeAssigned(captureTime)
 		{};
-		
+
+		PartInstance(const PartInstance& part) :
+			m_ID (part.m_ID),
+			m_BinNumber(part.m_BinNumber),
+			m_CameraOffset(part.m_CameraOffset),
+			m_PartNumber(part.m_PartNumber),
+			m_CategoryNumber(part.m_CategoryNumber),
+			m_CategoryName(part.m_CategoryName),
+			m_Image(part.m_Image),
+			m_ServerStatus(part.m_ServerStatus),
+			m_PartStatus(part.m_PartStatus),
+			m_TimeCaptured(part.m_TimeCaptured),
+			m_TimeTaxi(part.m_TimeTaxi),
+			m_TimeCF(part.m_TimeCF),
+			m_TimeAdded(part.m_TimeAdded),
+			m_TimeAssigned(part.m_TimeAssigned)
+		{};
+
 		string m_ID;
-		string m_PartNumber;
-		string m_CategoryNumber;
-		string m_CategoryName;
 		cv::Mat m_Image;
 		unsigned int m_BinNumber;
 		int m_CameraOffset;
 		ServerStatus m_ServerStatus;
 		PartStatus m_PartStatus;
+		string m_PartNumber;
+		string m_CategoryNumber;
+		string m_CategoryName;
 		std::chrono::system_clock::time_point m_TimeCaptured;
 		std::chrono::system_clock::time_point m_TimeTaxi;
 		std::chrono::system_clock::time_point m_TimeCF;
 		std::chrono::system_clock::time_point m_TimeAdded;
 		std::chrono::system_clock::time_point m_TimeAssigned;
 	};
+
 };	// namespace Parts
+
+using PartList = std::unordered_map<string, Parts::PartInstance>;
 
 class ClientBase
 {
 public:
 	virtual int Main() = 0;
-	void GetParts(std::vector<Parts::PartInstance>& partList);
+	void OutputParts(PartList& partList);
+	void InputPart(Parts::PartInstance& partList);
 
 	ClientBase(spdlog::level::level_enum logLevel, string clientName, string assetPath, INIReader* iniReader) :
 		m_logLevel(logLevel), 
@@ -172,7 +187,9 @@ protected:
 	bool m_isOk;
 	std::shared_ptr<spdlog::logger> m_logger;
 	std::mutex m_OutputLock;
-	std::vector<Parts::PartInstance> m_OutputBuffer;
+	std::mutex m_InputLock;
+	PartList m_OutputBuffer;
+	PartList m_InputBuffer;
 };
 
 #endif // !SS_CLASSES_H_11205B5C8C7047CAAA518874BA2C272C

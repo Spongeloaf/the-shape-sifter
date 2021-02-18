@@ -115,26 +115,14 @@ int Server::Main(ClientInterfaces clients)
 		auto start = std::chrono::system_clock::now();
 		
 		if (clients.phileSim)
-			clients.phileSim->GetParts(m_ActivePartList);
+			clients.phileSim->OutputParts(m_ActivePartList);
 
 		if (clients.phile)
-			clients.phile->GetParts(m_ActivePartList);
-		//
-		//if mode.check_mtm:
-		//    server.check_mtm()
-		//
-		//if mode.check_cf:
-		//    server.check_cf()
-		//
-		//if mode.check_bb:
-		//    server.check_bb()
-		//
-		//if mode.iterate_active_part_db:
-		//    server.iterate_part_list()
-		//
-		//server.check_suip(mode)
-		//server.send_part_list_to_suip()
-		//
+			clients.phile->OutputParts(m_ActivePartList);
+
+		if (clients.suip)
+			clients.suip->CopyPartsListFromServer(m_ActivePartList);
+
 		// global_tick_rate is the time in milliseconds of each loop, taken from settings.ini
 		auto end = std::chrono::system_clock::now();
 		std::chrono::duration<double, std::milli> elapsed = end - start;

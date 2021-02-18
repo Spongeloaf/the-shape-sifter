@@ -1,9 +1,7 @@
 #include "suipClient.h"
 
 SUIP::SUIP(spdlog::level::level_enum logLevel, string clientName, string assetPath, INIReader* iniReader) : ClientBase(logLevel, clientName, assetPath, iniReader)
-{
-
-}
+{}
 
 int SUIP::Main()
 {
@@ -13,10 +11,15 @@ int SUIP::Main()
 	QApplication app(argc, &pArgv);
 	SetDarkTheme(app);
 	QMainWindow windowBase;
-	UiWindow.setupUi(&windowBase);
+	UiWindow.setupUi(&windowBase, &app, &m_InputBuffer);
 	windowBase.show();
 
 	return app.exec();
+}
+
+void SUIP::CopyPartsListFromServer(PartList& partList)
+{
+	m_InputBuffer = partList;
 }
 
 void SUIP::SetDarkTheme(QApplication& app)

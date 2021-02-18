@@ -23,6 +23,7 @@
     <ClCompile Include="src\photophile\photophile.cpp" />
     <ClCompile Include="src\server\server.cpp" />
     <ClCompile Include="src\suip\suipClient.cpp" />
+    <ClCompile Include="src\suip\suipUI.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\common\ss_classes.h" />

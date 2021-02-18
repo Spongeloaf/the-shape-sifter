@@ -9,6 +9,7 @@ class SUIP : public ClientBase
 public:
 	SUIP(spdlog::level::level_enum logLevel, string clientName, string assetPath, INIReader* iniReader);
 	int Main();
+	void CopyPartsListFromServer(PartList& partList);
 
 private:
 	Ui_MainWindow UiWindow;

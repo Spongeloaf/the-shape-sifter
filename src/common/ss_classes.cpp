@@ -15,18 +15,30 @@ namespace BeltBuckleInterface
 	}
 }	//namespace BeltBuckleInterface
 
-void ClientBase::GetParts(std::vector<Parts::PartInstance>& partList)
+// The server calls this method to retrieve output parts from the client
+void ClientBase::OutputParts(PartList& partList)
 {
-	if (m_OutputBuffer.empty())
-		return;
-
 	if (m_OutputLock.try_lock())
 	{
-		for (auto& part : m_OutputBuffer)
+		if (!m_OutputBuffer.empty())
 		{
-			partList.push_back(std::move(part));
+			for (auto& part : m_OutputBuffer)
+			{
+				// This should automagically overwrite any part in the list with new contents, or add new parts.
+				partList[part.first] = std::move(part.second);
+			}
+			m_OutputBuffer.clear();
 		}
-		m_OutputBuffer.clear();
 	m_OutputLock.unlock();
+	}
+}
+
+// The server call this method to send parts to this client
+void ClientBase::InputPart(Parts::PartInstance& part)
+{
+	if (m_InputLock.try_lock())
+	{
+		m_InputBuffer[part.m_ID] = part;
+		m_InputLock.unlock();
 	}
 }
