@@ -8,7 +8,6 @@ int main()
 	if (!server.IsOK())
 		return -1;
 
-
 	// TODO: This is kind of a hack. I should find a better way to create only a photophile or a simulator.
 	string sPhotophileName = "PhotoPhile";
 	string sPhotophileSimName = "PhotoPhileSim";
@@ -40,7 +39,6 @@ int main()
 
 	SUIP suip{server.GetLogLevel(), sSuipName, server.GetAssetPath(), server.GetIniReader()};
 	std::thread threadSUIP(&SUIP::Main, &suip);
-
 
 	ClientInterfaces clients{ &phile, nullptr, &suip };
 

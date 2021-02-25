@@ -1,0 +1,58 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="photophile">
+      <UniqueIdentifier>{30426ccc-bbde-4c18-9375-bd59e9763828}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="common">
+      <UniqueIdentifier>{e857c49c-95f4-405f-bcc9-d273f628817a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="server">
+      <UniqueIdentifier>{ec75eb16-70d2-488e-8102-d9e66bbcbd9b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="SUIP">
+      <UniqueIdentifier>{d31475a6-1b8e-4ddc-8594-3067ffcf3632}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="src\photophile\photophile.cpp">
+      <Filter>photophile</Filter>
+    </ClCompile>
+    <ClCompile Include="src\common\ss_classes.cpp">
+      <Filter>common</Filter>
+    </ClCompile>
+    <ClCompile Include="src\server\server.cpp">
+      <Filter>server</Filter>
+    </ClCompile>
+    <ClCompile Include="src\suip\suipClient.cpp">
+      <Filter>SUIP</Filter>
+    </ClCompile>
+    <ClCompile Include="src\suip\suipUI.cpp">
+      <Filter>SUIP</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="src\photophile\photophile.h">
+      <Filter>photophile</Filter>
+    </ClInclude>
+    <ClInclude Include="src\common\ss_classes.h">
+      <Filter>common</Filter>
+    </ClInclude>
+    <ClInclude Include="src\server\server.h">
+      <Filter>server</Filter>
+    </ClInclude>
+    <ClInclude Include="src\suip\suipClient.h">
+      <Filter>SUIP</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="src\photophile\taxidermist.py">
+      <Filter>photophile</Filter>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <QtMoc Include="src\suip\suipUI.h">
+      <Filter>SUIP</Filter>
+    </QtMoc>
+  </ItemGroup>
+</Project>

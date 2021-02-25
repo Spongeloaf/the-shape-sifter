@@ -1,4 +1,8 @@
 .idea/
 .vs/
 out/
+include_3rd_Party/*/
+*.lib
+*.pdb
+*.dll
 *.log

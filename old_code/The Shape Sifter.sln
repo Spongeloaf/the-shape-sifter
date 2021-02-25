@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.29326.143
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ShapeSifter", "ShapeSifter.vcxproj", "{53DED304-0CFE-4CA7-A32A-55A60CBDD82D}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SUIP", "..\the_shape_sifter\SUIP\SUIP.vcxproj", "{48776F49-D64C-4866-8502-4D9DCA2EA778}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|x64 = Debug|x64
+		Release|x64 = Release|x64
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{53DED304-0CFE-4CA7-A32A-55A60CBDD82D}.Debug|x64.ActiveCfg = Debug|x64
+		{53DED304-0CFE-4CA7-A32A-55A60CBDD82D}.Debug|x64.Build.0 = Debug|x64
+		{53DED304-0CFE-4CA7-A32A-55A60CBDD82D}.Release|x64.ActiveCfg = Release|x64
+		{53DED304-0CFE-4CA7-A32A-55A60CBDD82D}.Release|x64.Build.0 = Release|x64
+		{48776F49-D64C-4866-8502-4D9DCA2EA778}.Debug|x64.ActiveCfg = Debug|x64
+		{48776F49-D64C-4866-8502-4D9DCA2EA778}.Debug|x64.Build.0 = Debug|x64
+		{48776F49-D64C-4866-8502-4D9DCA2EA778}.Release|x64.ActiveCfg = Release|x64
+		{48776F49-D64C-4866-8502-4D9DCA2EA778}.Release|x64.Build.0 = Release|x64
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {DB2062B5-2509-49B4-9055-FD24B8D83425}
+	EndGlobalSection
+EndGlobal

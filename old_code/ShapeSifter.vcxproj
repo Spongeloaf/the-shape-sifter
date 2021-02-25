@@ -22,19 +22,13 @@
     <ClCompile Include="src\common\ss_classes.cpp" />
     <ClCompile Include="src\photophile\photophile.cpp" />
     <ClCompile Include="src\server\server.cpp" />
-    <ClCompile Include="src\suip\suipClient.cpp" />
-    <ClCompile Include="src\suip\suipUI.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\common\ss_classes.h" />
     <ClInclude Include="src\photophile\photophile.h" />
     <ClInclude Include="src\server\server.h" />
-    <ClInclude Include="src\suip\suipClient.h" />
-    <ClInclude Include="src\suip\suipUI.h" />
+    <CustomBuild Include="src\suip\suipUI.h" />
     <ClInclude Include="suip.h" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="src\suip\suip_v3.ui" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>
