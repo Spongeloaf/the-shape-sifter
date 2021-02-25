@@ -1,17 +1,40 @@
-#include "suipUI.h"
+#include "suip.h"
 
-void Ui_MainWindow::setupUi(QMainWindow* MainWindow, QApplication* app, PartList* partList)
+	int SUIP::Main()
+{
+	// Setup UI
+	int argc = 0;
+	char argv[] = "x";
+	char* pArgv = argv;
+	QApplication app(argc, &pArgv);
+	QMainWindow windowBase;
+	UIMainWIndow ui;
+	ui.setupUi(&windowBase, &app, &m_InputBuffer);
+	windowBase.show();
+	return app.exec();
+}
+
+SUIP::SUIP(spdlog::level::level_enum logLevel, string clientName, string assetPath, INIReader* iniReader)
+		: ClientBase(logLevel, clientName, assetPath, iniReader){};
+
+void SUIP::CopyPartsListFromServer(PartList& partList)
+{
+	m_InputBuffer = partList;
+}
+
+void UIMainWIndow::setupUi(QMainWindow* MainWindow, QApplication* app, PartList* partList)
 {
 	SetupQTLayout(MainWindow);
+	SetDarkTheme(app);
 
 	refreshTimer = new QTimer(MainWindow);
-	refreshTimer->connect(refreshTimer, &QTimer::timeout, this, &Ui_MainWindow::UpdatePartTable);
+	refreshTimer->connect(refreshTimer, &QTimer::timeout, this, &UIMainWIndow::UpdatePartTable);
 	refreshTimer->start(kUIUpdateTime);
 
 	m_pPartList = partList;
 }
 
-void Ui_MainWindow::SetupQTLayout(QMainWindow* MainWindow)
+void UIMainWIndow::SetupQTLayout(QMainWindow* MainWindow)
 {
 	if (MainWindow->objectName().isEmpty())
 		MainWindow->setObjectName(QString::fromUtf8("MainWindow"));
@@ -202,7 +225,7 @@ void Ui_MainWindow::SetupQTLayout(QMainWindow* MainWindow)
 	QMetaObject::connectSlotsByName(MainWindow);
 }
 
-void Ui_MainWindow::retranslateUi(QMainWindow* MainWindow)
+void UIMainWIndow::retranslateUi(QMainWindow* MainWindow)
 {
 	MainWindow->setWindowTitle(QCoreApplication::translate("MainWindow", "MainWindow", nullptr));
 	actionNew_sorting_rules->setText(QCoreApplication::translate("MainWindow", "New sorting rules", nullptr));
@@ -232,7 +255,7 @@ void Ui_MainWindow::retranslateUi(QMainWindow* MainWindow)
 	pushButton_2->setText(QCoreApplication::translate("MainWindow", "Calibrate Bins", nullptr));
 }
 
-void Ui_MainWindow::UpdatePartTable()
+void UIMainWIndow::UpdatePartTable()
 {
 	if (!m_pPartList)
 		return;
@@ -250,4 +273,26 @@ void Ui_MainWindow::UpdatePartTable()
 		}
 		i++;
 	}
+}
+
+void UIMainWIndow::SetDarkTheme(QApplication* app)
+{
+	app->setStyle("Fusion");
+
+	QPalette dark_palette;
+	dark_palette.setColor(QPalette::Window, QColor(53, 53, 53));
+	dark_palette.setColor(QPalette::WindowText, QColorConstants::White);
+	dark_palette.setColor(QPalette::Base, QColor(25, 25, 25));
+	dark_palette.setColor(QPalette::AlternateBase, QColor(53, 53, 53));
+	dark_palette.setColor(QPalette::ToolTipBase, QColorConstants::White);
+	dark_palette.setColor(QPalette::ToolTipText, QColorConstants::White);
+	dark_palette.setColor(QPalette::Text, QColorConstants::White);
+	dark_palette.setColor(QPalette::Button, QColor(53, 53, 53));
+	dark_palette.setColor(QPalette::ButtonText, QColorConstants::White);
+	dark_palette.setColor(QPalette::BrightText, QColorConstants::Red);
+	dark_palette.setColor(QPalette::Highlight, QColor(42, 130, 218));
+	dark_palette.setColor(QPalette::HighlightedText, QColorConstants::Black);
+
+	app->setPalette(dark_palette);
+	app->setStyleSheet("QToolTip { color: #ffffff; background-color: #2a82da; border: 1px solid white; }");
 }

@@ -2,49 +2,6 @@
 
 #include "server.h"
 
-int main()
-{
-	Server server = Server();
-	if (!server.IsOK())
-		return -1;
-
-	// TODO: This is kind of a hack. I should find a better way to create only a photophile or a simulator.
-	string sPhotophileName = "PhotoPhile";
-	string sPhotophileSimName = "PhotoPhileSim";
-	string sSuipName = "PhotoPhileSim";
-
-	INIReader* iniRead = server.GetIniReader();
-
-	//bool simulatePhotoPhile = iniRead->GetBoolean(sPhotophileName, "simulation", false);
-	//
-	//PhotoPhile* phile = nullptr;
-	//std::thread* threadPhile = nullptr;
-
-	//PhotophileSimulator* phileSim = nullptr;
-	//std::thread* threadPhileSim = nullptr;
-
-	//if (simulatePhotoPhile)
-	//{
-	//	phileSim = new PhotophileSimulator{ server.GetLogLevel(), sPhotophileSimName, server.GetAssetPath(), server.GetIniReader() };
-	//	threadPhileSim = new std::thread(&PhotophileSimulator::Main, &phileSim);
-	//}
-	//else
-	//{
-	//	phile = new PhotoPhile{ server.GetLogLevel(), sPhotophileName, server.GetAssetPath(), server.GetIniReader() };
-	//	threadPhile = new std::thread(&PhotoPhile::Main, &phile);
-	//}
-
-	PhotoPhile phile { server.GetLogLevel(), sPhotophileName, server.GetAssetPath(), server.GetIniReader() };
-	std::thread threadPhile(&PhotoPhile::Main, &phile);
-
-	SUIP suip{server.GetLogLevel(), sSuipName, server.GetAssetPath(), server.GetIniReader()};
-	std::thread threadSUIP(&SUIP::Main, &suip);
-
-	ClientInterfaces clients{ &phile, nullptr, &suip };
-
-	server.Main(clients);
-}
-
 Server::Server()
 {
 	m_iniReader = INIReader(m_configPath);
@@ -55,6 +12,11 @@ bool Server::IsOK()
 {
 	return m_InitializeOK;
 }
+
+void Server::RegisterClients(ClientInterfaces clients)
+{
+	m_clients = clients;
+};
 
 bool Server::LoadConfig()
 {
@@ -86,9 +48,8 @@ bool Server::LoadConfig()
 	return true;
 }
 
-int Server::Main(ClientInterfaces clients)
+int Server::Main()
 {
-	
 	//	# 3rd party imports
 	//import time
 	//
@@ -101,7 +62,7 @@ int Server::Main(ClientInterfaces clients)
 	//if __name__ == '__main__':
 	//
 	//    init = ss_classes.ServerInit()
-	//    clients, bb = init.start_clients()
+	//    m_clients, bb = init.start_clients()
 	//    mode = ss_classes.ServerMode()
 	//    server = slib.Server(init, bb)
 	//
@@ -112,14 +73,14 @@ int Server::Main(ClientInterfaces clients)
 		// loop timer
 		auto start = std::chrono::system_clock::now();
 		
-		if (clients.phileSim)
-			clients.phileSim->OutputParts(m_ActivePartList);
+		if (m_clients.phileSim)
+			m_clients.phileSim->SendPartsToServer(m_ActivePartList);
 
-		if (clients.phile)
-			clients.phile->OutputParts(m_ActivePartList);
+		if (m_clients.phile)
+			m_clients.phile->SendPartsToServer(m_ActivePartList);
 
-		if (clients.suip)
-			clients.suip->CopyPartsListFromServer(m_ActivePartList);
+		if (m_clients.suip)
+			m_clients.suip->CopyPartsListFromServer(m_ActivePartList);
 
 		// global_tick_rate is the time in milliseconds of each loop, taken from settings.ini
 		auto end = std::chrono::system_clock::now();

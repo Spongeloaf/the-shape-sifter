@@ -7,7 +7,7 @@
 #include <iostream>
 #include <opencv2/core.hpp>
 #include "../photophile/photophile.h"
-#include "../suip/suipClient.h"
+#include "../suip/suip.h"
 
 using namespace std::chrono_literals;
 
@@ -29,8 +29,8 @@ class Server
 public:
 	Server();
 	bool IsOK();
-	int Main(ClientInterfaces clients);
-	
+	int Main();
+	void RegisterClients(ClientInterfaces clients);
 	spdlog::level::level_enum GetLogLevel() { return m_logLevel; };
 	string GetAssetPath() { return m_assetPath; };
 	INIReader* GetIniReader() { return &m_iniReader; };
@@ -38,6 +38,7 @@ public:
 private:
 	bool LoadConfig();
 
+	ClientInterfaces m_clients;
 	PartList m_ActivePartList;
 	string m_assetPath = "C:\\Users\\peter\\Google Drive\\software_dev\\the_shape_sifter\\";
 	string m_configPath = m_assetPath + "settings.ini";

@@ -123,16 +123,15 @@
   <ItemGroup>
     <ClCompile Include="src\common\ss_classes.cpp" />
     <ClCompile Include="src\photophile\photophile.cpp" />
+    <ClCompile Include="src\server\main.cpp" />
     <ClCompile Include="src\server\server.cpp" />
-    <ClCompile Include="src\suip\suipClient.cpp" />
-    <ClCompile Include="src\suip\suipUI.cpp" />
+    <ClCompile Include="src\suip\suip.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\common\ss_classes.h" />
     <ClInclude Include="src\photophile\photophile.h" />
     <ClInclude Include="src\server\server.h" />
-    <ClInclude Include="src\suip\suipClient.h" />
-    <QtMoc Include="src\suip\suipUI.h" />
+    <QtMoc Include="src\suip\suip.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="src\photophile\taxidermist.py" />

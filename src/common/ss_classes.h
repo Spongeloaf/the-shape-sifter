@@ -162,8 +162,8 @@ class ClientBase
 {
 public:
 	virtual int Main() = 0;
-	void OutputParts(PartList& partList);
-	void InputPart(Parts::PartInstance& partList);
+	void SendPartsToServer(PartList& partList);
+	void SendPartsToCLient(Parts::PartInstance& partList);
 
 	ClientBase(spdlog::level::level_enum logLevel, string clientName, string assetPath, INIReader* iniReader) :
 		m_logLevel(logLevel), 

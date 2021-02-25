@@ -6,8 +6,8 @@
 ** WARNING! All changes made in this file will be lost when recompiling UI file!
 ********************************************************************************/
 
-#ifndef SUIPUI_H
-#define SUIPUI_H
+#ifndef SUIP_H
+#define SUIP_H
 
 #define _SILENCE_ALL_CXX17_DEPRECATION_WARNINGS
 
@@ -32,20 +32,34 @@
 #include <QtWidgets/QWidget>
 #include <QtCore/QTimer>
 
+class SUIP : public ClientBase
+{
+public:
+	// The SUIP will use the QT even loop instead of a client Main(). It does not get threaded like a regular
+	// client, we just inherited from it to get logging and other common functionality
+	int Main();
+	
+	SUIP(spdlog::level::level_enum logLevel, string clientName, string assetPath, INIReader* iniReader);
+	void CopyPartsListFromServer(PartList& partList);
+};
+
 QT_BEGIN_NAMESPACE
 
-class Ui_MainWindow : public QObject
+class UIMainWIndow : public QObject
 {
 	Q_OBJECT
+
 public:
+	UIMainWIndow();
 	void setupUi(QMainWindow* MainWindow, QApplication* app, PartList* partList);
-	void SetupQTLayout(QMainWindow* MainWindow);
-  void retranslateUi(QMainWindow* MainWindow);  // retranslateUi
 
 	public slots:
 		void UpdatePartTable();
 
 private:
+	void SetupQTLayout(QMainWindow* MainWindow);
+	void retranslateUi(QMainWindow* MainWindow);  // retranslateUi
+	void SetDarkTheme(QApplication* app);
 	QString EnumToQStr(Parts::ServerStatus enumm)
 	{
 		using namespace Parts;
@@ -176,9 +190,9 @@ private:
 };
 
 namespace Ui {
-    class MainWindow: public Ui_MainWindow {};
+    class MainWindow: public UIMainWIndow {};
 } // namespace Ui
 
 QT_END_NAMESPACE
 
-#endif // SUIPUI_H
+#endif // SUIP_H

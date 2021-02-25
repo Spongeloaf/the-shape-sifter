@@ -16,7 +16,7 @@ namespace BeltBuckleInterface
 }	//namespace BeltBuckleInterface
 
 // The server calls this method to retrieve output parts from the client
-void ClientBase::OutputParts(PartList& partList)
+void ClientBase::SendPartsToServer(PartList& partList)
 {
 	if (m_OutputLock.try_lock())
 	{
@@ -34,7 +34,7 @@ void ClientBase::OutputParts(PartList& partList)
 }
 
 // The server call this method to send parts to this client
-void ClientBase::InputPart(Parts::PartInstance& part)
+void ClientBase::SendPartsToCLient(Parts::PartInstance& part)
 {
 	if (m_InputLock.try_lock())
 	{
