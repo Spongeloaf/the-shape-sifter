@@ -13,12 +13,6 @@ using namespace std::chrono_literals;
 
 struct ClientInterfaces
 {
-	~ClientInterfaces()
-	{
-		delete phile;
-		delete phileSim;
-		delete suip;
-	};
 	PhotoPhile* phile;
 	PhotophileSimulator* phileSim;
 	SUIP* suip;
@@ -30,7 +24,7 @@ public:
 	Server();
 	bool IsOK();
 	int Main();
-	void RegisterClients(ClientInterfaces clients);
+	void RegisterClients(ClientInterfaces& clients);
 	spdlog::level::level_enum GetLogLevel() { return m_logLevel; };
 	string GetAssetPath() { return m_assetPath; };
 	INIReader* GetIniReader() { return &m_iniReader; };

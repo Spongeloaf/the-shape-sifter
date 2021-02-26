@@ -1,5 +1,14 @@
 #include "suip.h"
 
+namespace
+{
+	bool PUIDCompare(const Parts::PartInstance& a, const Parts::PartInstance& b)
+	{
+		return a.m_ID < b.m_ID;
+	};
+
+}  // namespace
+
 	int SUIP::Main()
 {
 	// Setup UI
@@ -262,10 +271,19 @@ void UIMainWIndow::UpdatePartTable()
 
 	table_active_parts->clearContents();
 
-	int i = 0;
-	for (auto& item : *m_pPartList)
+	std::vector<Parts::PartInstance> SortedPartsList;
+	SortedPartsList.reserve(m_pPartList->size());
+	for (const auto& [key, value] : *m_pPartList)
 	{
-		QStringList strList = CreateQStringListFromPart(item.second);
+		SortedPartsList.push_back(value);
+	}
+
+	std::sort(SortedPartsList.begin(), SortedPartsList.end(), &PUIDCompare);
+
+	int i = 0;
+	for (auto& part : SortedPartsList)
+	{
+		QStringList strList = CreateQStringListFromPart(part);
 		for (int j = 0; j < strList.length(); j++)
 		{
 			QTableWidgetItem* newItem = new QTableWidgetItem(strList[j]);

@@ -13,7 +13,7 @@ bool Server::IsOK()
 	return m_InitializeOK;
 }
 
-void Server::RegisterClients(ClientInterfaces clients)
+void Server::RegisterClients(ClientInterfaces& clients)
 {
 	m_clients = clients;
 };

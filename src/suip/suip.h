@@ -50,7 +50,6 @@ class UIMainWIndow : public QObject
 	Q_OBJECT
 
 public:
-	UIMainWIndow();
 	void setupUi(QMainWindow* MainWindow, QApplication* app, PartList* partList);
 
 	public slots:
