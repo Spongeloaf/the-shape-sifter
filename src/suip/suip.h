@@ -38,9 +38,7 @@ public:
 	// The SUIP will use the QT even loop instead of a client Main(). It does not get threaded like a regular
 	// client, we just inherited from it to get logging and other common functionality
 	int Main();
-	
 	SUIP(spdlog::level::level_enum logLevel, string clientName, string assetPath, INIReader* iniReader);
-	void CopyPartsListFromServer(PartList& partList);
 };
 
 QT_BEGIN_NAMESPACE
@@ -117,7 +115,7 @@ private:
 
 	QStringList CreateQStringListFromPart(Parts::PartInstance& part)
 	{
-		QString ID = QString::fromUtf8(part.m_ID.c_str());
+		QString ID = QString::fromUtf8(part.m_PUID.c_str());
 
 		QString bin;
 		bin.setNum(part.m_BinNumber);
@@ -127,13 +125,17 @@ private:
 
 		QString serverStatus = EnumToQStr(part.m_ServerStatus);
 		QString partStatus = EnumToQStr(part.m_PartStatus);
-		QString Timecaptured = QString::fromUtf8(date::format("%F %T", part.m_TimeCaptured));
-		QString TimeTaxi = QString::fromUtf8(date::format("%F %T", part.m_TimeTaxi));
-		QString TimeCF = QString::fromUtf8(date::format("%F %T", part.m_TimeCF));
-		QString TimeAdded = QString::fromUtf8(date::format("%F %T", part.m_TimeAdded));
-		QString TimeAssigned = QString::fromUtf8(date::format("%F %T", part.m_TimeAssigned));
+		QString brickPartNumber = QString::fromUtf8(part.m_brickPartNumber);
+		QString brickCategoryNumber = QString::fromUtf8(part.m_brickCategoryNumber);
+		QString brickCategoryName = QString::fromUtf8(part.m_brickCategoryName);
+		
+		QString Timecaptured = QString::fromUtf8(date::format("%T", part.m_TimeCaptured));
+		QString TimeTaxi = QString::fromUtf8(date::format("%T", part.m_TimeTaxi));
+		QString TimeCF = QString::fromUtf8(date::format("%T", part.m_TimeCF));
+		QString TimeAdded = QString::fromUtf8(date::format("%T", part.m_TimeAdded));
+		QString TimeAssigned = QString::fromUtf8(date::format("%T", part.m_TimeAssigned));
 
-		return {ID, bin, camOffset, serverStatus, partStatus, Timecaptured, TimeTaxi, TimeCF, TimeAdded, TimeAssigned};
+		return {ID, bin, camOffset, serverStatus, partStatus, brickPartNumber, brickCategoryNumber, brickCategoryName, Timecaptured, TimeTaxi, TimeCF, TimeAdded, TimeAssigned};
 	};
 
 	QTimer m_refreshTimer;

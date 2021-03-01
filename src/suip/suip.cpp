@@ -4,7 +4,7 @@ namespace
 {
 	bool PUIDCompare(const Parts::PartInstance& a, const Parts::PartInstance& b)
 	{
-		return a.m_ID < b.m_ID;
+		return a.m_TimeCaptured < b.m_TimeCaptured;
 	};
 
 }  // namespace
@@ -25,11 +25,6 @@ namespace
 
 SUIP::SUIP(spdlog::level::level_enum logLevel, string clientName, string assetPath, INIReader* iniReader)
 		: ClientBase(logLevel, clientName, assetPath, iniReader){};
-
-void SUIP::CopyPartsListFromServer(PartList& partList)
-{
-	m_InputBuffer = partList;
-}
 
 void UIMainWIndow::setupUi(QMainWindow* MainWindow, QApplication* app, PartList* partList)
 {

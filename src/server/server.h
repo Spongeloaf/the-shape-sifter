@@ -8,14 +8,15 @@
 #include <opencv2/core.hpp>
 #include "../photophile/photophile.h"
 #include "../suip/suip.h"
+#include "../mt_mind/mt_mind.h"
 
 using namespace std::chrono_literals;
 
 struct ClientInterfaces
 {
-	PhotoPhile* phile;
-	PhotophileSimulator* phileSim;
-	SUIP* suip;
+	ClientBase* phile;
+	ClientBase* suip;
+	ClientBase* mtm;
 };
 
 class Server

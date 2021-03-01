@@ -13,6 +13,14 @@
     <Filter Include="SUIP">
       <UniqueIdentifier>{d31475a6-1b8e-4ddc-8594-3067ffcf3632}</UniqueIdentifier>
     </Filter>
+    <Filter Include="mtMind">
+      <UniqueIdentifier>{3a61f6fb-e585-4377-b728-f70de6b2fed0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+      <ParseFiles>true</ParseFiles>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\photophile\photophile.cpp">
@@ -24,11 +32,10 @@
     <ClCompile Include="src\server\server.cpp">
       <Filter>server</Filter>
     </ClCompile>
-    <ClCompile Include="src\suip\suipClient.cpp">
-      <Filter>SUIP</Filter>
-    </ClCompile>
-    <ClCompile Include="src\suip\suipUI.cpp">
-      <Filter>SUIP</Filter>
+    <ClCompile Include="src\server\main.cpp" />
+    <ClCompile Include="src\suip\suip.cpp" />
+    <ClCompile Include="src\mt_mind\mt_mind.cpp">
+      <Filter>mtMind</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -41,8 +48,8 @@
     <ClInclude Include="src\server\server.h">
       <Filter>server</Filter>
     </ClInclude>
-    <ClInclude Include="src\suip\suipClient.h">
-      <Filter>SUIP</Filter>
+    <ClInclude Include="src\mt_mind\mt_mind.h">
+      <Filter>mtMind</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -51,8 +58,6 @@
     </None>
   </ItemGroup>
   <ItemGroup>
-    <QtMoc Include="src\suip\suipUI.h">
-      <Filter>SUIP</Filter>
-    </QtMoc>
+    <QtMoc Include="src\suip\suip.h" />
   </ItemGroup>
 </Project>

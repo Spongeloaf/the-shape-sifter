@@ -50,22 +50,10 @@ bool Server::LoadConfig()
 
 int Server::Main()
 {
-	//	# 3rd party imports
-	//import time
-	//
-	//# 1st party imports. Safe to use from x import *
-	//import ss_classes
-	//import ss_server_lib as slib
-	//
-	//
-	//# needed for multiprocessing
-	//if __name__ == '__main__':
-	//
-	//    init = ss_classes.ServerInit()
-	//    m_clients, bb = init.start_clients()
-	//    mode = ss_classes.ServerMode()
-	//    server = slib.Server(init, bb)
-	//
+	// If any ptrs are null, you should check to see if you called RegisterClients() before main, and ensure you've setup
+	// threads for each client in main.cpp::main()
+	if (!(m_clients.phile && m_clients.mtm && m_clients.suip))
+		return 1;
 
 	// main loop
 	while (true)
@@ -73,14 +61,32 @@ int Server::Main()
 		// loop timer
 		auto start = std::chrono::system_clock::now();
 		
-		if (m_clients.phileSim)
-			m_clients.phileSim->SendPartsToServer(m_ActivePartList);
+		m_clients.phile->SendPartsToServer(m_ActivePartList);
+		m_clients.suip->CopyServerPartListToClient(m_ActivePartList);
+		m_clients.mtm->SendPartsToServer(m_ActivePartList);
 
-		if (m_clients.phile)
-			m_clients.phile->SendPartsToServer(m_ActivePartList);
+		for (auto& part : m_ActivePartList)
+		{
+			switch (part.second.m_ServerStatus)
+			{
+				case Parts::ServerStatus::newPart:
+					part.second.m_ServerStatus = Parts::ServerStatus::waitMTM;
+					m_clients.mtm->SendPartsToClient(part.second);
+					break;
+				
+				case Parts::ServerStatus::MTMDone:
+					// mtm done
+					break;
 
-		if (m_clients.suip)
-			m_clients.suip->CopyPartsListFromServer(m_ActivePartList);
+				case Parts::ServerStatus::cfDone:
+					// wait cf
+					break;
+
+				case Parts::ServerStatus::sortDone:
+					// sort done 
+					break;
+			}
+		}
 
 		// global_tick_rate is the time in milliseconds of each loop, taken from settings.ini
 		auto end = std::chrono::system_clock::now();

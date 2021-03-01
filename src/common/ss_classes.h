@@ -102,13 +102,22 @@ namespace Parts
 
 	struct PartInstance
 	{
+		// The word "part" in the context of this software generally refers to the software object of an individual part
+		// being tracked by the sorting machine. To refer to the actual building brick that is being track, we refer to
+		// the individuals as "instances" and categorically refer to them as "bricks".
+		//
+		// Therefore, the member name m_brickPartNumber refers to the part number of that type of brick in the Bricklink
+		// database. Whereas the unique identifier for each instance is a PUID: Part Unique Identification Number.
+		//
+		// The PUID is like a GUID: 12 alpha-numeric characters long, generated at random.
+
 		PartInstance(){};
 
 		PartInstance(string ID, std::chrono::system_clock::time_point captureTime, cv::Mat img) :
-			m_ID(ID), 
-			m_PartNumber(""),
-			m_CategoryNumber(""),
-			m_CategoryName(""),
+			m_PUID(ID), 
+			m_brickPartNumber(""),
+			m_brickCategoryNumber(""),
+			m_brickCategoryName(""),
 			m_Image(img),
 			m_BinNumber(0),
 			m_CameraOffset(0),
@@ -122,12 +131,12 @@ namespace Parts
 		{};
 
 		PartInstance(const PartInstance& part) :
-			m_ID (part.m_ID),
+			m_PUID (part.m_PUID),
 			m_BinNumber(part.m_BinNumber),
 			m_CameraOffset(part.m_CameraOffset),
-			m_PartNumber(part.m_PartNumber),
-			m_CategoryNumber(part.m_CategoryNumber),
-			m_CategoryName(part.m_CategoryName),
+			m_brickPartNumber(part.m_brickPartNumber),
+			m_brickCategoryNumber(part.m_brickCategoryNumber),
+			m_brickCategoryName(part.m_brickCategoryName),
 			m_Image(part.m_Image),
 			m_ServerStatus(part.m_ServerStatus),
 			m_PartStatus(part.m_PartStatus),
@@ -138,15 +147,15 @@ namespace Parts
 			m_TimeAssigned(part.m_TimeAssigned)
 		{};
 
-		string m_ID;
+		string m_PUID;
 		cv::Mat m_Image;
 		unsigned int m_BinNumber;
 		int m_CameraOffset;
 		ServerStatus m_ServerStatus;
 		PartStatus m_PartStatus;
-		string m_PartNumber;
-		string m_CategoryNumber;
-		string m_CategoryName;
+		string m_brickPartNumber;
+		string m_brickCategoryNumber;
+		string m_brickCategoryName;
 		std::chrono::system_clock::time_point m_TimeCaptured;
 		std::chrono::system_clock::time_point m_TimeTaxi;
 		std::chrono::system_clock::time_point m_TimeCF;
@@ -161,10 +170,6 @@ using PartList = std::unordered_map<string, Parts::PartInstance>;
 class ClientBase
 {
 public:
-	virtual int Main() = 0;
-	void SendPartsToServer(PartList& partList);
-	void SendPartsToCLient(Parts::PartInstance& partList);
-
 	ClientBase(spdlog::level::level_enum logLevel, string clientName, string assetPath, INIReader* iniReader) :
 		m_logLevel(logLevel), 
 		m_clientName(clientName),
@@ -179,7 +184,16 @@ public:
 			m_logger->flush();
 		};
 
+	virtual int Main() { return -1; };
+	void SendPartsToServer(PartList& partList);
+	void SendPartsToClient(Parts::PartInstance& part);
+	void CopyServerPartListToClient(PartList& partList);
+
 protected:
+	Parts::PartInstance GetPartFromInputBuffer();
+	void PutPartInOutputBuffer(Parts::PartInstance& part);
+
+
 	spdlog::level::level_enum m_logLevel;
 	string m_clientName;
 	string m_assetPath;

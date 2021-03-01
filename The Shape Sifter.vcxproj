@@ -122,6 +122,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="src\common\ss_classes.cpp" />
+    <ClCompile Include="src\mt_mind\mt_mind.cpp" />
     <ClCompile Include="src\photophile\photophile.cpp" />
     <ClCompile Include="src\server\main.cpp" />
     <ClCompile Include="src\server\server.cpp" />
@@ -129,6 +130,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\common\ss_classes.h" />
+    <ClInclude Include="src\mt_mind\mt_mind.h" />
     <ClInclude Include="src\photophile\photophile.h" />
     <ClInclude Include="src\server\server.h" />
     <QtMoc Include="src\suip\suip.h" />
