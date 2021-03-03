@@ -12,6 +12,9 @@
 #include <thread>
 #include <mutex>
 #include <iostream>
+#include <optional>
+
+#define LOCK_GUARD(var) std::lock_guard<std::mutex> ___scope__(var);
 
 using std::string;
 constexpr std::chrono::duration<double, std::milli> kUpdateInterval(10);
@@ -190,7 +193,7 @@ public:
 	void CopyServerPartListToClient(PartList& partList);
 
 protected:
-	Parts::PartInstance GetPartFromInputBuffer();
+	std::optional<Parts::PartInstance> GetPartFromInputBuffer();
 	void PutPartInOutputBuffer(Parts::PartInstance& part);
 
 

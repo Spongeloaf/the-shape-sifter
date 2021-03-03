@@ -44,13 +44,17 @@ void ClientBase::SendPartsToClient(Parts::PartInstance& part)
 }
 
 // The client calls this method to retrieve parts from the Input buffer, which were sent from the server.
-Parts::PartInstance ClientBase::GetPartFromInputBuffer()
+std::optional<Parts::PartInstance> ClientBase::GetPartFromInputBuffer()
 {
 	// We want this to block because if we cannot lock the input buffer, there's no point in carrying on.
-	m_InputLock.lock();
+	LOCK_GUARD(m_InputLock)
+
+	if (m_InputBuffer.size() != 0)
+	{
 	Parts::PartInstance part = m_InputBuffer.begin()->second;
-	m_InputLock.unlock();
 	return std::move(part);
+	}
+	return {};
 }
 
 // The client calls this method to place parts in the output buffer, for retrieval by the server.
