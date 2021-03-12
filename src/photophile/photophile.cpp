@@ -3,37 +3,8 @@
 
 #include "photophile.h"
 
-
 namespace
 {
-	unsigned int random_char() {
-		std::random_device rd;
-		std::mt19937 gen(rd());
-		std::uniform_int_distribution<> dis(0, 255);
-		return dis(gen);
-	}
-
-	/***************************************************************
-	GeneratePUID()
-
-	Creates a Part Unique IDentifier, which is a string of N length ASCII characters.
-***************************************************************/
-	std::string GeneratePUID() {
-		std::stringstream ss;
-
-		for (unsigned int i = 0; i < kPUIDLength; i++) {
-			const auto rc = random_char();
-			std::stringstream hexstream;
-			hexstream << std::hex << rc;
-			auto hex = hexstream.str();
-			if (hex.length() < 2)
-				ss << hex.at(0);
-			else
-				ss << hex.at(1);
-		}
-		return ss.str();
-	}
-
 	cv::Point2i GetRectCenter(const Rect& r)
 	{
 		return (r.br() + r.tl()) * 0.5;
@@ -89,6 +60,9 @@ PhotoPhile::PhotoPhile(spdlog::level::level_enum logLevel, string clientName, st
 
 	cv::resize(m_beltMask, m_beltMask, maskSize, cv::InterpolationFlags::INTER_NEAREST);
 	cv::threshold(m_beltMask, m_beltMask, 127, 255, cv::THRESH_BINARY);
+
+	m_RandomGenerator = std::mt19937(std::random_device()());
+	std::uniform_int_distribution<> m_RandomDistribution(0, 255);
 }
 
 int PhotoPhile::Main()
@@ -174,6 +148,29 @@ int PhotoPhile::Main()
 	cv::destroyAllWindows();
 
 	return 0;
+}
+
+	/***************************************************************
+GeneratePUID()
+
+Creates a Part Unique IDentifier, which is a string of N length ASCII characters.
+***************************************************************/
+std::string PhotoPhile::GeneratePUID()
+{
+	std::stringstream ss;
+
+	for (unsigned int i = 0; i < kPUIDLength; i++)
+	{
+		const auto rc = RandomInteger();
+		std::stringstream hexstream;
+		hexstream << std::hex << rc;
+		auto hex = hexstream.str();
+		if (hex.length() < 2)
+			ss << hex.at(0);
+		else
+			ss << hex.at(1);
+	}
+	return ss.str();
 }
 
 /***************************************************************
@@ -297,25 +294,27 @@ bool PhotoPhile::IsObjectTouchingEdgeOfFrame(const Rect& rect)
 	return false;
 }
 
-int PhotophileSimulator::Main()
-{
-	std::random_device rd;     // only used once to initialise (seed) engine
-	std::mt19937 rng(rd());    // random-number engine used (Mersenne-Twister in this case)
-	std::uniform_int_distribution<int> sleepTimer(kSleepMin, kSleepMax);
-
-	while (true)
-	{
-		auto random_integer = sleepTimer(rng);
-		//std::chrono::duration<int, std::milli> tSleep(random_integer);
-		std::chrono::duration<int, std::milli> tSleep(1000);
-		std::this_thread::sleep_for(tSleep);
-
-		Parts::PartInstance p = { GeneratePUID(), std::chrono::system_clock::now(), mat() };
-		m_OutputLock.lock();
-		m_OutputBuffer.insert(std::make_pair(p.m_PUID, std::move(p)));
-		m_OutputLock.unlock();
-	}
-}
+// This could be rolled into the main photophile class as an alternative main loop which could be toggled on by the config file. 
+// I suppose I'll get around to it when I need it.
+//int PhotophileSimulator::Main()
+//{
+//	std::random_device rd;     // only used once to initialise (seed) engine
+//	std::mt19937 rng(rd());    // random-number engine used (Mersenne-Twister in this case)
+//	std::uniform_int_distribution<int> sleepTimer(kSleepMin, kSleepMax);
+//
+//	while (true)
+//	{
+//		auto random_integer = sleepTimer(rng);
+//		//std::chrono::duration<int, std::milli> tSleep(random_integer);
+//		std::chrono::duration<int, std::milli> tSleep(1000);
+//		std::this_thread::sleep_for(tSleep);
+//
+//		Parts::PartInstance p = { GeneratePUID(), std::chrono::system_clock::now(), mat() };
+//		m_OutputLock.lock();
+//		m_OutputBuffer.insert(std::make_pair(p.m_PUID, std::move(p)));
+//		m_OutputLock.unlock();
+//	}
+//}
 
 bool 	PhotoPhile::MatchNewRectToOldRect(ppObject& r)
 {

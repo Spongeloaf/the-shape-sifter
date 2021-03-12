@@ -5,7 +5,11 @@
 constexpr std::chrono::duration<double, std::milli> kSimlulatedDelay(300);
 
 MtMind::MtMind(spdlog::level::level_enum logLevel, string clientName, string assetPath, INIReader* iniReader)
-		: ClientBase(logLevel, clientName, assetPath, iniReader){};
+		: ClientBase(logLevel, clientName, assetPath, iniReader)
+{
+	m_RandomGenerator = std::mt19937(std::random_device()());
+	std::uniform_int_distribution<> m_RandomDistribution(0, 8);
+};
 
 int MtMind::Main()
 {
@@ -16,9 +20,10 @@ int MtMind::Main()
 		std::optional<Parts::PartInstance> part = GetPartFromInputBuffer();
 		if (part)
 		{
-		part->m_brickCategoryNumber = "5";
+		part->m_brickCategoryNumber = std::to_string(RandomInteger());
 		part->m_brickPartNumber = "2456";
 		part->m_brickCategoryName = "SIM CATEGORY";
+		TimeStampPart(part.value());
 		PutPartInOutputBuffer(part.value());
 		}
 	}

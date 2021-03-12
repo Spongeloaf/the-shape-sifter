@@ -17,6 +17,8 @@ struct ClientInterfaces
 	ClientBase* phile;
 	ClientBase* suip;
 	ClientBase* mtm;
+	ClientBase* cf;
+	ClientBase* bb;
 };
 
 class Server

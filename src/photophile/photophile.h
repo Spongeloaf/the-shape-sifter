@@ -46,6 +46,7 @@ public:
 	int Main();
 
 private:
+	std::string GeneratePUID();
 	mat GetDetectedObjectMask(const mat& image);
 	void GetContours(const mat& image, cvContours& contours, cvHierarchy& hierarchy);
 	ppObjectList GetRects(const cvContours& contours);
@@ -80,12 +81,13 @@ private:
 	float m_bgSubtractScale;
 };
 
-class PhotophileSimulator : public ClientBase
-{
-public:
-	PhotophileSimulator(spdlog::level::level_enum logLevel, string clientName, string assetPath, INIReader* iniReader) 
-		: ClientBase(logLevel, clientName, assetPath, iniReader) {};
-	int Main() override;
-};
+// I really should just make the photphile sim an alternate main loop for the photophile class. 
+//class PhotophileSimulator : public ClientBase
+//{
+//public:
+//	PhotophileSimulator(spdlog::level::level_enum logLevel, string clientName, string assetPath, INIReader* iniReader) 
+//		: ClientBase(logLevel, clientName, assetPath, iniReader) {};
+//	int Main() override;
+//};
 
 #endif // !PHOTOPHILE_H_9EEBDD8A14DB43B992C657E2C80DCD48

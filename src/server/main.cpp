@@ -3,6 +3,8 @@
 #include "server.h"
 #include "../suip/suip.h"
 #include "../mt_mind/mt_mind.h"
+#include "../classifist/Classifist.h"
+#include "../belt_buckle_interface/BeltBuckle.h"
 
 int main()
 {
@@ -10,24 +12,26 @@ int main()
 	if (!server.IsOK())
 		return -1;
 
-	// TODO: This is kind of a hack. I should find a better way to create only a photophile or a simulator.
-	string sPhotophileName = "PhotoPhile";
-	string sPhotophileSimName = "PhotoPhileSim";
-	string sSuipName = "SUIP";
-	string sMtMindName = "MtMind";
+	INIReader* iniReader = server.GetIniReader();
+	spdlog::level::level_enum logLevel = server.GetLogLevel();
+	std::string assetPath = server.GetAssetPath();
 
-	INIReader* iniRead = server.GetIniReader();
-
-	PhotoPhile phile{server.GetLogLevel(), sPhotophileName, server.GetAssetPath(), server.GetIniReader()};
+	PhotoPhile phile{logLevel, kNamePhotophile, assetPath, iniReader};
 	std::thread threadPhile(&PhotoPhile::Main, &phile);
 	
-	MtMind mtm{server.GetLogLevel(), sMtMindName, server.GetAssetPath(), server.GetIniReader()};
+	MtMind mtm{logLevel, kNameMtMind, assetPath, iniReader};
 	std::thread threadMtMind(&MtMind::Main, &mtm);
 
-	SUIP suip{server.GetLogLevel(), sSuipName, server.GetAssetPath(), server.GetIniReader()};
+	Classifist cf{logLevel, kNameMtMind, assetPath, iniReader};
+	std::thread threadCF(&Classifist::Main, &cf);
+
+	BeltBuckle bb{logLevel, kNameMtMind, assetPath, iniReader};
+	std::thread threadBB(&BeltBuckle::Main, &bb);
+
+	SUIP suip{logLevel, kNameSUIP, assetPath, iniReader};
 
 	// Start the server thread
-	ClientInterfaces clients{&phile, &suip, &mtm};
+	ClientInterfaces clients{&phile, &suip, &mtm, &cf, &bb};
 	server.RegisterClients(clients);
 	std::thread threadServer(&Server::Main, &server);
 

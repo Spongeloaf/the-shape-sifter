@@ -51,8 +51,9 @@ std::optional<Parts::PartInstance> ClientBase::GetPartFromInputBuffer()
 
 	if (m_InputBuffer.size() != 0)
 	{
-	Parts::PartInstance part = m_InputBuffer.begin()->second;
-	return std::move(part);
+		Parts::PartInstance part = m_InputBuffer.begin()->second;
+		m_InputBuffer.erase(m_InputBuffer.begin());
+		return std::move(part);
 	}
 	return {};
 }
@@ -72,4 +73,34 @@ void ClientBase::CopyServerPartListToClient(PartList& partList)
 		m_InputBuffer = partList;
 		m_InputLock.unlock();
 	}
+}
+
+void ClientBase::TimeStampPart(Parts::PartInstance& part) 
+{
+	auto time = std::chrono::system_clock::now();
+	
+	if (m_clientName == kNamePhotophile)
+	{
+		part.m_TimePhile = time;
+	}
+
+	else if (m_clientName == kNameMtMind)
+	{
+		part.m_TimeMTM = time;
+	}
+
+	else if (m_clientName == kNameClassiFist)
+	{
+		part.m_TimeCF = time;
+	}
+
+	else if (m_clientName == kNameBeltBuckle)
+	{
+		part.m_TimeBB = time;
+	}
+}
+
+unsigned int ClientBase::RandomInteger()
+{
+	return m_RandomDistribution(m_RandomGenerator);
 }

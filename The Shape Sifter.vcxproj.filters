@@ -16,10 +16,11 @@
     <Filter Include="mtMind">
       <UniqueIdentifier>{3a61f6fb-e585-4377-b728-f70de6b2fed0}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Source Files">
-      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
-      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
-      <ParseFiles>true</ParseFiles>
+    <Filter Include="Classifist">
+      <UniqueIdentifier>{f7a9c48f-aecd-43f5-b8c1-19909cacc156}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="BeltBuckleInterface">
+      <UniqueIdentifier>{bc095c68-f0e8-4889-a321-033f7eded61d}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -32,10 +33,20 @@
     <ClCompile Include="src\server\server.cpp">
       <Filter>server</Filter>
     </ClCompile>
-    <ClCompile Include="src\server\main.cpp" />
-    <ClCompile Include="src\suip\suip.cpp" />
     <ClCompile Include="src\mt_mind\mt_mind.cpp">
       <Filter>mtMind</Filter>
+    </ClCompile>
+    <ClCompile Include="src\suip\suip.cpp">
+      <Filter>SUIP</Filter>
+    </ClCompile>
+    <ClCompile Include="src\server\main.cpp">
+      <Filter>server</Filter>
+    </ClCompile>
+    <ClCompile Include="src\classifist\Classifist.cpp">
+      <Filter>Classifist</Filter>
+    </ClCompile>
+    <ClCompile Include="src\belt_buckle_interface\BeltBuckle.cpp">
+      <Filter>BeltBuckleInterface</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -51,6 +62,12 @@
     <ClInclude Include="src\mt_mind\mt_mind.h">
       <Filter>mtMind</Filter>
     </ClInclude>
+    <ClInclude Include="src\classifist\Classifist.h">
+      <Filter>Classifist</Filter>
+    </ClInclude>
+    <ClInclude Include="src\belt_buckle_interface\BeltBuckle.h">
+      <Filter>BeltBuckleInterface</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="src\photophile\taxidermist.py">
@@ -58,6 +75,8 @@
     </None>
   </ItemGroup>
   <ItemGroup>
-    <QtMoc Include="src\suip\suip.h" />
+    <QtMoc Include="src\suip\suip.h">
+      <Filter>SUIP</Filter>
+    </QtMoc>
   </ItemGroup>
 </Project>

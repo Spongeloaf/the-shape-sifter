@@ -4,7 +4,7 @@ namespace
 {
 	bool PUIDCompare(const Parts::PartInstance& a, const Parts::PartInstance& b)
 	{
-		return a.m_TimeCaptured < b.m_TimeCaptured;
+		return a.m_TimeMTM < b.m_TimeMTM;
 	};
 
 }  // namespace
@@ -308,4 +308,97 @@ void UIMainWIndow::SetDarkTheme(QApplication* app)
 
 	app->setPalette(dark_palette);
 	app->setStyleSheet("QToolTip { color: #ffffff; background-color: #2a82da; border: 1px solid white; }");
+}
+
+inline QString UIMainWIndow::EnumToQStr(Parts::ServerStatus enumm)
+{
+	using namespace Parts;
+	switch (enumm)
+	{
+		case ServerStatus::newPart:
+			return "newPart";
+
+		case ServerStatus::waitMTM:
+			return "waitMTM";
+
+		case ServerStatus::MTMDone:
+			return "MTMDone";
+
+		case ServerStatus::waitCF:
+			return "waitCF";
+
+		case ServerStatus::cfDone:
+			return "cfDone";
+
+		case ServerStatus::waitSort:
+			return "waitSort";
+
+		case ServerStatus::sortDone:
+			return "sortDone";
+
+		case ServerStatus::lost:
+			return "lost";
+	}
+}
+
+inline QString UIMainWIndow::EnumToQStr(Parts::PartStatus enumm)
+{
+	using namespace Parts;
+	switch (enumm)
+	{
+		case PartStatus::waitAckAdd:
+			return "waitAckAdd";
+
+		case PartStatus::waitAckAssign:
+			return "waitAckAssign";
+
+		case PartStatus::Added:
+			return "Added";
+
+		case PartStatus::Assigned:
+			return "Assigned";
+
+		case PartStatus::Sorted:
+			return "Sorted";
+
+		case PartStatus::lost:
+			return "lost";
+	}
+}
+
+inline QStringList UIMainWIndow::CreateQStringListFromPart(Parts::PartInstance& part)
+{
+	QString ID = QString::fromUtf8(part.m_PUID.c_str());
+
+	QString bin;
+	bin.setNum(part.m_BinNumber);
+
+	QString camOffset;
+	camOffset.setNum(part.m_CameraOffset);
+
+	QString serverStatus = EnumToQStr(part.m_ServerStatus);
+	QString partStatus = EnumToQStr(part.m_PartStatus);
+	QString brickPartNumber = QString::fromUtf8(part.m_brickPartNumber);
+	QString brickCategoryNumber = QString::fromUtf8(part.m_brickCategoryNumber);
+	QString brickCategoryName = QString::fromUtf8(part.m_brickCategoryName);
+
+	QString TimeMTM = QString::fromUtf8(date::format("%T", part.m_TimeMTM));
+	QString TimePhile = QString::fromUtf8(date::format("%T", part.m_TimePhile));
+	QString TimeCF = QString::fromUtf8(date::format("%T", part.m_TimeCF));
+	QString TimeBB = QString::fromUtf8(date::format("%T", part.m_TimeBB));
+	QString TimeUnused = QString::fromUtf8(date::format("%T", part.m_TimeBBAssigned));
+
+	return {ID,
+					bin,
+					camOffset,
+					serverStatus,
+					partStatus,
+					brickPartNumber,
+					brickCategoryNumber,
+					brickCategoryName,
+					TimePhile,
+					TimeMTM,
+					TimeCF,
+					TimeBB,
+					TimeUnused};
 }

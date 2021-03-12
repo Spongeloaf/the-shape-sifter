@@ -50,9 +50,9 @@ bool Server::LoadConfig()
 
 int Server::Main()
 {
-	// If any ptrs are null, you should check to see if you called RegisterClients() before main, and ensure you've setup
+	// If any ptrs are null, you should check to see if you called RegisterClients() before main(), and ensure you've setup
 	// threads for each client in main.cpp::main()
-	if (!(m_clients.phile && m_clients.mtm && m_clients.suip))
+	if (!(m_clients.phile && m_clients.mtm && m_clients.suip && m_clients.cf))
 		return 1;
 
 	// main loop
@@ -62,24 +62,29 @@ int Server::Main()
 		auto start = std::chrono::system_clock::now();
 		
 		m_clients.phile->SendPartsToServer(m_ActivePartList);
-		m_clients.suip->CopyServerPartListToClient(m_ActivePartList);
 		m_clients.mtm->SendPartsToServer(m_ActivePartList);
+		m_clients.cf->SendPartsToServer(m_ActivePartList);
 
 		for (auto& part : m_ActivePartList)
 		{
 			switch (part.second.m_ServerStatus)
 			{
 				case Parts::ServerStatus::newPart:
+					// TODO: Need to dispatch to BB
+					part.second.m_PartStatus = Parts::PartStatus::waitAckAdd;
 					part.second.m_ServerStatus = Parts::ServerStatus::waitMTM;
 					m_clients.mtm->SendPartsToClient(part.second);
 					break;
 				
 				case Parts::ServerStatus::MTMDone:
-					// mtm done
+					part.second.m_ServerStatus = Parts::ServerStatus::waitCF;
+					m_clients.cf->SendPartsToClient(part.second);
 					break;
 
 				case Parts::ServerStatus::cfDone:
-					// wait cf
+					part.second.m_ServerStatus = Parts::ServerStatus::cfDone;
+					part.second.m_PartStatus = Parts::PartStatus::waitAckAssign;
+					m_clients.bb->SendPartsToClient(part.second);
 					break;
 
 				case Parts::ServerStatus::sortDone:
@@ -87,6 +92,8 @@ int Server::Main()
 					break;
 			}
 		}
+
+		m_clients.suip->CopyServerPartListToClient(m_ActivePartList);
 
 		// global_tick_rate is the time in milliseconds of each loop, taken from settings.ini
 		auto end = std::chrono::system_clock::now();

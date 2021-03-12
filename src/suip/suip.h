@@ -57,94 +57,19 @@ private:
 	void SetupQTLayout(QMainWindow* MainWindow);
 	void retranslateUi(QMainWindow* MainWindow);  // retranslateUi
 	void SetDarkTheme(QApplication* app);
-	QString EnumToQStr(Parts::ServerStatus enumm)
-	{
-		using namespace Parts;
-		switch (enumm)
-		{
-			case ServerStatus::newPart:
-				return "newPart";
+	QString EnumToQStr(Parts::ServerStatus enumm);
 
-			case ServerStatus::waitMTM:
-				return "waitMTM";
+	QString EnumToQStr(Parts::PartStatus enumm);
 
-			case ServerStatus::MTMDone:
-				return "MTMDone";
-
-			case ServerStatus::waitCF:
-				return "waitCF";
-
-			case ServerStatus::cfDone:
-				return "cfDone";
-
-			case ServerStatus::waitSort:
-				return "waitSort";
-
-			case ServerStatus::sortDone:
-				return "sortDone";
-
-			case ServerStatus::lost:
-				return "lost";
-		}
-	};
-
-	QString EnumToQStr(Parts::PartStatus enumm)
-	{
-		using namespace Parts;
-		switch (enumm)
-		{
-			case PartStatus::newPart:
-				return "newPart";
-
-			case PartStatus::waitAck:
-				return "waitAck";
-
-			case PartStatus::tracked:
-				return "tracked";
-
-			case PartStatus::assigned:
-				return "assigned";
-
-			case PartStatus::sorted:
-				return "sorted";
-
-			case PartStatus::lost:
-				return "lost";
-		}
-	};
-
-	QStringList CreateQStringListFromPart(Parts::PartInstance& part)
-	{
-		QString ID = QString::fromUtf8(part.m_PUID.c_str());
-
-		QString bin;
-		bin.setNum(part.m_BinNumber);
-
-		QString camOffset;
-		camOffset.setNum(part.m_CameraOffset);
-
-		QString serverStatus = EnumToQStr(part.m_ServerStatus);
-		QString partStatus = EnumToQStr(part.m_PartStatus);
-		QString brickPartNumber = QString::fromUtf8(part.m_brickPartNumber);
-		QString brickCategoryNumber = QString::fromUtf8(part.m_brickCategoryNumber);
-		QString brickCategoryName = QString::fromUtf8(part.m_brickCategoryName);
-		
-		QString Timecaptured = QString::fromUtf8(date::format("%T", part.m_TimeCaptured));
-		QString TimeTaxi = QString::fromUtf8(date::format("%T", part.m_TimeTaxi));
-		QString TimeCF = QString::fromUtf8(date::format("%T", part.m_TimeCF));
-		QString TimeAdded = QString::fromUtf8(date::format("%T", part.m_TimeAdded));
-		QString TimeAssigned = QString::fromUtf8(date::format("%T", part.m_TimeAssigned));
-
-		return {ID, bin, camOffset, serverStatus, partStatus, brickPartNumber, brickCategoryNumber, brickCategoryName, Timecaptured, TimeTaxi, TimeCF, TimeAdded, TimeAssigned};
-	};
+	QStringList CreateQStringListFromPart(Parts::PartInstance& part);
 
 	QTimer m_refreshTimer;
 	PartList* m_pPartList;
 	const int kUIUpdateTime = 16;  // Milliseconds between UI updates
 	QStringList tableHeaders = {"PUID",          "Bin Assignment", "Camera Offset",   "Server Status",
 															"Part Status",   "Lego Part #",    "Lego Category #", "Lego Category Name",
-															"Time Captured", "Time Sent MTM",  "Time Recvd MTM",  "Time added to BB",
-															"Time asiigned"};
+															"Time Phile", "Time MTM",  "Time CF",  "Time BB",
+															"unused"};
 
 	QAction* actionNew_sorting_rules;
 	QAction* actionLoad_sorting_rules;
