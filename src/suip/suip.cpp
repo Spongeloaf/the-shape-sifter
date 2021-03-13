@@ -341,27 +341,27 @@ inline QString UIMainWIndow::EnumToQStr(Parts::ServerStatus enumm)
 	}
 }
 
-inline QString UIMainWIndow::EnumToQStr(Parts::PartStatus enumm)
+inline QString UIMainWIndow::EnumToQStr(Parts::BBStatus enumm)
 {
 	using namespace Parts;
 	switch (enumm)
 	{
-		case PartStatus::waitAckAdd:
+		case BBStatus::waitAckAdd:
 			return "waitAckAdd";
 
-		case PartStatus::waitAckAssign:
+		case BBStatus::waitAckAssign:
 			return "waitAckAssign";
 
-		case PartStatus::Added:
+		case BBStatus::Added:
 			return "Added";
 
-		case PartStatus::Assigned:
+		case BBStatus::Assigned:
 			return "Assigned";
 
-		case PartStatus::Sorted:
+		case BBStatus::Sorted:
 			return "Sorted";
 
-		case PartStatus::lost:
+		case BBStatus::lost:
 			return "lost";
 	}
 }
@@ -377,7 +377,7 @@ inline QStringList UIMainWIndow::CreateQStringListFromPart(Parts::PartInstance& 
 	camOffset.setNum(part.m_CameraOffset);
 
 	QString serverStatus = EnumToQStr(part.m_ServerStatus);
-	QString partStatus = EnumToQStr(part.m_PartStatus);
+	QString partStatus = EnumToQStr(part.m_BBStatus);
 	QString brickPartNumber = QString::fromUtf8(part.m_brickPartNumber);
 	QString brickCategoryNumber = QString::fromUtf8(part.m_brickCategoryNumber);
 	QString brickCategoryName = QString::fromUtf8(part.m_brickCategoryName);

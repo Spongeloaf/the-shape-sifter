@@ -59,7 +59,7 @@ private:
 	void SetDarkTheme(QApplication* app);
 	QString EnumToQStr(Parts::ServerStatus enumm);
 
-	QString EnumToQStr(Parts::PartStatus enumm);
+	QString EnumToQStr(Parts::BBStatus enumm);
 
 	QStringList CreateQStringListFromPart(Parts::PartInstance& part);
 

@@ -1,7 +1,7 @@
 .idea/
 .vs/
 out/
-include_3rd_Party/*/
+include_large_libs/*/
 *.lib
 *.pdb
 *.dll

@@ -36,56 +36,6 @@ const string kNameMtMind = "MtMind";
 const string kNameClassiFist = "ClassiFist";
 const string kNameBeltBuckle = "BeltBuckle";
 
-namespace BeltBuckleInterface
-{
-	enum class Action
-	{
-		AddPart,
-		AssignPart,
-		ConfirmSorting,
-		GetBinConfig,
-		PartRanOffBelt,
-		Handshake,
-		GetStatus,
-		SetParameters,
-		FlushPartIndex,
-		PrintFullPartIndex,
-		PrintSinglePartIndex,
-		OutputTest,
-		PrintPartIndex,
-		Acknowledge
-	};
-
-	struct Command
-	{
-		Action m_action;
-		string m_string;
-	};
-
-	const Command AddPart{ Action::AddPart, "A" };
-	const Command AssignPart{ Action::AssignPart, "B" };
-	const Command ConfirmSorting{ Action::ConfirmSorting, "C" };
-
-	class BbPacket
-	{
-		//	<XAAAA123456789012CSUM>
-		//	X = Command
-		//	AAAA = Arguments
-		//	123456789012 = payload
-		//	CSUM = checksum
-
-	public:
-		BbPacket(Command command, string& argument, string& payload) : m_command(command), m_argument(argument), m_payload(payload) {};
-		string GetString();
-
-	private:
-		void CalcCSUM();
-		Command m_command;
-		string m_argument;
-		string m_payload;
-		string m_CSUM;
-	};
-}	// BeltBuckleInterface
 
 namespace Parts
 {
@@ -101,7 +51,7 @@ namespace Parts
 		lost
 	};
 
-	enum class PartStatus
+	enum class BBStatus
 	{
 		waitAckAdd,
 		waitAckAssign,
@@ -134,7 +84,7 @@ namespace Parts
 			m_BinNumber(0),
 			m_CameraOffset(0),
 			m_ServerStatus(ServerStatus::newPart),
-			m_PartStatus(PartStatus::waitAckAdd),
+			m_BBStatus(BBStatus::waitAckAdd),
 			m_TimeMTM(),
 			m_TimePhile(captureTime),
 			m_TimeCF(),
@@ -151,7 +101,7 @@ namespace Parts
 			m_brickCategoryName(part.m_brickCategoryName),
 			m_Image(part.m_Image),
 			m_ServerStatus(part.m_ServerStatus),
-			m_PartStatus(part.m_PartStatus),
+			m_BBStatus(part.m_BBStatus),
 			m_TimeMTM(part.m_TimeMTM),
 			m_TimePhile(part.m_TimePhile),
 			m_TimeCF(part.m_TimeCF),
@@ -164,7 +114,7 @@ namespace Parts
 		unsigned int m_BinNumber;
 		int m_CameraOffset;
 		ServerStatus m_ServerStatus;
-		PartStatus m_PartStatus;
+		BBStatus m_BBStatus;
 		string m_brickPartNumber;
 		string m_brickCategoryNumber;
 		string m_brickCategoryName;

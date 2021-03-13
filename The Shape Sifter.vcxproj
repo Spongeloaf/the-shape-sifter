@@ -45,7 +45,7 @@
   </ImportGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|x64'">
     <OutDir>$(SolutionDir)out\$(Configuration)\</OutDir>
-    <IncludePath>$(SolutionDir)include;$(SolutionDir)include_3rd_party;$(IncludePath)</IncludePath>
+    <IncludePath>$(SolutionDir)include;$(SolutionDir)include_large_libs;$(IncludePath)</IncludePath>
     <LibraryPath>$(ProjectDir)lib\;$(LibraryPath)</LibraryPath>
     <IntDir>$(SolutionDir)out\$(Configuration)\artifacts\</IntDir>
     <SourcePath>$(SolutionDir)src;$(SourcePath)</SourcePath>
@@ -121,6 +121,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="include\RS-232\rs232.c" />
     <ClCompile Include="src\belt_buckle_interface\BeltBuckle.cpp" />
     <ClCompile Include="src\classifist\Classifist.cpp" />
     <ClCompile Include="src\common\ss_classes.cpp" />
@@ -133,6 +134,7 @@
   <ItemGroup>
     <ClInclude Include="src\belt_buckle_interface\BeltBuckle.h" />
     <ClInclude Include="src\classifist\Classifist.h" />
+    <ClInclude Include="src\common\bb_utils.h" />
     <ClInclude Include="src\common\ss_classes.h" />
     <ClInclude Include="src\mt_mind\mt_mind.h" />
     <ClInclude Include="src\photophile\photophile.h" />

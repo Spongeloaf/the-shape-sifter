@@ -48,11 +48,49 @@ bool Server::LoadConfig()
 	return true;
 }
 
+void Server::ExecuteServerCommands() 
+{
+	for (auto command : m_CommandsForServer)
+	{
+		switch (command.message)
+		{
+			case BBmesg::Acknowledge:
+				// Do we even need to do anything on an ack?
+				break;
+
+			case BBmesg::Notify:
+				HandleBBNotify(command);
+				break;
+		}
+	}
+}
+
+void Server::HandleBBNotify(CommandServer& command)
+{
+	// todo
+	//switch (command.action)
+	//{
+	//	case
+	//}
+}
+
+void Server::HandleBBAck(CommandServer& command)
+{
+	switch (command.action)
+	{
+		case BBAction::AddPart:
+			try
+			{
+				m_ActivePartList[command.payload].m_BBStatus = Parts::BBStatus::Added;
+			}
+	}
+}
+
 int Server::Main()
 {
 	// If any ptrs are null, you should check to see if you called RegisterClients() before main(), and ensure you've setup
 	// threads for each client in main.cpp::main()
-	if (!(m_clients.phile && m_clients.mtm && m_clients.suip && m_clients.cf))
+	if (!(m_clients.phile && m_clients.mtm && m_clients.suip && m_clients.cf && m_clients.bb))
 		return 1;
 
 	// main loop
@@ -64,6 +102,7 @@ int Server::Main()
 		m_clients.phile->SendPartsToServer(m_ActivePartList);
 		m_clients.mtm->SendPartsToServer(m_ActivePartList);
 		m_clients.cf->SendPartsToServer(m_ActivePartList);
+		m_clients.bb->SendCommandsToServer(m_CommandsForServer);
 
 		for (auto& part : m_ActivePartList)
 		{
@@ -71,7 +110,7 @@ int Server::Main()
 			{
 				case Parts::ServerStatus::newPart:
 					// TODO: Need to dispatch to BB
-					part.second.m_PartStatus = Parts::PartStatus::waitAckAdd;
+					part.second.m_BBStatus = Parts::BBStatus::waitAckAdd;
 					part.second.m_ServerStatus = Parts::ServerStatus::waitMTM;
 					m_clients.mtm->SendPartsToClient(part.second);
 					break;
@@ -83,7 +122,7 @@ int Server::Main()
 
 				case Parts::ServerStatus::cfDone:
 					part.second.m_ServerStatus = Parts::ServerStatus::cfDone;
-					part.second.m_PartStatus = Parts::PartStatus::waitAckAssign;
+					part.second.m_BBStatus = Parts::BBStatus::waitAckAssign;
 					m_clients.bb->SendPartsToClient(part.second);
 					break;
 
@@ -92,6 +131,8 @@ int Server::Main()
 					break;
 			}
 		}
+
+		ExecuteServerCommands();
 
 		m_clients.suip->CopyServerPartListToClient(m_ActivePartList);
 

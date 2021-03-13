@@ -9,6 +9,7 @@
 #include "../photophile/photophile.h"
 #include "../suip/suip.h"
 #include "../mt_mind/mt_mind.h"
+#include "../belt_buckle_interface/BeltBuckle.h"
 
 using namespace std::chrono_literals;
 
@@ -18,7 +19,7 @@ struct ClientInterfaces
 	ClientBase* suip;
 	ClientBase* mtm;
 	ClientBase* cf;
-	ClientBase* bb;
+	BeltBuckle* bb;
 };
 
 class Server
@@ -34,6 +35,9 @@ public:
 
 private:
 	bool LoadConfig();
+	void ExecuteServerCommands();
+	void HandleBBNotify(CommandServer&);
+	void HandleBBAck(CommandServer&);
 
 	ClientInterfaces m_clients;
 	PartList m_ActivePartList;
@@ -46,6 +50,8 @@ private:
 	std::chrono::milliseconds m_BbPacketTimeout = 50ms;
 	std::chrono::milliseconds m_ServerTickInterval = 32ms;
 	spdlog::level::level_enum m_logLevel = spdlog::level::level_enum::err;
+	CommandServerList m_CommandsForServer;
+	CommandServerList m_CommandsForBB;
 };
 
 #endif // !SERVER_H_E3C650C14FA146B6AA281A3CC17B52E2

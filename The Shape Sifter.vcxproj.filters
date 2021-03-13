@@ -48,6 +48,9 @@
     <ClCompile Include="src\belt_buckle_interface\BeltBuckle.cpp">
       <Filter>BeltBuckleInterface</Filter>
     </ClCompile>
+    <ClCompile Include="include\RS-232\rs232.c">
+      <Filter>BeltBuckleInterface</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\photophile\photophile.h">
@@ -67,6 +70,9 @@
     </ClInclude>
     <ClInclude Include="src\belt_buckle_interface\BeltBuckle.h">
       <Filter>BeltBuckleInterface</Filter>
+    </ClInclude>
+    <ClInclude Include="src\common\bb_utils.h">
+      <Filter>common</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
