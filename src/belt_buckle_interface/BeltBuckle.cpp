@@ -101,10 +101,10 @@ void BeltBuckle::ExecuteRxCommand()
 
 	string strMessage = {char(m_RxBuffer.at(1)), char(m_RxBuffer.at(2)), char( m_RxBuffer.at(3))};
 	if (strMessage == "ACK")
-		command.message = BBmesg::Acknowledge;
+		command.messageType = MesgType::Acknowledge;
 	
 	else if (strMessage == "TEL")
-		command.message = BBmesg::Notify;
+		command.messageType = MesgType::Tell;
 	else
 	{
 		m_logger->error("Bad message in BB packet: " + strMessage);

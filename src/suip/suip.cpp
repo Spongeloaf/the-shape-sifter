@@ -336,8 +336,8 @@ inline QString UIMainWIndow::EnumToQStr(Parts::ServerStatus enumm)
 		case ServerStatus::sortDone:
 			return "sortDone";
 
-		case ServerStatus::lost:
-			return "lost";
+		case ServerStatus::Lost:
+			return "Lost";
 	}
 }
 
@@ -361,8 +361,8 @@ inline QString UIMainWIndow::EnumToQStr(Parts::BBStatus enumm)
 		case BBStatus::Sorted:
 			return "Sorted";
 
-		case BBStatus::lost:
-			return "lost";
+		case BBStatus::Lost:
+			return "Lost";
 	}
 }
 

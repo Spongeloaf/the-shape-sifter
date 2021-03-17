@@ -48,7 +48,7 @@ namespace Parts
 		cfDone,
 		waitSort,
 		sortDone,
-		lost
+		Lost
 	};
 
 	enum class BBStatus
@@ -58,7 +58,7 @@ namespace Parts
 		Added,
 		Assigned,
 		Sorted,
-		lost
+		Lost
 	};
 
 	struct PartInstance

@@ -27,7 +27,10 @@ class Server
 public:
 	Server();
 	bool IsOK();
+	void ProcessActivePartList();
 	int Main();
+	void SendPartsListToSUIP();
+	void PullPartsFromClients();
 	void RegisterClients(ClientInterfaces& clients);
 	spdlog::level::level_enum GetLogLevel() { return m_logLevel; };
 	string GetAssetPath() { return m_assetPath; };
@@ -36,7 +39,7 @@ public:
 private:
 	bool LoadConfig();
 	void ExecuteServerCommands();
-	void HandleBBNotify(CommandServer&);
+	void HandleBBTell(CommandServer&);
 	void HandleBBAck(CommandServer&);
 
 	ClientInterfaces m_clients;

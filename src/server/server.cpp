@@ -48,41 +48,140 @@ bool Server::LoadConfig()
 	return true;
 }
 
+// Executes commands sent from clients
 void Server::ExecuteServerCommands() 
 {
 	for (auto command : m_CommandsForServer)
 	{
-		switch (command.message)
+		switch (command.messageType)
 		{
-			case BBmesg::Acknowledge:
-				// Do we even need to do anything on an ack?
+			case MesgType::Acknowledge:
+				HandleBBAck(command);
 				break;
 
-			case BBmesg::Notify:
-				HandleBBNotify(command);
+			case MesgType::Tell:
+				HandleBBTell(command);
 				break;
+			default:
+				// Should never get here! Did you add a message type enum and forget to catch it here?
+				m_logger->error("Failure in ExecuteServerCommands() command: " + command.BuildSerialString());
 		}
 	}
 }
 
-void Server::HandleBBNotify(CommandServer& command)
+// Handles "TEL" comamnds sent from the belt buckle to the server
+void Server::HandleBBTell(CommandServer& command)
 {
-	// todo
-	//switch (command.action)
-	//{
-	//	case
-	//}
+	try
+	{
+		switch (command.action)
+		{
+			case BBAction::ConfirmSorting:
+				m_ActivePartList[command.payload].m_BBStatus = Parts::BBStatus::Sorted;
+				m_ActivePartList[command.payload].m_ServerStatus = Parts::ServerStatus::sortDone;
+				break;
+
+			case BBAction::PartRanOffBelt:
+				m_ActivePartList[command.payload].m_BBStatus = Parts::BBStatus::Lost;
+				m_ActivePartList[command.payload].m_ServerStatus = Parts::ServerStatus::Lost;
+				break;
+
+			case BBAction::AddPart:
+			case BBAction::AssignPartToBin:
+			case BBAction::GetBinConfig:
+			case BBAction::PrintEncoderDistance:
+			case BBAction::Handshake:
+			case BBAction::GetStatus:
+			case BBAction::SetParameters:
+			case BBAction::FlushPartIndex:
+			case BBAction::PrintFullPartIndex:
+			case BBAction::PrintSinglePartIndex:
+			case BBAction::OutputTest:
+				// do nothing
+				break;
+
+			default:
+				// Should never get here! Did you add a message type enum and forget to catch it here?
+				m_logger->error("Failure in HandleBBTell() command: " + command.BuildSerialString());
+		}
+	}
+	catch (...)
+	{
+		m_logger->error("Exception in HandleBBTell(). Command: " + command.BuildSerialString());
+	}
 }
 
+// Handles "ACK" comamnds sent from the belt buckle to the server
 void Server::HandleBBAck(CommandServer& command)
 {
-	switch (command.action)
+	try
 	{
-		case BBAction::AddPart:
-			try
-			{
+		switch (command.action)
+		{
+			case BBAction::AddPart:
 				m_ActivePartList[command.payload].m_BBStatus = Parts::BBStatus::Added;
-			}
+				break;
+			case BBAction::AssignPartToBin:
+				m_ActivePartList[command.payload].m_BBStatus = Parts::BBStatus::Assigned;
+				break;
+
+			case BBAction::ConfirmSorting:
+			case BBAction::GetBinConfig:
+			case BBAction::PartRanOffBelt:
+			case BBAction::PrintEncoderDistance:
+			case BBAction::Handshake:
+			case BBAction::GetStatus:
+			case BBAction::SetParameters:
+			case BBAction::FlushPartIndex:
+			case BBAction::PrintFullPartIndex:
+			case BBAction::PrintSinglePartIndex:
+			case BBAction::OutputTest:
+				// do nothing
+				break;
+
+			default:
+				// Should never get here! Did you add a message type enum and forget to catch it here?
+				m_logger->error("Failure in HandleBBAck() command: " + command.BuildSerialString());
+		}
+	}
+	catch (...)
+	{
+		m_logger->error("Exception in HandleBBAck(). Command: " + command.BuildSerialString());
+	}
+}
+
+void Server::ProcessActivePartList()
+{
+	for (auto& part : m_ActivePartList)
+	{
+		switch (part.second.m_ServerStatus)
+		{
+			case Parts::ServerStatus::newPart:
+				// TODO: Need to dispatch to BB
+				part.second.m_BBStatus = Parts::BBStatus::waitAckAdd;
+				part.second.m_ServerStatus = Parts::ServerStatus::waitMTM;
+				m_clients.mtm->SendPartsToClient(part.second);
+				break;
+
+			case Parts::ServerStatus::MTMDone:
+				part.second.m_ServerStatus = Parts::ServerStatus::waitCF;
+				m_clients.cf->SendPartsToClient(part.second);
+				break;
+
+			case Parts::ServerStatus::cfDone:
+				part.second.m_ServerStatus = Parts::ServerStatus::cfDone;
+				part.second.m_BBStatus = Parts::BBStatus::waitAckAssign;
+				m_clients.bb->SendPartsToClient(part.second);
+				break;
+
+			case Parts::ServerStatus::Lost:
+				m_ActivePartList.erase(part.first);
+				break;
+
+			case Parts::ServerStatus::sortDone:
+				m_ActivePartList.erase(part.first);
+				break;
+		}
 	}
 }
 
@@ -99,42 +198,10 @@ int Server::Main()
 		// loop timer
 		auto start = std::chrono::system_clock::now();
 		
-		m_clients.phile->SendPartsToServer(m_ActivePartList);
-		m_clients.mtm->SendPartsToServer(m_ActivePartList);
-		m_clients.cf->SendPartsToServer(m_ActivePartList);
-		m_clients.bb->SendCommandsToServer(m_CommandsForServer);
-
-		for (auto& part : m_ActivePartList)
-		{
-			switch (part.second.m_ServerStatus)
-			{
-				case Parts::ServerStatus::newPart:
-					// TODO: Need to dispatch to BB
-					part.second.m_BBStatus = Parts::BBStatus::waitAckAdd;
-					part.second.m_ServerStatus = Parts::ServerStatus::waitMTM;
-					m_clients.mtm->SendPartsToClient(part.second);
-					break;
-				
-				case Parts::ServerStatus::MTMDone:
-					part.second.m_ServerStatus = Parts::ServerStatus::waitCF;
-					m_clients.cf->SendPartsToClient(part.second);
-					break;
-
-				case Parts::ServerStatus::cfDone:
-					part.second.m_ServerStatus = Parts::ServerStatus::cfDone;
-					part.second.m_BBStatus = Parts::BBStatus::waitAckAssign;
-					m_clients.bb->SendPartsToClient(part.second);
-					break;
-
-				case Parts::ServerStatus::sortDone:
-					// sort done 
-					break;
-			}
-		}
-
+		PullPartsFromClients();
+		ProcessActivePartList();
 		ExecuteServerCommands();
-
-		m_clients.suip->CopyServerPartListToClient(m_ActivePartList);
+		SendPartsListToSUIP();
 
 		// global_tick_rate is the time in milliseconds of each loop, taken from settings.ini
 		auto end = std::chrono::system_clock::now();
@@ -154,4 +221,17 @@ int Server::Main()
 		}
 
 	}
+}
+
+void Server::SendPartsListToSUIP()
+{
+	m_clients.suip->CopyServerPartListToClient(m_ActivePartList);
+}
+
+void Server::PullPartsFromClients()
+{
+	m_clients.phile->SendPartsToServer(m_ActivePartList);
+	m_clients.mtm->SendPartsToServer(m_ActivePartList);
+	m_clients.cf->SendPartsToServer(m_ActivePartList);
+	m_clients.bb->SendCommandsToServer(m_CommandsForServer);
 }
