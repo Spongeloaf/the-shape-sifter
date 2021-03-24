@@ -24,7 +24,7 @@ int BeltBuckle::Main()
 {
 	if (RS232_OpenComport(m_ComPort, m_BaudRate, &m_mode[0], m_FlowCtrl))
 	{
-		m_logger->error("Can not open comport");
+		m_logger->error("Cannot open comport");
 		return (1);
 	}
 
@@ -44,6 +44,9 @@ int BeltBuckle::Main()
 
 		// Make damn sure this is clean
 		tempBuffer.fill('\0');
+
+		// Send m_TxBuffer
+		RS232_SendBuf(m_ComPort, &m_TxBuffer[0], m_TxBuffer.size());
 	}
 
 	return 0;
@@ -66,7 +69,7 @@ void BeltBuckle::ParseRxBuffer(std::array<unsigned char, kMaxBufferLen>& buffer)
 			case ']':
 				// Packet terminator.
 				m_RxBuffer.push_back(c);
-				ExecuteRxCommand();
+				DeserializeCommand();
 				m_RxBuffer.clear();
 				break;
 
@@ -81,12 +84,12 @@ void BeltBuckle::ParseRxBuffer(std::array<unsigned char, kMaxBufferLen>& buffer)
 	}
 }
 
-// Executes a command that is recieved by the belt buckle.
-void BeltBuckle::ExecuteRxCommand()
+// Convert serial strings into server commands
+void BeltBuckle::DeserializeCommand()
 {
 	if (m_RxBuffer.size() != kRxCommandLen)
 	{
-		m_logger->error("Called BeltBuckle::ExecuteRxCommand() with invalid string length. Expected " +
+		m_logger->error("Called BeltBuckle::DeserializeCommand() with invalid string length. Expected " +
 										std::to_string(kRxCommandLen) + " but got " + std::to_string(m_RxBuffer.size()));
 		return;
 	}
@@ -122,6 +125,8 @@ void BeltBuckle::ExecuteRxCommand()
 
 	command.argument = {char(m_RxBuffer.at(7)), char(m_RxBuffer.at(8)), char(m_RxBuffer.at(9))};
 	command.payload.insert(command.payload.begin(), m_RxBuffer.at(11), m_RxBuffer.at(22));
+
+	PutPartInOutputBuffer(command);
 }
 
 // The server calls this method to retrieve commands from the belt buckle
@@ -142,11 +147,30 @@ void BeltBuckle::SendCommandsToServer(CommandServerList& commands)
 }
 
 // The server call this method to send parts to this client
-void BeltBuckle::SendCommandsToBB(CommandServer& part)
+void BeltBuckle::SendCommandsToBBClient(CommandBB& part)
 {
 	if (m_CommandBBLock.try_lock())
 	{
 		m_CommandsForBB.push_back(std::move(part));
 		m_CommandBBLock.unlock();
 	}
+}
+
+// Sends a command from the server to the belt buckle
+void BeltBuckle::SerializeCommands() 
+{
+	for (auto& cmd : m_CommandsForBB)
+	{
+		string str = cmd.BuildSerialString();
+		m_TxBuffer.insert(m_TxBuffer.end(), str.begin(), str.end());
+		m_TxBuffer.push_back('\n');
+	}
+}
+
+// The client calls this method to place commands in the output buffer, for retrieval by the server.
+void BeltBuckle::PutPartInOutputBuffer(CommandServer& cmd)
+{
+	m_CommandServerLock.lock();
+	m_CommandsForServer.push_back(std::move(cmd));
+	m_CommandServerLock.unlock();
 }

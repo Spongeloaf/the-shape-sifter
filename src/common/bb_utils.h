@@ -13,6 +13,7 @@ enum class BBAction;
 
 using std::string;
 using CommandServerList = std::vector<CommandServer>;
+using CommandBBList = std::vector<CommandBB>;
 
 enum class MesgType
 {
@@ -64,9 +65,9 @@ static const std::map<char, BBAction> BBActionMap = {
 // A command sent from the server to the belt buckle
 struct CommandBB
 {
-	BBAction action;
-	string argument;
-	string payload;
+	BBAction action = BBAction::Handshake;
+	string argument = "ZZZZ";
+	string payload = "YYYYYYYYYYYY";
 
 	string BuildSerialString()
 	{
@@ -84,6 +85,20 @@ struct CommandBB
 		}
 
 		return "<" + sAction + argument + payload + "CSUM>";
+	}
+
+	void IntToArgumentString(unsigned int n) 
+	{ 
+		// Pad with leading zeroes, up to 4 chars
+		if (n < 9999)
+		{
+			argument = std::to_string(n);
+			argument = std::string(4 - argument.length(), '0') + argument;
+		}
+		else
+		{
+			argument = "9999";
+		}
 	}
 };
 

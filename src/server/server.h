@@ -41,6 +41,7 @@ private:
 	void ExecuteServerCommands();
 	void HandleBBTell(CommandServer&);
 	void HandleBBAck(CommandServer&);
+	CommandBB CreateBBCommand(const Parts::PartInstance&);
 
 	ClientInterfaces m_clients;
 	PartList m_ActivePartList;

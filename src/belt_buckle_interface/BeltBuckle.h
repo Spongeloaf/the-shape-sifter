@@ -25,11 +25,14 @@ public:
 	BeltBuckle(spdlog::level::level_enum logLevel, string clientName, string assetPath, INIReader* iniReader);
 	int Main();
 	void SendCommandsToServer(CommandServerList& commands);
-	void SendCommandsToBB(CommandServer& part);
+	void SendCommandsToBBClient(CommandBB& part);
 
 private:
 	void ParseRxBuffer(std::array<unsigned char, kMaxBufferLen>& buffer);
-	void ExecuteRxCommand();
+	void DeserializeCommand();
+	void SerializeCommands();
+	void PutPartInOutputBuffer(CommandServer& cmd);
+ 
 	std::vector<unsigned char> m_RxBuffer;
 	std::vector<unsigned char> m_TxBuffer;
 
@@ -41,7 +44,7 @@ private:
 	std::mutex m_CommandServerLock;
 	std::mutex m_CommandBBLock;
 	CommandServerList m_CommandsForServer;
-	CommandServerList m_CommandsForBB;
+	CommandBBList m_CommandsForBB;
 
 };
 

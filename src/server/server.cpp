@@ -150,6 +150,26 @@ void Server::HandleBBAck(CommandServer& command)
 	}
 }
 
+CommandBB Server::CreateBBCommand(const Parts::PartInstance& part)
+{
+	CommandBB cmd;
+	cmd.payload = part.m_PUID;
+
+	switch (part.m_ServerStatus)
+	{
+		case Parts::ServerStatus::newPart:
+			cmd.action = BBAction::AddPart;
+			cmd.argument = "0000";
+			break;
+
+		case Parts::ServerStatus::cfDone:
+			cmd.action = BBAction::AssignPartToBin;
+			cmd.IntToArgumentString(part.m_BinNumber);
+			break;
+	}
+	return std::move(cmd);
+}
+
 void Server::ProcessActivePartList()
 {
 	for (auto& part : m_ActivePartList)
@@ -161,6 +181,7 @@ void Server::ProcessActivePartList()
 				part.second.m_BBStatus = Parts::BBStatus::waitAckAdd;
 				part.second.m_ServerStatus = Parts::ServerStatus::waitMTM;
 				m_clients.mtm->SendPartsToClient(part.second);
+				m_clients.bb->SendCommandsToBBClient(CreateBBCommand(part.second));
 				break;
 
 			case Parts::ServerStatus::MTMDone:
@@ -172,6 +193,8 @@ void Server::ProcessActivePartList()
 				part.second.m_ServerStatus = Parts::ServerStatus::cfDone;
 				part.second.m_BBStatus = Parts::BBStatus::waitAckAssign;
 				m_clients.bb->SendPartsToClient(part.second);
+				m_clients.bb->SendCommandsToBBClient(CreateBBCommand(part.second));
+
 				break;
 
 			case Parts::ServerStatus::Lost:
