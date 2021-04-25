@@ -1,5 +1,5 @@
 # The Shape Sifter
-The Shape Sifter is a lego sorting machine utilizing a neural network, image processing software, a conveyor belt, and air jets. The software is written in C++ and Python. 
+The Shape Sifter is a lego sorting machine utilizing a neural network, image processing software, a conveyor belt, and air jets. The software is written in C++. Previous versions were written largely in python, but I've been re-writing it in C++ as a self-education exercise. 
 
 As you can see, it's majesty is outmatched only by it's imposing size:
 
@@ -30,14 +30,12 @@ If you'd like to checkout the code, you can start with the server by looking in 
 ## Dependencies
 
 * [Opencv](https://opencv.org) - Image and video manipulation library
-* [Fast.ai](https://www.fast.ai/) - Neural network framework built on Pytorch
+* [Fast.ai](https://www.fast.ai/) - Neural network framework built on Pytorch (The C++ re-write will likely replace this)
 * [Arduino](https://www.arduino.cc/) - Open source hardware and software project for embedded devices
 * [Encoder Library](https://www.pjrc.com/teensy/td_libs_Encoder.html) - Arduino library for reading data from rotary encoders
-* [Pyserial](https://github.com/pyserial/pyserial) - Serial communication library for python.
 * [QT](https://www.qt.io/) - UI authoring suite
-
-Plus a few common python modules such as time, multiprocessing, etc.
-
+* [INIReader](https://github.com/benhoyt/inih) - C++ INI reader library
+* [Howard Hinnants's Date Library](https://github.com/HowardHinnant/date) - An excelleent C++ time/date library.
 
 ## Want to build one yourself?
 
