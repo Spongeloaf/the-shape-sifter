@@ -46,14 +46,22 @@ def AreFilesInABundle(f1, f2):
     if f1 == f2:
         return False
 
-    root1, ext1 = os.path.split(f1)
-    root2, ext2 = os.path.split(f1)
+    split1 = f1.split('.')
+    split2 = f2.split('.')
 
-    if (ext1 != ".png") and (ext2 != ".png"):
+    if (len(split1) != 2) or (len(split2) != 2):
         return False
 
-    haystack1 = root1.split('_')
-    haystack2 = root2.split('_')
+    fName1 = split1[0]
+    fName2 = split2[0]
+    ext1 = split1[1]
+    ext2 = split2[1]
+
+    if (ext1 != "png") and (ext2 != "png"):
+        return False
+
+    haystack1 = fName1.split('_')
+    haystack2 = fName2.split('_')
 
     # Length will be 2 as long as the filename has only one '_' somewhere inside it.
     if (len(haystack1) != 2) or (len(haystack2) != 2):
@@ -61,8 +69,8 @@ def AreFilesInABundle(f1, f2):
 
     # Ensure both indexes are integers
     try:
-        i1 = int(haystack1)
-        i2 = int(haystack2)
+        i1 = int(haystack1[1])
+        i2 = int(haystack2[1])
     except:
         return False
 

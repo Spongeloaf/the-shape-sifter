@@ -1,13 +1,29 @@
 {% extends 'base.html' %}
 
-
-
 {% block content %}
 <body>
   {% for image in images %}
     <img src="{{ url_for('sorting.download_file', filename=image) }}">
   {% endfor %}
-  <h1>Sorting page</h1>
-  <p>This is a paragraph.</p>
+ <div></div>
+    <form method="post">
+        <label for="query">Search for a part:</label>
+        <input name="query" id="query" value="{{ request.form['query'] }}" required>
+        <input type="submit" value="Search">
+    </form>
+  <p>Choose a result:</p>
+    <form method="post">
+        {% for result in results %}
+            <input type="radio" id="{{result.label}}" name="partNumber" value="{{result.partNumber}}">
+            <label for="{{result.label}}">{{result.label}}</label><br>
+        {% endfor %}
+        <input name="submit" id="submit" value="{{ request.form['submit'] }}" required>
+        <input type="submit" value="Search">
+    </form>
+  <div></div>
+  {% if query %}
+    <li>Query {{query}}</li>
+  {% endif %}
+
 </body>
 {% endblock %}
