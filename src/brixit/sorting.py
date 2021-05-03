@@ -7,30 +7,16 @@ import db as dataBase
 
 
 bp = Blueprint('sorting', __name__)
-mediaFolder = cu.GetGoogleDrivePath() + "\\assets\\photophile\\new_part_images"
 
 
-def HandlePost(request, images):
-    """
-    Handle the various types of POST events.
-    """
-
-    if 'submit' in request.form:
-        # TODO: Handle part submissions here!
-        flash("Submitted!")
-        return render_template('sorting/sorting.html', images=images)
-
-    if 'query' in request.form:
-        query = request.form['query']
-        return render_template('sorting/sorting.html', images=images, query=query)
-
-    flash("HandlePost() got no query or submission")
-    return render_template('sorting/sorting.html', images=images)
+class Result:
+    partNumber = ""
+    label = ""
 
 
 @bp.route('/<path:filename>')
 def download_file(filename):
-    return send_from_directory(mediaFolder, filename, as_attachment=True)
+    return send_from_directory(cu.settings.unknownPartsPath, filename, as_attachment=True)
 
 
 @bp.route('/', methods=('GET', 'POST'))
@@ -44,13 +30,44 @@ def sorting(query=None):
     TODO: This may become problematic once we have multiple users.
     TODO: It is quite possible that while searching another user may delete the picture you're looking at.
     """
-    assetfolder = cu.GetGoogleDrivePath()
-    srcImageFolder = assetfolder + "\\assets\\photophile\\new_part_images"
-    walker = os.walk(srcImageFolder, topdown=False)
+    folder = cu.settings.unknownPartsPath
+    walker = os.walk(folder, topdown=False)
     images = cu.GetImageBundle(walker)
 
-    if request.method == 'POST':
-        return HandlePost(request, images)
+    # if len(images) < 1:
+    #     # TODO: need to make an "out of files" page
+    #     return render_template('sorting/sorting.html', images=images)
 
+    if request.method == 'POST':
+        if 'partNumber' in request.form:
+            result = dataBase.SubmitPart(request.form)
+            images = cu.GetImageBundle(walker)
+            if result == "success":
+                partNumber = request.form['partNumber']
+                flash("Submitted {} as {}".format(cu.GetPUID(images[0]), partNumber))
+                return render_template('sorting/sorting.html', images=images)
+            else:
+                flash("Error in part submission: {}".format(result))
+                return render_template('sorting/sorting.html', images=images)
+
+        if 'query' in request.form:
+            query = request.form['query']
+
+            res1 = Result()
+            res1.label = "2x4 brick"
+            res1.partNumber = "2004"
+            res2 = Result()
+            res2.label = "1x3 plate"
+            res2.partNumber = "1003"
+            res3 = Result()
+            res3.label = "1x9 tile"
+            res3.partNumber = "1009"
+            results = [res1,res2,res3]
+            return render_template('sorting/sorting.html', images=images, results=results)
+
+        flash("HandlePost() got no query or submission")
+        return render_template('sorting/sorting.html', images=images)
+
+    # request.method == 'Get':
     return render_template('sorting/sorting.html', images=images)
 

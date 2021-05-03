@@ -14,7 +14,7 @@ def register():
     if request.method == 'POST':
         username = request.form['username']
         password = request.form['password']
-        serverDb = db.get_db()
+        serverDb = db.GetDb()
         error = None
 
         if not username:
@@ -43,7 +43,7 @@ def login():
     if request.method == 'POST':
         username = request.form['username']
         password = request.form['password']
-        serverDb = db.get_db()
+        serverDb = db.GetDb()
         error = None
         user = serverDb.execute(
             'SELECT * FROM user WHERE username = ?', (username,)
@@ -63,6 +63,7 @@ def login():
 
     return render_template('auth/login.html')
 
+
 @bp.before_app_request
 def load_logged_in_user():
     user_id = session.get('user_id')
@@ -70,9 +71,10 @@ def load_logged_in_user():
     if user_id is None:
         g.user = None
     else:
-        g.user = db.get_db().execute(
+        g.user = db.GetDb().execute(
             'SELECT * FROM user WHERE id = ?', (user_id,)
         ).fetchone()
+
 
 @bp.route('/logout')
 def logout():

@@ -1,4 +1,6 @@
 import os
+import configparser
+import sys
 
 
 def GetGoogleDrivePath():
@@ -10,7 +12,6 @@ def GetGoogleDrivePath():
     # https://stackoverflow.com/a/53430229/10236951
 
     import sqlite3
-    import os
 
     db_path = (os.getenv('LOCALAPPDATA') + '\\Google\\Drive\\user_default\\sync_config.db')
     db = sqlite3.connect(db_path)
@@ -81,19 +82,31 @@ def AreFilesInABundle(f1, f2):
     return False
 
 
-def GetImageBundle(walker):
+def GetPUID(fName):
+    """
+    Gets a PUID from a file name.
+    """
+    haystack1 = fName.split('.')
+    haystack2 = haystack1.pop(0).split('_')
+    return haystack2.pop(0)
+
+
+def GetImageBundle(walker: os.walk):
     """ Gets the first file from a directory and tries to find any files from the same bundle """
+    print(walker)
     try:
         for root, dirs, files in walker:
             # Grab the first file in the directory
             selectedFile = files.pop(0)
 
             fileStr = selectedFile.split('.')
+            if len(fileStr) != 2:
+                continue
+
             if fileStr[1] != "png":
                 continue
 
             imageBundle = [selectedFile]
-
             # Images may be standalone or part of a bundle.
             # Bundled images are in the same folder, add them.
             for f in files:
@@ -104,4 +117,54 @@ def GetImageBundle(walker):
 
     except Exception as e:
         print("Python Error in GetImageBundle()" + e)
+        return None, None
+
+
+def ImageStrToList(images: str):
+    """ Takes a serialized string of image file names from a form and converts it to a python list of strings"""
+    images = images.replace("[", '')
+    images = images.replace("]", '')
+    images = images.replace("\\", '')
+    images = images.replace("'", '')
+    result = images.split(',')
+    result = [i.strip() for i in result]
+    return result
+
+
+class Settings:
+    assetPath: str
+    unknownPartsPath: str
+    knownPartsPath: str
+    instancePath: str
+    userDbPath: str
+    knownPartsDb: str
+
+    def __init__(self):
+        # Don't check the ini file. I want the program to crash immediately if it cannot be read
+        ini = self.__GetIni()
+
+        self.assetPath = GetGoogleDrivePath()
+        self.unknownPartsPath = self.assetPath + ini.get('brixit', 'unknownPartsPath')
+        self.knownPartsPath = self.assetPath + ini.get('brixit', 'knownPartsPath')
+        self.userDbPath = sys.path[0] + ini.get('brixit', 'userDbPath')
+        self.knownPartsDb = self.assetPath + ini.get('brixit', 'knownPartDb')
+
+    @staticmethod
+    def __GetSettingsFile():
+        """ Searches the assset path for a settings file """
+        fName = GetGoogleDrivePath() + "\\settings.ini"
+        if os.path.isfile(fName):
+            return fName
+
         return None
+
+    def __GetIni(self):
+        file = self.__GetSettingsFile()
+        if file:
+            config = configparser.ConfigParser()
+            config.read(file)
+            return config
+        return None
+
+
+settings = Settings()

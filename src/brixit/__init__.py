@@ -4,24 +4,21 @@
 # placed into the appropriate folder.
 #####################################################################
 
-import sys
+
 import db
 from flask import Flask
-from commonUtils import GetGoogleDrivePath
-
-
-assetPath = GetGoogleDrivePath()
-sourceImagePath = assetPath + "\\assets\\photophile\\new_part_images"
-instancePath = assetPath + "\\briXit"
-DbPath = sys.path[0] + '\\briXit.sqlite'
+import commonUtils as cu
 
 
 def create_app():
     # create and configure the app
-    app = Flask(__name__,instance_path=instancePath)
+    # TODO: Check if I actually need instance path here
+    # TODO: It's quite possible that this may behave differently if I want to run this from the command line
+
+    app = Flask(__name__,instance_path=cu.settings.assetPath)
     app.config.from_mapping(
         SECRET_KEY='dev',
-        DATABASE=DbPath,
+        DATABASE=cu.settings.userDbPath,
     )
 
     app.config.from_pyfile('config.py', silent=True)
@@ -31,7 +28,7 @@ def create_app():
     def hello():
         return 'Hello, World!'
 
-    db.init_app(app)
+    db.InitApp(app)
 
     import auth
     app.register_blueprint(auth.bp)
@@ -41,6 +38,7 @@ def create_app():
     app.add_url_rule('/', endpoint='index')
 
     return app
+
 
 if __name__ == "__main__":
     app = create_app()

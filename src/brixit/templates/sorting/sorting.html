@@ -2,13 +2,17 @@
 
 {% block content %}
 <body>
-  {% for image in images %}
-    <img src="{{ url_for('sorting.download_file', filename=image) }}">
-  {% endfor %}
+    {% if images %}
+      {% for image in images %}
+        <img src="{{ url_for('sorting.download_file', filename=image) }}">
+      {% endfor %}
+    {% else %}
+    <p>Could not find parts!</p>
+    {% endif %}
  <div></div>
     <form method="post">
         <label for="query">Search for a part:</label>
-        <input name="query" id="query" value="{{ request.form['query'] }}" required>
+        <input name="query" id="query" value="" required>
         <input type="submit" value="Search">
     </form>
   <p>Choose a result:</p>
@@ -17,8 +21,9 @@
             <input type="radio" id="{{result.label}}" name="partNumber" value="{{result.partNumber}}">
             <label for="{{result.label}}">{{result.label}}</label><br>
         {% endfor %}
-        <input name="submit" id="submit" value="{{ request.form['submit'] }}" required>
-        <input type="submit" value="Search">
+        <input type="hidden" id="images" name="images" value="{{images}}">
+        <input type="hidden" id="user" name="user" value="{{g.user}}">
+        <input type="submit" value="Submit">
     </form>
   <div></div>
   {% if query %}
