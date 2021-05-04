@@ -2,6 +2,10 @@
 # This web application allows a user classify images of lego parts
 # The classified pictures will be prepped for ai training and
 # placed into the appropriate folder.
+#
+# This code was largely copied from the Flask tutorial and reworked to suit my needs
+# https://flask.palletsprojects.com/en/1.1.x/tutorial/
+# Thanks Flask!
 #####################################################################
 
 

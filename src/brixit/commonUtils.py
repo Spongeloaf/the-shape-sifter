@@ -138,6 +138,7 @@ class Settings:
     instancePath: str
     userDbPath: str
     knownPartsDb: str
+    partList: str
 
     def __init__(self):
         # Don't check the ini file. I want the program to crash immediately if it cannot be read
@@ -148,6 +149,7 @@ class Settings:
         self.knownPartsPath = self.assetPath + ini.get('brixit', 'knownPartsPath')
         self.userDbPath = sys.path[0] + ini.get('brixit', 'userDbPath')
         self.knownPartsDb = self.assetPath + ini.get('brixit', 'knownPartDb')
+        self.partList = self.assetPath + ini.get('brixit', 'partList')
 
     @staticmethod
     def __GetSettingsFile():
