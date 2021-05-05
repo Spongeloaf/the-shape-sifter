@@ -17,17 +17,17 @@ class Part:
     partName: str
     categoryNum: str
     categoryName: str
-    term_frequencies: Counter
+    # term_frequencies: Counter
 
     @property
     def fulltext(self):
         return self.partName
 
-    def analyze(self):
-        self.term_frequencies = Counter(analyze(self.fulltext))
+    # def analyze(self):
+        # self.term_frequencies = Counter(analyze(self.fulltext))
 
-    def term_frequency(self, term):
-        return self.term_frequencies.get(term, 0)
+    # def term_frequency(self, term):
+        # return self.term_frequencies.get(term, 0)
 
 
 def load_parts():
@@ -35,7 +35,8 @@ def load_parts():
         reader = csv.reader(file, delimiter='\t')
         for line in reader:
             if len(line) == 4:
-                yield Part(categoryNum=line[0], categoryName=line[1], partNum=line[2], partName=line[3], term_frequencies=Counter())
+                # yield Part(categoryNum=line[0], categoryName=line[1], partNum=line[2], partName=line[3], term_frequencies=Counter())
+                yield Part(categoryNum=line[0], categoryName=line[1], partNum=line[2], partName=line[3])
 
 
 def index_parts(documents, index):
@@ -99,22 +100,18 @@ class Index:
             return self.rank(analyzed_query, parts)
         return parts
 
-    def rank(self, analyzed_query, documents):
+    def rank(self, analyzed_query, parts):
         results = []
-        if not documents:
+        if not parts:
             return results
-        for document in documents:
-            score = 0.0
-            for token in analyzed_query:
-                tf = document.term_frequency(token)
-                idf = self.inverse_document_frequency(token)
-                score += tf * idf
-            results.append((document, score))
-        return sorted(results, key=lambda doc: doc[1], reverse=True)
+        for part in parts:
+            score = len(part.partName)
+            results.append((part, score))
+        return sorted(results, key=lambda doc: doc[1], reverse=False)
 
 
 index = index_parts(load_parts(), Index())
-print(index.search('1 x 4 tile', search_type='AND', rank=True)[0])
+result = index.search('tile 1 x 4', search_type='AND', rank=True)
 # index.search('1 x 4 tile', search_type='OR')
 # index.search('1 x 4 tile', search_type='AND', rank=True)
 # index.search('1 x 4 tile', search_type='OR', rank=True)
