@@ -58,7 +58,7 @@ def MoveFiles(form: dict):
                 os.replace(srcPath, dstPath)
             except Exception as e:
                 continue
-            row = [i, form['partNumber']]
+            row = [i, form['partNum']]
             writer.writerow(row)
 
     return "success"

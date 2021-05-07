@@ -4,8 +4,8 @@ import Stemmer
 
 PUNCTUATION = re.compile('[%s]' % re.escape(string.punctuation))
 STEMMER = Stemmer.Stemmer('english')
-STOPWORDS = {'the', 'of', 'a', 'that', 'have', 'it', 'for', 'he',
-             'as', 'do', 'at', 'this', 'but', 'his', 'from'}
+STOPWORDS = {'the', 'of', 'a', 'that', 'have', 'it', 'for',
+             'as', 'do', 'at', 'this', 'but'}
 
 
 def convertDimensions(text: str):

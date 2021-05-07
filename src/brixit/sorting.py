@@ -4,7 +4,7 @@ from auth import login_required
 import commonUtils as cu
 import os
 import db as dataBase
-
+import partIndex as index
 
 bp = Blueprint('sorting', __name__)
 
@@ -33,41 +33,31 @@ def sorting(query=None):
     folder = cu.settings.unknownPartsPath
     walker = os.walk(folder, topdown=False)
     images = cu.GetImageBundle(walker)
+    results = []
 
     # if len(images) < 1:
     #     # TODO: need to make an "out of files" page
     #     return render_template('sorting/sorting.html', images=images)
 
     if request.method == 'POST':
-        if 'partNumber' in request.form:
+        if 'partNum' in request.form:
             result = dataBase.SubmitPart(request.form)
             images = cu.GetImageBundle(walker)
             if result == "success":
-                partNumber = request.form['partNumber']
+                partNumber = request.form['partNum']
+                # TODO: Nonetype object is not subscriptable
                 flash("Submitted {} as {}".format(cu.GetPUID(images[0]), partNumber))
-                return render_template('sorting/sorting.html', images=images)
             else:
                 flash("Error in part submission: {}".format(result))
-                return render_template('sorting/sorting.html', images=images)
 
-        if 'query' in request.form:
+        elif 'query' in request.form:
             query = request.form['query']
+            results = index.PartIndex.search(query)
+            if len(results) > cu.settings.numberOfResults:
+                del results[cu.settings.numberOfResults:]
+        else:
+            flash("HandlePost() got no query or submission")
 
-            res1 = Result()
-            res1.label = "2x4 brick"
-            res1.partNumber = "2004"
-            res2 = Result()
-            res2.label = "1x3 plate"
-            res2.partNumber = "1003"
-            res3 = Result()
-            res3.label = "1x9 tile"
-            res3.partNumber = "1009"
-            results = [res1,res2,res3]
-            return render_template('sorting/sorting.html', images=images, results=results)
-
-        flash("HandlePost() got no query or submission")
-        return render_template('sorting/sorting.html', images=images)
-
-    # request.method == 'Get':
-    return render_template('sorting/sorting.html', images=images)
+    # request.method == 'Get' or otherwise:
+    return render_template('sorting/sorting.html', images=images, results=results)
 

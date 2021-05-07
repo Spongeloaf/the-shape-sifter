@@ -139,9 +139,10 @@ class Settings:
     userDbPath: str
     knownPartsDb: str
     partList: str
+    numberOfResults: int
 
     def __init__(self):
-        # Don't check the ini file. I want the program to crash immediately if it cannot be read
+        # Don't check the ini file. I want the program to crash immediately if it cannot be read.
         ini = self.__GetIni()
 
         self.assetPath = GetGoogleDrivePath()
@@ -150,6 +151,7 @@ class Settings:
         self.userDbPath = sys.path[0] + ini.get('brixit', 'userDbPath')
         self.knownPartsDb = self.assetPath + ini.get('brixit', 'knownPartDb')
         self.partList = self.assetPath + ini.get('brixit', 'partList')
+        self.numberOfResults = ini.getint('brixit', 'numberOfResults')
 
     @staticmethod
     def __GetSettingsFile():

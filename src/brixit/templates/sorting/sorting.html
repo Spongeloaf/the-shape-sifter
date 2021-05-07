@@ -15,15 +15,15 @@
         <input name="query" id="query" value="" required>
         <input type="submit" value="Search">
     </form>
-  <p>Choose a result:</p>
+    <hr>
+    <p>Choose a part and click submit: </p>
     <form method="post">
+        <input type="submit" value="Submit">
         {% for result in results %}
-            <input type="radio" id="{{result.label}}" name="partNumber" value="{{result.partNumber}}">
-            <label for="{{result.label}}">{{result.label}}</label><br>
+             <label><input type="radio" id="{{result.partNum}}" name="partNum" value="{{result.partNum}}"> {{result.partName}}</label>
         {% endfor %}
         <input type="hidden" id="images" name="images" value="{{images}}">
         <input type="hidden" id="user" name="user" value="{{g.user}}">
-        <input type="submit" value="Submit">
     </form>
   <div></div>
   {% if query %}
