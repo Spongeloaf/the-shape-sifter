@@ -12,6 +12,7 @@
 import db
 from flask import Flask
 import commonUtils as cu
+from gevent.pywsgi import WSGIServer
 
 
 def create_app():
@@ -47,3 +48,6 @@ def create_app():
 if __name__ == "__main__":
     app = create_app()
     app.run()
+    # http_server = WSGIServer(('192.168.0.11', 5000), app)
+    # print(http_server.address)
+    # http_server.serve_forever()

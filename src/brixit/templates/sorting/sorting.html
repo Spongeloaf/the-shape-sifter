@@ -4,7 +4,7 @@
 <body>
     {% if images %}
       {% for image in images %}
-        <img src="{{ url_for('sorting.download_file', filename=image) }}">
+        <img src="{{ url_for('sorting.GetUnknownImage', filename=image) }}">
       {% endfor %}
     {% else %}
     <p>Could not find parts!</p>
@@ -16,19 +16,18 @@
         <input type="submit" value="Search">
     </form>
     <hr>
-    <p>Choose a part and click submit: </p>
+    <form method="post"><input type="submit" value="Picture Of Conveyor belt"><input type="hidden" id="badImage" name="badImage" value="conveyor"><input type="hidden" id="images" name="realImage" value="{{images}}"></form>
+    <form method="post"><input type="submit" value="Bad Picture(s)"><input type="hidden" id="badImage" name="badImage" value="badImages"><input type="hidden" id="images" name="realImage" value="{{images}}"></form>
+        <form method="post"><input type="submit" value="Skip Part"><input type="hidden" id="badImage" name="badImage" value="skip"><input type="hidden" id="images" name="realImage" value="{{images}}"></form>
     <form method="post">
+        <!-- The values names submitted in the form must match the variable names in a Part object -->
         <input type="submit" value="Submit">
         {% for result in results %}
-             <label><input type="radio" id="{{result.partNum}}" name="partNum" value="{{result.partNum}}"> {{result.partName}}</label>
+            <label><img src="{{ url_for('sorting.GetSearchResultImage', filename=result.stockImage) }}" style="max-width: 150px; max-height: 150px"><input type="radio" id="{{result.partNum}}" name="partNum" value="{{result.partNum}}"> {{result.partName}}</label>
         {% endfor %}
-        <input type="hidden" id="images" name="images" value="{{images}}">
-        <input type="hidden" id="user" name="user" value="{{g.user}}">
+        <input type="hidden" id="images" name="realImage" value="{{images}}">
     </form>
-  <div></div>
-  {% if query %}
-    <li>Query {{query}}</li>
-  {% endif %}
+    <form method="post">
 
 </body>
 {% endblock %}

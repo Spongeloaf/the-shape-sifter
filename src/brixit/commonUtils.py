@@ -1,6 +1,34 @@
 import os
 import configparser
 import sys
+from dataclasses import dataclass
+
+
+@dataclass
+class Part:
+    partNum: str
+    partName: str
+    categoryNum: str
+    categoryName: str
+    stockImage: str
+    realImageListStr: str
+
+    # def __int__(self, categoryNum="", categoryName="", partNum="",
+    #             partName="", stockImage="", realImages=""):
+    #     self.partNum = partNum
+    #     self.partName = partName
+    #     self.categoryNum = categoryNum
+    #     self.categoryName = categoryName
+    #     self.stockImage = stockImage
+    #     self.realImageListStr = realImages
+    #
+    # def __init__(self):
+    #     self.partNum = ""
+    #     self.partName = ""
+    #     self.categoryNum = ""
+    #     self.categoryName = ""
+    #     self.stockImage = ""
+    #     self.realImageListStr = ""
 
 
 def GetGoogleDrivePath():
@@ -91,35 +119,6 @@ def GetPUID(fName):
     return haystack2.pop(0)
 
 
-def GetImageBundle(walker: os.walk):
-    """ Gets the first file from a directory and tries to find any files from the same bundle """
-    print(walker)
-    try:
-        for root, dirs, files in walker:
-            # Grab the first file in the directory
-            selectedFile = files.pop(0)
-
-            fileStr = selectedFile.split('.')
-            if len(fileStr) != 2:
-                continue
-
-            if fileStr[1] != "png":
-                continue
-
-            imageBundle = [selectedFile]
-            # Images may be standalone or part of a bundle.
-            # Bundled images are in the same folder, add them.
-            for f in files:
-                if AreFilesInABundle(selectedFile, f):
-                    imageBundle.append(f)
-
-            return imageBundle
-
-    except Exception as e:
-        print("Python Error in GetImageBundle()" + e)
-        return None, None
-
-
 def ImageStrToList(images: str):
     """ Takes a serialized string of image file names from a form and converts it to a python list of strings"""
     images = images.replace("[", '')
@@ -152,6 +151,13 @@ class Settings:
         self.knownPartsDb = self.assetPath + ini.get('brixit', 'knownPartDb')
         self.partList = self.assetPath + ini.get('brixit', 'partList')
         self.numberOfResults = ini.getint('brixit', 'numberOfResults')
+        self.renderedImageFolder = self.assetPath + ini.get('brixit', 'renderedImageFolder')
+        self.defaultPartImage = ini.get('brixit', 'defaultPartImage')
+        self.conveyorBeltImgFolder = self.assetPath + ini.get('brixit', 'conveyorBeltImgFolder')
+        self.skippedImageFolder = self.assetPath + ini.get('brixit', 'skippedImageFolder')
+
+        if not os.path.isfile(self.defaultPartImage):
+            print("Failed to locate default part file at {}".format(self.defaultPartImage))
 
     @staticmethod
     def __GetSettingsFile():
@@ -171,4 +177,44 @@ class Settings:
         return None
 
 
+class ImageWalker:
+    def __init__(self, settings: Settings):
+        self.folder = settings.unknownPartsPath
+        self.images = self.__GetImageBundle()
+
+    def GetCurrentImageBundle(self):
+        return self.images
+
+    def NewImageBundle(self):
+        self.images = self.__GetImageBundle()
+
+    def __GetImageBundle(self):
+        """ Gets the first file from a directory and tries to find any files from the same bundle """
+        try:
+            walker = os.walk(self.folder, topdown=False)
+            for root, dirs, files in walker:
+                # Grab the first file in the directory
+                selectedFile = files.pop(0)
+
+                fileStr = selectedFile.split('.')
+                if len(fileStr) != 2:
+                    continue
+
+                if fileStr[1] != "png":
+                    continue
+
+                imageBundle = [selectedFile]
+                # Images may be standalone or part of a bundle.
+                # Bundled images are in the same folder, add them.
+                for f in files:
+                    if AreFilesInABundle(selectedFile, f):
+                        imageBundle.append(f)
+                return imageBundle
+
+        except:
+            print("Python Error in GetImageBundle()")
+            return None, None
+
+
 settings = Settings()
+imageWalker = ImageWalker(settings)

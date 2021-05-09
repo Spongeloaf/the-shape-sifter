@@ -1,42 +1,104 @@
-from commonUtils import settings
-from dataclasses import dataclass
+from typing import List
+import os
+from commonUtils import settings, Part
 from textAnalysis import analyze
 from timing import timing
 import csv
-import math
-
+import commonUtils as cu
 
 # This code was largely stolen from https://bart.degoe.de/building-a-full-text-search-engine-150-lines-of-code/
 # and reworked to suit my needs. Thanks Bart de Geode!
 
 
-@dataclass
-class Part:
-    partNum: str
-    partName: str
-    categoryNum: str
-    categoryName: str
-    # term_frequencies: Counter
+class StockImage:
+    partNumber: str
+    imageName: str
 
-    @property
-    def fulltext(self):
-        return self.partName
+    def __init__(self, partNumber: str, imageName: str):
+        self.imageName = imageName
+        self.partNumber = partNumber
 
 
-def FileReader():
-    """ Creates a file-read generator """
-    with open(settings.partList, encoding="utf8") as file:
-        reader = csv.reader(file, delimiter='\t')
-        for line in reader:
-            if len(line) == 4:
-                yield Part(categoryNum=line[0], categoryName=line[1], partNum=line[2], partName=line[3])
+class StockImageIndex:
+    """ Stock images are displayed with search results."""
+    stockImages = []
+    stockImageFolder = cu.settings.renderedImageFolder
+    defaultPartImage = cu.settings.defaultPartImage
+
+    def __init__(self):
+        walker = os.walk(cu.settings.renderedImageFolder, topdown=False)
+        for root, dirs, files in walker:
+            for file in files:
+                self.stockImages.append(os.path.join(root, file))
+
+    def GetImage(self, partNumber: str):
+        fName = partNumber + ".png"
+        file = os.path.join(self.stockImageFolder, fName)
+        if file in self.stockImages:
+            return fName
+        else:
+            return self.defaultPartImage
+
+# DELETE THIS IF THE APP RUNS WITHOUT IT
+# class StockImageIndex:
+#     """ A list of images to use for search results and their associated part numbers """
+#     index: List[StockImage]
+#
+#     def __init__(self):
+#         try:
+#             for row in self.__StockImageDBReader():
+#                 self.index.append(row)
+#         except FileNotFoundError:
+#             self.index = []
+#
+#     # noinspection PyBroadException
+#     def GetStockImage(self, partNum: str):
+#         image = settings.defaultPartImage
+#         try:
+#             for part in self.index:
+#                 if partNum == part.partNumber:
+#                     if os.path.isfile(part.imageName):
+#                         image = part.imageName
+#         except:
+#             pass
+#         return image
+#
+#     @staticmethod
+#     def __StockImageDBReader():
+#         """ Creates a file-read generator for entries in the rendered parts image database"""
+#         with open(settings.renderedImageList, encoding="utf8") as file:
+#             reader = csv.reader(file, delimiter='\t')
+#             for line in reader:
+#                 if len(line) == 2:
+#                     yield StockImage(partNumber=line[0], imageName=line[1])
 
 
-class Index:
-    def __init__(self, generator):
-        self.index = {}
+class PartSearchIndex:
+    def __init__(self):
+        self.__searchTokenIndex = {}
         self.parts = {}
-        self.__IndexPartList(generator)
+        self.__imageList = StockImageIndex()
+        self.__IndexPartList(self.PartListReader())
+
+    def PartListReader(self):
+        """
+        Creates a file-read generator.
+        The columns in the index file are expected to be:
+            0. categoryNum
+            1. categoryName
+            2. partNum
+            3. partName
+        """
+        with open(settings.partList, encoding="utf8") as file:
+            reader = csv.reader(file, delimiter='\t')
+            for line in reader:
+                if len(line) == 4:
+                    img = self.__imageList.GetImage(line[2])
+                    yield Part(categoryNum=line[0], categoryName=line[1], partNum=line[2], partName=line[3],
+                               stockImage=img, realImageListStr="")
+
+    def GetStockImage(self, partNumber: str):
+        return self.__imageList.GetImage(partNumber)
 
     def __AddToIndex(self, part):
         # Prevent indexing same doc twice
@@ -44,9 +106,9 @@ class Index:
             self.parts[part.partNum] = part
 
         for token in analyze(part.partName):
-            if token not in self.index:
-                self.index[token] = set()
-            self.index[token].add(part.partNum)
+            if token not in self.__searchTokenIndex:
+                self.__searchTokenIndex[token] = set()
+            self.__searchTokenIndex[token].add(part.partNum)
 
     def __IndexPartList(self, parts):
         for i, part in enumerate(parts):
@@ -55,7 +117,7 @@ class Index:
                 print('Indexed {} parts'.format(i))
 
     def __results(self, analyzed_query):
-        return [self.index.get(token, set()) for token in analyzed_query]
+        return [self.__searchTokenIndex.get(token, set()) for token in analyzed_query]
 
     @timing
     def search(self, query, searchType='AND', rank=True):
@@ -100,10 +162,10 @@ class Index:
         return sorted(parts, key=lambda part: len(part.partName), reverse=False)
 
 
-
 if __name__ == "__main__":
-    # Run a test search
-    index = Index(FileReader())
+    # Running standalone. Put any test you wish to run in here.
+
+    index = PartSearchIndex()
 
     # result1 = index.search('tile 1 x 4', searchType='AND', rank=False)
     # result2 = index.search('tile 1 x 4', searchType='OR', rank=False)
@@ -119,5 +181,5 @@ if __name__ == "__main__":
 
     print('done')
 else:
-    # Library mode
-    PartIndex = Index(FileReader())
+    # Running in library mode
+    PartIndex = PartSearchIndex()

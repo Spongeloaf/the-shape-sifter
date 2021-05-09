@@ -4,6 +4,7 @@ import random
 import datetime
 import colorsys
 
+
 def get_google_drive_path():
     """
     Get Google Drive path on windows machines. The returned string does not have trailing slashes.
@@ -41,13 +42,14 @@ def get_google_drive_path():
 # For a set color, use a color string formatted like this: 0x0066ff (this color is blue)
 # ---------------------------------------------------------------------------------
 mode = 1
-view_angle = "random"
-color = "random"
-batch_size = 50
+view_angle = "45"
+color = "0x2e6b6b"
+batch_size = 1
 ldrawFolder = get_google_drive_path() + "\\ldraw"
 partsFolder = ldrawFolder + "\\parts"
 mode_1_input_file = "\\3001.dat"
 mode_2_input_list = "C:\\Users\\Spongeloaf\\Google Drive\\peter\\python projects\\machine learning\\ldraw_render\\plates.txt"
+mode_3_input_dir = "C:\\Users\\peter.vandergragt\\Google Drive\\software_dev\\the_shape_sifter\\ldraw\\parts"
 output_dir = ldrawFolder + "\\out"
 
 
@@ -122,8 +124,6 @@ def random_color():
     return color
 
 
-
-
 def render_part(render_input_file, output_dir, general_params, geometry_params, effects_params, primitives_params, save_params, color, view_angle):
     if color == "random":
         render_color = "-DefaultColor3={0}".format(random_color())
@@ -162,7 +162,7 @@ def render_part(render_input_file, output_dir, general_params, geometry_params, 
     # this command invokes LDview to render the part, after collecting all of our params
     subprocess.Popen('"C:\\Program Files\\LDView\\LDView64.exe" {0}'.format(params), shell=True, stdin=None, close_fds=True)
     # subprocess.Popen("C:\\Program Files\\LDView\\LDView64.exe", shell=True, stdin=None, close_fds=True)
-    #subprocess.call('"C:\\Program Files\\LDView\\LDView64.exe" {0}'.format(params), shell=True)
+    # subprocess.call('"C:\\Program Files\\LDView\\LDView64.exe" {0}'.format(params), shell=True)
     return
 
 
@@ -191,7 +191,7 @@ if mode == 2:
                 # simple 1 to 1 conversion of filename for a single part operation
                 render_input_file = line.strip() + ".dat"
                 print(render_input_file)
-                #Pass the render_input filename and all the other shit to the function
+                # Pass the render_input filename and all the other shit to the function
                 render_part(render_input_file, output_dir, general_params, geometry_params, effects_params, primitives_params, save_params, color, view_angle)
 
 

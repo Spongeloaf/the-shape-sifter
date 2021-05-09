@@ -1,10 +1,10 @@
-from flask import (Blueprint, render_template, send_from_directory, flash, request, redirect, url_for)
-
+from flask import (Blueprint, render_template, send_from_directory, flash, request, redirect, url_for, session)
 from auth import login_required
 import commonUtils as cu
 import os
 import db as dataBase
-import partIndex as index
+import partIndex as pi
+
 
 bp = Blueprint('sorting', __name__)
 
@@ -14,9 +14,28 @@ class Result:
     label = ""
 
 
+def FormToPart(form: dict):
+    part = cu.Part("", "", "", "", "", "")
+    try:
+        part.partNum = form['partNum']
+        # part.partName = form['partName']
+        # part.categoryNum = form['categoryNum']
+        # part.categoryName = form['categoryName']
+        part.realImageListStr = form['realImage']
+        # part.stockImage = form['stockImage']
+    except:
+        pass
+    return part
+
+
 @bp.route('/<path:filename>')
-def download_file(filename):
+def GetUnknownImage(filename):
     return send_from_directory(cu.settings.unknownPartsPath, filename, as_attachment=True)
+
+
+@bp.route('/stockImages/<path:filename>')
+def GetSearchResultImage(filename):
+    return send_from_directory(cu.settings.renderedImageFolder, filename, as_attachment=True)
 
 
 @bp.route('/', methods=('GET', 'POST'))
@@ -29,35 +48,40 @@ def sorting(query=None):
     This version contains search results.
     TODO: This may become problematic once we have multiple users.
     TODO: It is quite possible that while searching another user may delete the picture you're looking at.
+    TODO: An idea would be to scan all files before running and make a list of them. When we serve them to
+    TODO: a user, we move those filenames (or flag them) as being 'taken', so another user cnnot access
+    TODO: them. We'd need to use a lock to ensure that data raaces do not happen. Should be simple enough
+    TODO: to implement without needing a lot of rework.
     """
-    folder = cu.settings.unknownPartsPath
-    walker = os.walk(folder, topdown=False)
-    images = cu.GetImageBundle(walker)
+
+
+    # TODO: need to make an "out of files" page
+    # TODO: return render_template('sorting/OutOfParts.html')
+
+    user_id = session["user_id"]
     results = []
 
-    # if len(images) < 1:
-    #     # TODO: need to make an "out of files" page
-    #     return render_template('sorting/sorting.html', images=images)
-
     if request.method == 'POST':
+        # This check is not robust, but it works.
         if 'partNum' in request.form:
-            result = dataBase.SubmitPart(request.form)
-            images = cu.GetImageBundle(walker)
-            if result == "success":
-                partNumber = request.form['partNum']
-                # TODO: Nonetype object is not subscriptable
-                flash("Submitted {} as {}".format(cu.GetPUID(images[0]), partNumber))
-            else:
+            partSubmission = FormToPart(request.form)
+            result = dataBase.SubmitPart(partSubmission, user_id)
+            cu.imageWalker.NewImageBundle()
+
+            if result != "success":
                 flash("Error in part submission: {}".format(result))
 
         elif 'query' in request.form:
             query = request.form['query']
-            results = index.PartIndex.search(query)
+            results = pi.PartIndex.search(query)
             if len(results) > cu.settings.numberOfResults:
                 del results[cu.settings.numberOfResults:]
+
+        elif 'badImage' in request.form:
+            dataBase.HandleBadImages(request.form['realImage'], request.form['badImage'])
+            cu.imageWalker.NewImageBundle()
         else:
             flash("HandlePost() got no query or submission")
 
-    # request.method == 'Get' or otherwise:
+    images = cu.imageWalker.GetCurrentImageBundle()
     return render_template('sorting/sorting.html', images=images, results=results)
-
