@@ -142,7 +142,7 @@ class Settings:
 
     def __init__(self):
         # Don't check the ini file. I want the program to crash immediately if it cannot be read.
-        ini = self.__GetIni()
+        ini = self.GetIni()
 
         self.assetPath = GetGoogleDrivePath()
         self.unknownPartsPath = self.assetPath + ini.get('brixit', 'unknownPartsPath')
@@ -168,7 +168,7 @@ class Settings:
 
         return None
 
-    def __GetIni(self):
+    def GetIni(self):
         file = self.__GetSettingsFile()
         if file:
             config = configparser.ConfigParser()

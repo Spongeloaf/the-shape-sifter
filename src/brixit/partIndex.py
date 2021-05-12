@@ -5,6 +5,8 @@ from textAnalysis import analyze
 from timing import timing
 import csv
 import commonUtils as cu
+import StockImageRenderer
+
 
 # This code was largely stolen from https://bart.degoe.de/building-a-full-text-search-engine-150-lines-of-code/
 # and reworked to suit my needs. Thanks Bart de Geode!
@@ -19,65 +21,33 @@ class StockImage:
         self.partNumber = partNumber
 
 
-class StockImageIndex:
-    """ Stock images are displayed with search results."""
-    stockImages = []
-    stockImageFolder = cu.settings.renderedImageFolder
-    defaultPartImage = cu.settings.defaultPartImage
-
-    def __init__(self):
-        walker = os.walk(cu.settings.renderedImageFolder, topdown=False)
-        for root, dirs, files in walker:
-            for file in files:
-                self.stockImages.append(os.path.join(root, file))
-
-    def GetImage(self, partNumber: str):
-        fName = partNumber + ".png"
-        file = os.path.join(self.stockImageFolder, fName)
-        if file in self.stockImages:
-            return fName
-        else:
-            return self.defaultPartImage
-
-# DELETE THIS IF THE APP RUNS WITHOUT IT
 # class StockImageIndex:
-#     """ A list of images to use for search results and their associated part numbers """
-#     index: List[StockImage]
+#     """ Stock images are displayed with search results."""
+#     stockImages = []
+#     stockImageFolder = cu.settings.renderedImageFolder
+#     defaultPartImage = cu.settings.defaultPartImage
 #
 #     def __init__(self):
-#         try:
-#             for row in self.__StockImageDBReader():
-#                 self.index.append(row)
-#         except FileNotFoundError:
-#             self.index = []
+#         walker = os.walk(cu.settings.renderedImageFolder, topdown=False)
+#         for root, dirs, files in walker:
+#             for file in files:
+#                 self.stockImages.append(os.path.join(root, file))
 #
-#     # noinspection PyBroadException
-#     def GetStockImage(self, partNum: str):
-#         image = settings.defaultPartImage
-#         try:
-#             for part in self.index:
-#                 if partNum == part.partNumber:
-#                     if os.path.isfile(part.imageName):
-#                         image = part.imageName
-#         except:
-#             pass
-#         return image
+#     def GetImage(self, partNumber: str):
+#         fName = partNumber + ".png"
+#         file = os.path.join(self.stockImageFolder, fName)
+#         if file in self.stockImages:
+#             return fName
+#         else:
 #
-#     @staticmethod
-#     def __StockImageDBReader():
-#         """ Creates a file-read generator for entries in the rendered parts image database"""
-#         with open(settings.renderedImageList, encoding="utf8") as file:
-#             reader = csv.reader(file, delimiter='\t')
-#             for line in reader:
-#                 if len(line) == 2:
-#                     yield StockImage(partNumber=line[0], imageName=line[1])
+#             return self.defaultPartImage
 
 
 class PartSearchIndex:
     def __init__(self):
         self.__searchTokenIndex = {}
         self.parts = {}
-        self.__imageList = StockImageIndex()
+        # self.__imageList = StockImageIndex()
         self.__IndexPartList(self.PartListReader())
 
     def PartListReader(self):
@@ -93,12 +63,23 @@ class PartSearchIndex:
             reader = csv.reader(file, delimiter='\t')
             for line in reader:
                 if len(line) == 4:
-                    img = self.__imageList.GetImage(line[2])
                     yield Part(categoryNum=line[0], categoryName=line[1], partNum=line[2], partName=line[3],
-                               stockImage=img, realImageListStr="")
+                               stockImage="", realImageListStr="")
 
     def GetStockImage(self, partNumber: str):
-        return self.__imageList.GetImage(partNumber)
+        partNumber = "3001"
+        fName = partNumber + ".png"
+        file = os.path.join(cu.settings.renderedImageFolder, fName)
+
+        # Check for cached file
+        if not os.path.isfile(file):
+            StockImageRenderer.renderer.RenderPart(partNumber)
+
+        if os.path.isfile(file):
+            return fName
+
+        # Use default if no image cached or generated.
+        return cu.settings.defaultPartImage
 
     def __AddToIndex(self, part):
         # Prevent indexing same doc twice
@@ -145,6 +126,9 @@ class PartSearchIndex:
         if searchType == 'OR':
             # only one token has to be in the document
             parts = [self.parts[doc_id] for doc_id in set.union(*results)]
+
+        for part in parts:
+            part.stockImage = self.GetStockImage(part.partNum)
 
         if rank:
             return self.__RankResults(parts)
