@@ -33,11 +33,6 @@ def GetUnknownImage(filename):
     return send_from_directory(cu.settings.unknownPartsPath, filename, as_attachment=True)
 
 
-@bp.route('/stockImages/<path:filename>')
-def GetSearchResultImage(filename):
-    return send_from_directory(cu.settings.renderedImageFolder, filename, as_attachment=True)
-
-
 @bp.route('/', methods=('GET', 'POST'))
 @login_required
 def sorting(query=None):

@@ -23,7 +23,11 @@
         <!-- The values names submitted in the form must match the variable names in a Part object -->
         <input type="submit" value="Submit">
         {% for result in results %}
-            <label><img src="{{ url_for('sorting.GetSearchResultImage', filename=result.stockImage) }}" style="max-width: 150px; max-height: 150px"><input type="radio" id="{{result.partNum}}" name="partNum" value="{{result.partNum}}"> {{result.partName}}</label>
+            <!-- Bricklink hosts pictures of images at http://img.bricklink.com/ItemImage/PL/{{result.partNum}}.png.
+                 You can access alternative images of parts by subbing out "/PL/" for "/PN/x/" where 'x' is some index number from 1 upwards   -->
+            <label><img src="http://img.bricklink.com/ItemImage/PL/{{result.partNum}}.png" style="max-width: 150px; max-height: 150px">
+                <input type="radio" id="{{result.partNum}}" name="partNum" value="{{result.partNum}}">
+                {{result.partName}} <a href="https://www.bricklink.com/v2/catalog/catalogitem.page?P={{result.partNum}}#T=P" target="_blank">[Bricklink]</a> </label>
         {% endfor %}
         <input type="hidden" id="images" name="realImage" value="{{images}}">
     </form>

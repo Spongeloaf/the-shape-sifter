@@ -7,6 +7,40 @@ STEMMER = Stemmer.Stemmer('english')
 STOPWORDS = {'the', 'of', 'a', 'that', 'have', 'it', 'for',
              'as', 'do', 'at', 'this', 'but'}
 
+# All substitutions must be in lower case!
+SUBSTITUTIONS = {
+    "by" : 'x',
+    "*" : 'x',
+    "cheese wedge" : "slope 30",
+    "snot" : "studs on side",
+    "slur" : "rock panel",
+    "burp" : "rock panel",
+    "lurp" : "rock panel",
+}
+
+
+def ReorderDimensions(text: str):
+    """
+    Re-orders dimension strings such that the highest value is on the left. This normalises all part names and search
+    queries; searching for '1 x 3' will return parts whose names contain both '1 x 3' and '3 x 1'
+    input:
+        '1 x 4 x 7 x 2'
+
+    Output:
+        '7 x 4 x 2 x 1'
+    """
+    tokens = text.split()
+    tokens = [ t for t in tokens if t.isnumeric()]
+    tokens.sort(reverse=True)
+    if len(tokens) > 1:
+        result = str(tokens.pop(0))
+        for t in tokens:
+            result = result + ' x '
+            result = result + t
+        return result
+    else:
+        return text
+
 
 def convertDimensions(text: str):
     """
@@ -66,7 +100,7 @@ def tokenize(text: str):
         # Strip any dimension text from the string otherwise the tokenizer will split ea
         dimensions = match.group()
         text = text.replace(dimensions, "")
-
+        dimensions = ReorderDimensions(dimensions)
         tokens = text.split()
         tokens.append(dimensions)
         return tokens
@@ -109,6 +143,13 @@ def stem_filter(tokens):
     return STEMMER.stemWords(tokens)
 
 
+def keywordReplace(text: str):
+    text = text.lower()
+    for word in SUBSTITUTIONS:
+        text = text.replace(word, SUBSTITUTIONS[word])
+    return text
+
+
 def analyze(text):
     """
     Applies all of the text treatments to a string and tokenizes it.
@@ -118,6 +159,7 @@ def analyze(text):
     Output:
     list: ['plate', 'with', 'clip', 'on', 'side', '2 x 4']
     """
+    text = keywordReplace(text)
     text = convertDimensions(text)
     tokens = tokenize(text)
     tokens = lowercase_filter(tokens)

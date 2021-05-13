@@ -5,49 +5,16 @@ from textAnalysis import analyze
 from timing import timing
 import csv
 import commonUtils as cu
-import StockImageRenderer
 
 
 # This code was largely stolen from https://bart.degoe.de/building-a-full-text-search-engine-150-lines-of-code/
 # and reworked to suit my needs. Thanks Bart de Geode!
 
 
-class StockImage:
-    partNumber: str
-    imageName: str
-
-    def __init__(self, partNumber: str, imageName: str):
-        self.imageName = imageName
-        self.partNumber = partNumber
-
-
-# class StockImageIndex:
-#     """ Stock images are displayed with search results."""
-#     stockImages = []
-#     stockImageFolder = cu.settings.renderedImageFolder
-#     defaultPartImage = cu.settings.defaultPartImage
-#
-#     def __init__(self):
-#         walker = os.walk(cu.settings.renderedImageFolder, topdown=False)
-#         for root, dirs, files in walker:
-#             for file in files:
-#                 self.stockImages.append(os.path.join(root, file))
-#
-#     def GetImage(self, partNumber: str):
-#         fName = partNumber + ".png"
-#         file = os.path.join(self.stockImageFolder, fName)
-#         if file in self.stockImages:
-#             return fName
-#         else:
-#
-#             return self.defaultPartImage
-
-
 class PartSearchIndex:
     def __init__(self):
         self.__searchTokenIndex = {}
         self.parts = {}
-        # self.__imageList = StockImageIndex()
         self.__IndexPartList(self.PartListReader())
 
     def PartListReader(self):
@@ -66,25 +33,17 @@ class PartSearchIndex:
                     yield Part(categoryNum=line[0], categoryName=line[1], partNum=line[2], partName=line[3],
                                stockImage="", realImageListStr="")
 
-    def GetStockImage(self, partNumber: str):
-        partNumber = "3001"
-        fName = partNumber + ".png"
-        file = os.path.join(cu.settings.renderedImageFolder, fName)
-
-        # Check for cached file
-        if not os.path.isfile(file):
-            StockImageRenderer.renderer.RenderPart(partNumber)
-
-        if os.path.isfile(file):
-            return fName
-
-        # Use default if no image cached or generated.
-        return cu.settings.defaultPartImage
+    def GetImageURL(self, partNumber: str):
+        """ Get bricklink part image """
+        return "http://img.bricklink.com/ItemImage/PL/{}.png".format(partNumber)
 
     def __AddToIndex(self, part):
         # Prevent indexing same doc twice
         if part.partNum not in self.parts:
             self.parts[part.partNum] = part
+
+        if part.partNum == '4286':
+            i=0
 
         for token in analyze(part.partName):
             if token not in self.__searchTokenIndex:
@@ -128,7 +87,7 @@ class PartSearchIndex:
             parts = [self.parts[doc_id] for doc_id in set.union(*results)]
 
         for part in parts:
-            part.stockImage = self.GetStockImage(part.partNum)
+            part.stockImage = self.GetImageURL(part.partNum)
 
         if rank:
             return self.__RankResults(parts)
@@ -136,13 +95,6 @@ class PartSearchIndex:
 
     @staticmethod
     def __RankResults(parts):
-        # results = []
-        # if not parts:
-        #     return results
-        # for part in parts:
-        #     score = len(part.partName)
-        #     results.append((part, score))
-        # return sorted(results, key=lambda doc: doc[1], reverse=False)
         return sorted(parts, key=lambda part: len(part.partName), reverse=False)
 
 
