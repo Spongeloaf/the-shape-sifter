@@ -4,6 +4,7 @@ import commonUtils as cu
 import os
 import db as dataBase
 import partIndex as pi
+import imageManager as im
 
 
 bp = Blueprint('sorting', __name__)
@@ -48,7 +49,6 @@ def sorting(query=None):
     TODO: them. We'd need to use a lock to ensure that data raaces do not happen. Should be simple enough
     TODO: to implement without needing a lot of rework.
     """
-
 
     # TODO: need to make an "out of files" page
     # TODO: return render_template('sorting/OutOfParts.html')

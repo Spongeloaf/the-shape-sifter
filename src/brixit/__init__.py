@@ -14,7 +14,6 @@ from flask import Flask
 import commonUtils as cu
 from gevent.pywsgi import WSGIServer
 
-
 def create_app():
     # create and configure the app
     # TODO: Check if I actually need instance path here
