@@ -1,8 +1,9 @@
 import sqlite3
 from sqlite3 import Error
+import commonUtils as cu
 
 
-def create_BriXit_db(db_file):
+def create_BriXit_db(db_file, schema):
     """ create a database connection to a SQLite database """
     conn = None
     try:
@@ -10,7 +11,7 @@ def create_BriXit_db(db_file):
         print("Sqlite version: " + sqlite3.version)
         print("Filename: " + db_file)
 
-        f = open('brixitSchema.sql')
+        f = open(schema)
         conn.executescript(f.read())
 
     except Error as e:
@@ -21,4 +22,5 @@ def create_BriXit_db(db_file):
 
 
 if __name__ == '__main__':
-    create_BriXit_db("brixit.sqlite")
+    create_BriXit_db(cu.settings.labelledPartsDB, "labelledPartsSchema.sql")
+    create_BriXit_db(cu.settings.mainDB, "brixitMainSchema.sql")

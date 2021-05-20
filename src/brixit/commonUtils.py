@@ -2,6 +2,32 @@ import os
 import configparser
 import sys
 from dataclasses import dataclass
+from typing import List
+
+class ImageBundle:
+    """
+    Properties:
+        images - A list of image file names
+        user   - The user assigned to classify a given bundle
+        PUID   - The PUID of the bundle. The PUID is taken from the filename.
+                 For a file "c93bn69cgw0s_01.png", the PUID is "c93bn69cgw0s"
+    """
+    images: List[str]
+    user: int
+    PUID: str
+    partNum: str
+
+    def __init__(self, images, PUID, user):
+        self.images = images
+        self.user = user
+        self.PUID = PUID
+        self.partNum = ""
+
+    def __init__(self, images, PUID, user, partNum):
+        self.images = images
+        self.user = user
+        self.PUID = PUID
+        self.partNum = partNum
 
 
 @dataclass
@@ -132,11 +158,12 @@ def ImageStrToList(images: str):
 
 class Settings:
     assetPath: str
-    unknownPartsPath: str
-    knownPartsPath: str
+    unlabelledPartsPath: str
+    labelledPartsPath: str
     instancePath: str
-    userDbPath: str
-    knownPartsDb: str
+    mainDB: str
+    labelledPartsDB: str
+    labelledPartsTxt: str
     partList: str
     numberOfResults: int
 
@@ -145,19 +172,20 @@ class Settings:
         ini = self.GetIni()
 
         self.assetPath = GetGoogleDrivePath()
-        self.unknownPartsPath = self.assetPath + ini.get('brixit', 'unknownPartsPath')
-        self.knownPartsPath = self.assetPath + ini.get('brixit', 'knownPartsPath')
-        self.userDbPath = sys.path[0] + ini.get('brixit', 'userDbPath')
-        self.knownPartsDb = self.assetPath + ini.get('brixit', 'knownPartDb')
+        self.unlabelledPartsPath = self.assetPath + ini.get('brixit', 'unlabelledPartsPath')
+        self.labelledPartsPath = self.assetPath + ini.get('brixit', 'labelledPartsPath')
+        self.mainDB = self.assetPath + ini.get('brixit', 'mainDB')
+        self.labelledPartsDB = self.assetPath + ini.get('brixit', 'labelledPartsDB')
+        self.labelledPartsTxt = self.assetPath + ini.get('brixit', 'labelledPartsTxt')
         self.partList = self.assetPath + ini.get('brixit', 'partList')
         self.numberOfResults = ini.getint('brixit', 'numberOfResults')
         self.renderedImageFolder = self.assetPath + ini.get('brixit', 'renderedImageFolder')
         self.defaultPartImage = ini.get('brixit', 'defaultPartImage')
         self.conveyorBeltImgFolder = self.assetPath + ini.get('brixit', 'conveyorBeltImgFolder')
         self.skippedImageFolder = self.assetPath + ini.get('brixit', 'skippedImageFolder')
-
-        if not os.path.isfile(self.defaultPartImage):
-            print("Failed to locate default part file at {}".format(self.defaultPartImage))
+        self.bountyLevel1 = 1
+        self.bountyLevel2 = 10
+        self.bountyLevel3 = 25
 
     @staticmethod
     def __GetSettingsFile():
@@ -179,7 +207,7 @@ class Settings:
 
 class ImageWalker:
     def __init__(self, settings: Settings):
-        self.folder = settings.unknownPartsPath
+        self.folder = settings.unlabelledPartsPath
         self.images = self.__GetImageBundle()
 
     def GetCurrentImageBundle(self):

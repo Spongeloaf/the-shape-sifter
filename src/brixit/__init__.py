@@ -9,7 +9,7 @@
 #####################################################################
 
 
-import db
+import fileUtils
 from flask import Flask
 import commonUtils as cu
 from gevent.pywsgi import WSGIServer
@@ -22,7 +22,7 @@ def create_app():
     app = Flask(__name__,instance_path=cu.settings.assetPath)
     app.config.from_mapping(
         SECRET_KEY='dev',
-        DATABASE=cu.settings.userDbPath,
+        DATABASE=cu.settings.mainDB,
     )
 
     app.config.from_pyfile('config.py', silent=True)
@@ -32,13 +32,13 @@ def create_app():
     def hello():
         return 'Hello, World!'
 
-    db.InitApp(app)
+    fileUtils.InitApp(app)
 
     import auth
     app.register_blueprint(auth.bp)
 
-    import sorting
-    app.register_blueprint(sorting.bp)
+    import labelling
+    app.register_blueprint(labelling.bp)
     app.add_url_rule('/', endpoint='index')
 
     return app

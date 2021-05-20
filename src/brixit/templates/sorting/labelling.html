@@ -29,7 +29,8 @@
                 <input type="radio" id="{{result.partNum}}" name="partNum" value="{{result.partNum}}">
                 {{result.partName}} <a href="https://www.bricklink.com/v2/catalog/catalogitem.page?P={{result.partNum}}#T=P" target="_blank">[Bricklink]</a> </label>
         {% endfor %}
-        <input type="hidden" id="images" name="realImage" value="{{images}}">
+        <input type="hidden" id="images" name="images" value="{{images}}">
+        <input type="hidden" id="puid" name="puid" value="{{puid}}">
     </form>
     <form method="post">
 
