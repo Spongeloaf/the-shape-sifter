@@ -86,7 +86,7 @@ class ImageManager:
 
         self.bundleList.append(ImageBundle([file], PUID, 0, ""))
 
-    def __FindBundleFromPUID__(self, puid):
+    def __FindImagesFromPUID__(self, puid):
         """ Gets the pictures of a given PUID from the image list """
         for bundle in self.bundleList:
             if puid == bundle.PUID:
@@ -127,6 +127,13 @@ class ImageManager:
                 return True
         return False
 
+    def GetBundleFromPuid(self, puid):
+        """ Retruns true if a given PUID has an image bundle on the disk. """
+        for bundle in self.bundleList:
+            if bundle.PUID == puid:
+                return bundle
+        return None
+
     def __PruneDB__(self):
         """ Removes any part from the live db if its image bundle cannot be located. """
         sql = sqlite3.connect(self.mainDB)
@@ -150,10 +157,11 @@ class ImageManager:
 
     def __ClaimBundle__(self, bundle: ImageBundle, user: int):
         """ Changes ownership of a bunbdle in the parts db"""
-        if bundle is None:
+        if not isinstance(bundle, ImageBundle):
+            print("Error in ImageManger::__ClaimBundle__(): Expected an IMageBunbdle object, but got {} instead.".format(type(bundle)))
             return
         sql = sqlite3.connect(self.mainDB)
-        sql.execute("UPDATE unlabelledParts SET user = ? WHERE puid = ?", [str(user), bundle.puid])
+        sql.execute("UPDATE unlabelledParts SET user = ? WHERE puid = ?", [str(user), bundle.PUID])
         sql.commit()
 
     def GetImageBundle(self, user):
@@ -217,27 +225,27 @@ class ImageManager:
 
     def __ConveyorImage__(self, bundle: ImageBundle):
         """ Handle pictures of the conveyor belt """
-        fu.HandleBadImages(bundle)
+        fu.HandleConveyorImages(bundle)
         self.__RemoveBundleFromDB__(bundle)
 
-    def HandleBadImages(self, puid:str, type: str):
+    def HandleBadImages(self, puid: str, error: str):
         """
         Bad image types:
             conveyor - a picture of the conveyor belt
             badImages - pictures of different parts or pooryl cropped
             skip - a picture was skipped.
         """
-        bundle = self.__FindBundleFromPUID__(puid)
+        bundle = self.GetBundleFromPuid(puid)
         if bundle is None:
             return
 
-        if type == "conveyor":
+        if error == "conveyor":
             self.__ConveyorImage__(bundle)
 
-        if type == "badImages":
+        if error == "badImages":
             self.__BadImages__(bundle)
 
-        if type == "skip":
+        if error == "skip":
             self.__SkipImageBundle__(bundle)
 
 
