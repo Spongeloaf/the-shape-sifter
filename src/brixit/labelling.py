@@ -28,7 +28,7 @@ def labelling(query=None):
     """
 
     # TODO: need to make an "out of files" page
-    # TODO: return render_template('sorting/OutOfParts.html')
+    # TODO: return render_template('labelling/OutOfParts.html')
 
     user_id = session["user_id"]
     results = []
@@ -48,11 +48,16 @@ def labelling(query=None):
             if len(results) > cu.settings.numberOfResults:
                 del results[cu.settings.numberOfResults:]
 
-        elif 'badImage' in request.form:
-            dataBase.HandleBadImages(request.form['realImage'], request.form['badImage'])
-            cu.imageWalker.NewImageBundle()
+        elif 'problem' in request.form and 'puid' in request.form:
+            im.imageMgr.HandleBadImages(request.form['puid'], request.form['problem'])
         else:
             flash("HandlePost() got no query or submission")
 
     bundle = im.imageMgr.GetImageBundle(user_id)
-    return render_template('sorting/labelling.html', images=bundle.images, results=results, puid=bundle.PUID)
+    if bundle is None:
+        # TODO: make an out of parts page and show it here.
+        empytImages = []
+        emptyPUID = ""
+        return render_template('labelling/labelling.html', images=empytImages, results=results, puid=emptyPUID)
+
+    return render_template('labelling/labelling.html', images=bundle.images, results=results, puid=bundle.PUID)

@@ -17,12 +17,6 @@ class ImageBundle:
     PUID: str
     partNum: str
 
-    def __init__(self, images, PUID, user):
-        self.images = images
-        self.user = user
-        self.PUID = PUID
-        self.partNum = ""
-
     def __init__(self, images, PUID, user, partNum):
         self.images = images
         self.user = user

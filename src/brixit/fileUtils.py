@@ -67,21 +67,13 @@ def __MoveImages__(src: str, dst: str):
         return False
 
 
-def HandleBadImages(imagesStr : str, reason: str):
-    images = cu.ImageStrToList(imagesStr)
-    if reason == 'conveyor':
-        for i in images:
-            srcPath = cu.settings.unlabelledPartsPath + "\\" + i
-            dstPath = cu.settings.conveyorBeltImgFolder + "\\" + i
-            __MoveImages__(srcPath, dstPath)
-        return
+def HandleConveyorImages(bundle: cu.ImageBundle):
+    for i in bundle.images:
+        srcPath = cu.settings.unlabelledPartsPath + "\\" + i
+        dstPath = cu.settings.conveyorBeltImgFolder + "\\" + i
+        __MoveImages__(srcPath, dstPath)
 
-    if reason == 'badImages':
-        for i in images:
-            os.remove(cu.settings.unlabelledPartsPath + "\\" + i)
+def HandleBadImages(bundle: cu.ImageBundle):
+    for i in bundle.images:
+        os.remove(cu.settings.unlabelledPartsPath + "\\" + i)
 
-    if reason == 'skip':
-        for i in images:
-            srcPath = cu.settings.unlabelledPartsPath + "\\" + i
-            dstPath = cu.settings.skippedImageFolder + "\\" + i
-            __MoveImages__(srcPath, dstPath)

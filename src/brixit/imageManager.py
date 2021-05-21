@@ -8,21 +8,16 @@ import fileUtils as fu
 
 
 def MakeBundleFromForm(form, user_id):
-    try:
-        partNum = form['partNum']
-        puid = form['puid']
-        images = cu.ImageStrToList(form['images'])
-
-        return ImageBundle(images, puid, user_id, partNum)
-    except:
-        return None
+    if ('partNum' in form) and ('puid' in form) and ('images' in form):
+        return ImageBundle(cu.ImageStrToList(form['images']), form['puid'], user_id, form['partNum'])
+    return None
 
 
 class ImageManager:
     """
-    The ImageManager will track the files available for sorting and flag files that have been sent to a user for
+    The ImageManager will track the files available for labelling and flag files that have been sent to a user for
     classification. When a user loads the classification page (labelling.py), the page will display at least one image
-    of an unknow part. However, some files come in bundles; multiple images taken by the sorting machine of the same
+    of an unknow part. However, some files come in bundles; multiple images taken by the labelling machine of the same
     part. These bundles follow the naming convention of PUID_XX.png. Files which are not bundled follow the convention
     of PUID.png, note the absent '_' delimiter. Two files with the same PUID are not bundled if they have the same
     number following the '_' delimiter or if one of the files is does not have a delimeter. The index number, XX may be
@@ -91,12 +86,12 @@ class ImageManager:
 
         self.bundleList.append(ImageBundle([file], PUID, 0, ""))
 
-    def __FindBundle__(self, puid):
+    def __FindBundleFromPUID__(self, puid):
         """ Gets the pictures of a given PUID from the image list """
         for bundle in self.bundleList:
             if puid == bundle.PUID:
                 return bundle.images
-        return []
+        return None
 
     def __CreateBundleList__(self):
         """ This function creates a list of file bundles in the unknowParts directory. """
@@ -116,10 +111,13 @@ class ImageManager:
     def __AddImagesToDB__(self):
         """ Loops through the image bundle list and adds bundles to the SQL db if they don't exist."""
         sql = sqlite3.connect(self.mainDB)
+        rows =[]
         for bundle in self.bundleList:
-            # TODO: Fix this! We needto serialize the image list in a sqlite friendly way. Maybe we can make it BLOB?
-            query = "INSERT OR IGNORE INTO unlabelledParts(puid, user, images) VALUES ({}, {}, {})".format(bundle.PUID, 0, bundle.images)
-            sql.execute(query)
+            images = ""
+            for i in bundle.images:
+                images = images + i + ","
+            rows.append([bundle.PUID, 0, images])
+        sql.executemany("INSERT OR IGNORE INTO unlabelledParts(puid, user, images) VALUES (?, ?, ?)", rows)
         sql.commit()
 
     def DoesPUIDHaveBundle(self, puid):
@@ -140,45 +138,60 @@ class ImageManager:
         # row[0] = puid, row[1] = user, row[2] = images
         for row in rows:
             if not self.DoesPUIDHaveBundle(row[0]):
-                sql.execute("DELETE FROM unlabelledParts WHERE puid = {}".format(row[0]))
+                sql.execute("DELETE FROM unlabelledParts WHERE puid = ?", [row[0]])
+        sql.commit()
+
+    @staticmethod
+    def RowToBundle(row: List):
+        # DB rows unpack into ImageBundle members: row[0] = puid, row[1] = user, row[2] = images
+        images = row[2].split(',')
+        images = list(filter(None, images))
+        return ImageBundle(images, row[0], row[1], "")
+
+    def __ClaimBundle__(self, bundle: ImageBundle, user: int):
+        """ Changes ownership of a bunbdle in the parts db"""
+        if bundle is None:
+            return
+        sql = sqlite3.connect(self.mainDB)
+        sql.execute("UPDATE unlabelledParts SET user = ? WHERE puid = ?", [str(user), bundle.puid])
         sql.commit()
 
     def GetImageBundle(self, user):
         """
-        Gets an image bundle from the database. If the user has a bundle already assigned to them, it will be fewtched.
+        Gets an image bundle from the database. If the user has a bundle already assigned to them, it will be fetched.
         Otherwise, the user gets a new bundle from the database.
 
-        DB rows unpack into ImageBundle members: row[0] = puid, row[1] = user, row[2] = images
+         DB rows unpack into ImageBundle members: row[0] = puid, row[1] = user, row[2] = images
         """
         # No user should have id 0; It represents parts that have not been assigned to a user
         if user == 0:
             return None
 
         sql = sqlite3.connect(self.mainDB)
-        query = "SELECT * FROM unlabelledParts WHERE user = {} LIMIT 1".format(user)
         cursor = sql.cursor()
-        cursor.execute(query)
-        if cursor.rowcount < 1:
+        cursor.execute("SELECT * FROM unlabelledParts WHERE user = ? LIMIT 1", str(user))
+        row = cursor.fetchall()
+        if len(row) < 1:
             # The user should get a new unlabelled part
-            query = "SELECT * FROM unlabelledParts WHERE user = 0 LIMIT 1"
-            cursor.execute(query)
-            if cursor.rowcount < 1:
+            cursor.execute("SELECT * FROM unlabelledParts WHERE user = 0 LIMIT 1")
+            row = cursor.fetchall()
+            if len(row) < 1:
                 # No images left!
                 return None
-            row = cursor.fetchone()
-            return ImageBundle(row[0], row[1], row[2])
+            # claim a bundle
+            bundle = self.RowToBundle(row[0])
+            self.__ClaimBundle__(bundle, user)
+            return bundle
         else:
             # The user has a part already assigned to them
-            row = cursor.fetchone()
-            return ImageBundle(row[0], row[1], row[2])
+            return self.RowToBundle(row[0])
 
     def __RemoveBundleFromDB__(self, bundle: ImageBundle):
         sql = sqlite3.connect(self.mainDB)
-        cursor = sql.cursor()
-        query = "DELETE FROM unlabelledParts WHERE puid = %s'"
-        cursor.execute(query, bundle.PUID)
+        sql.execute("DELETE FROM unlabelledParts WHERE puid = ?", [bundle.PUID])
+        sql.commit()
 
-    def __LogBundle__(self):
+    def __LogBundle__(self, bundle):
         # TODO: Log the labelling of parts here!
         pass
 
@@ -191,5 +204,41 @@ class ImageManager:
         self.__RemoveBundleFromDB__(bundle)
         self.__LogBundle__(bundle)
         pass
+
+    def __SkipImageBundle__(self, bundle: ImageBundle):
+        """ A user skipped an image bundle """
+        # TODO: Implement the bounty system for skipping parts
+        self.__ClaimBundle__(bundle, -1)
+
+    def __BadImages__(self, bundle: ImageBundle):
+        """ Handle pictures of different parts or poorly cropped """
+        fu.HandleBadImages(bundle)
+        self.__RemoveBundleFromDB__(bundle)
+
+    def __ConveyorImage__(self, bundle: ImageBundle):
+        """ Handle pictures of the conveyor belt """
+        fu.HandleBadImages(bundle)
+        self.__RemoveBundleFromDB__(bundle)
+
+    def HandleBadImages(self, puid:str, type: str):
+        """
+        Bad image types:
+            conveyor - a picture of the conveyor belt
+            badImages - pictures of different parts or pooryl cropped
+            skip - a picture was skipped.
+        """
+        bundle = self.__FindBundleFromPUID__(puid)
+        if bundle is None:
+            return
+
+        if type == "conveyor":
+            self.__ConveyorImage__(bundle)
+
+        if type == "badImages":
+            self.__BadImages__(bundle)
+
+        if type == "skip":
+            self.__SkipImageBundle__(bundle)
+
 
 imageMgr = ImageManager(cu.settings)

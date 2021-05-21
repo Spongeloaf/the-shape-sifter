@@ -253,7 +253,7 @@ def set_dark_theme(qApp):
 
 
 def main(client_params):
-    """ The sorting machine UI
+    """ The labelling machine UI
         All fucntion defs are in suip.py
         The GUI consists of a pyQT gui connected to the active part DB and the part log DB,
         with a pipe to the server for command/control signaling. This signaling is handled by

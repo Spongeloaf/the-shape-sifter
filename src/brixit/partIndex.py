@@ -69,7 +69,7 @@ class PartSearchIndex:
           - search_type: ('AND', 'OR') do all query terms have to match, or just one
           - score: (True, False) if True, rank results based on TF-IDF score
 
-        Testing with part names has revealed that the best options for part sorting are:
+        Testing with part names has revealed that the best options for part labelling are:
             Rank = True
             search_type = 'AND'
         """
