@@ -155,9 +155,9 @@ class Settings:
     unlabelledPartsPath: str
     labelledPartsPath: str
     instancePath: str
-    mainDB: str
-    labelledPartsDB: str
-    labelledPartsTxt: str
+    DB_Parts: str
+    DB_LabelLog: str
+    TXT_labelLog: str
     partList: str
     numberOfResults: int
 
@@ -166,20 +166,24 @@ class Settings:
         ini = self.GetIni()
 
         self.assetPath = GetGoogleDrivePath()
-        self.unlabelledPartsPath = self.assetPath + ini.get('brixit', 'unlabelledPartsPath')
-        self.labelledPartsPath = self.assetPath + ini.get('brixit', 'labelledPartsPath')
-        self.mainDB = self.assetPath + ini.get('brixit', 'mainDB')
-        self.labelledPartsDB = self.assetPath + ini.get('brixit', 'labelledPartsDB')
-        self.labelledPartsTxt = self.assetPath + ini.get('brixit', 'labelledPartsTxt')
-        self.partList = self.assetPath + ini.get('brixit', 'partList')
-        self.numberOfResults = ini.getint('brixit', 'numberOfResults')
-        self.renderedImageFolder = self.assetPath + ini.get('brixit', 'renderedImageFolder')
-        self.defaultPartImage = ini.get('brixit', 'defaultPartImage')
+
+        self.DB_LabelLog = self.assetPath + ini.get('brixit', 'DB_LabelLog')
+        self.DB_Parts = self.assetPath + ini.get('brixit', 'DB_Parts')
+        self.DB_User = self.assetPath + ini.get('brixit', 'DB_User')
+        self.TXT_labelLog = self.assetPath + ini.get('brixit', 'labelledPartsTxt')
         self.conveyorBeltImgFolder = self.assetPath + ini.get('brixit', 'conveyorBeltImgFolder')
+        self.defaultPartImage = ini.get('brixit', 'defaultPartImage')
+        self.devMode = ini.getboolean('brixit', 'devMode')
+        self.fakeDeleteFiles = ini.getboolean('brixit', 'fakeDeleteFiles')
+        self.fakeDeleteFolder = self.assetPath + ini.get('brixit', 'fakeDeleteFolder')
+        self.labelledPartsPath = self.assetPath + ini.get('brixit', 'labelledPartsPath')
+        self.numberOfResults = ini.getint('brixit', 'numberOfResults')
+        self.partList = self.assetPath + ini.get('brixit', 'partList')
+        self.renderedImageFolder = self.assetPath + ini.get('brixit', 'renderedImageFolder')
+        self.serverIp = ini.get('brixit', 'serverIp')
+        self.serverPort = ini.getint('brixit', 'serverPort')
         self.skippedImageFolder = self.assetPath + ini.get('brixit', 'skippedImageFolder')
-        self.bountyLevel1 = 1
-        self.bountyLevel2 = 10
-        self.bountyLevel3 = 25
+        self.unlabelledPartsPath = self.assetPath + ini.get('brixit', 'unlabelledPartsPath')
 
     @staticmethod
     def __GetSettingsFile():

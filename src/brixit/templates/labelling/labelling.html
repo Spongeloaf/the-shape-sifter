@@ -2,6 +2,8 @@
 
 {% block content %}
 <body>
+
+    <!--  Images of parts  -->
     {% if images %}
       {% for image in images %}
         <img src="{{ url_for('labelling.GetUnknownImage', filename=image) }}">
@@ -10,24 +12,54 @@
     <p>Could not find parts!</p>
     {% endif %}
  <div></div>
+
+    <!--  Search Button  -->
     <form method="post">
         <label for="query">Search for a part:</label>
         <input name="query" id="query" value="" required>
         <input type="submit" value="Search">
     </form>
+
     <hr>
-    <form method="post"><input type="submit" value="Picture Of Conveyor belt"><input type="hidden" name="problem" value="conveyor"><input type="hidden" name="puid" value="{{puid}}"></form>
-    <form method="post"><input type="submit" value="Bad Picture(s)"><input type="hidden" name="problem" value="badImages"><input type="hidden" name="puid" value="{{puid}}"></form>
-        <form method="post"><input type="submit" value="Skip Part"><input type="hidden" name="problem" value="skip"><input type="hidden" name="puid" value="{{puid}}"></form>
+
+    <!--  Picture of conveyor Button  -->
+    <form method="post">
+        <input type="submit" value="Picture Of Conveyor belt">
+        <input type="hidden" name="problem" value={{k.kConveyor}}>
+        <input type="hidden" name="puid" value="{{puid}}">
+        <input type="hidden" name="images" value="{{images}}">
+    </form>
+
+    <!--  Bad pictures Button  -->
+    <form method="post">
+        <input type="submit" value="Bad Picture(s)">
+        <input type="hidden" name="problem" value={{k.kBadImages}}>
+        <input type="hidden" name="puid" value="{{puid}}">
+        <input type="hidden" name="images" value="{{images}}">
+    </form>
+
+    <!--  Skip Parts Button  -->
+    <form method="post">
+        <input type="submit" value="Skip Part">
+        <input type="hidden" name="problem" value={{k.kSkippedPart}}>
+        <input type="hidden" name="puid" value="{{puid}}">
+        <input type="hidden" name="images" value="{{images}}">
+    </form>
+
+    <!--  Search result form  -->
     <form method="post">
         <!-- The values names submitted in the form must match the variable names in a Part object -->
         <input type="submit" value="Submit">
         {% for result in results %}
             <!-- Bricklink hosts pictures of images at http://img.bricklink.com/ItemImage/PL/{{result.partNum}}.png.
                  You can access alternative images of parts by subbing out "/PL/" for "/PN/x/" where 'x' is some index number from 1 upwards   -->
-            <label><img src="http://img.bricklink.com/ItemImage/PL/{{result.partNum}}.png" style="max-width: 150px; max-height: 150px">
+            <label>
+                <img src="http://img.bricklink.com/ItemImage/PL/{{result.partNum}}.png" style="max-width: 150px; max-height: 150px">
                 <input type="radio" id="{{result.partNum}}" name="partNum" value="{{result.partNum}}">
-                {{result.partName}} <a href="https://www.bricklink.com/v2/catalog/catalogitem.page?P={{result.partNum}}#T=P" target="_blank">[Bricklink]</a> </label>
+                {{result.partName}}
+                <a href="https://www.bricklink.com/v2/catalog/catalogitem.page?P={{result.partNum}}#T=P" target="_blank">
+                    [Bricklink]</a>
+            </label>
         {% endfor %}
         <input type="hidden" id="images" name="images" value="{{images}}">
         <input type="hidden" id="puid" name="puid" value="{{puid}}">

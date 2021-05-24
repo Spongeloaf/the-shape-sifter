@@ -42,9 +42,6 @@ class PartSearchIndex:
         if part.partNum not in self.parts:
             self.parts[part.partNum] = part
 
-        if part.partNum == '4286':
-            i=0
-
         for token in analyze(part.partName):
             if token not in self.__searchTokenIndex:
                 self.__searchTokenIndex[token] = set()

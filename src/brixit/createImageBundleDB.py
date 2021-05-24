@@ -22,5 +22,4 @@ def create_BriXit_db(db_file, schema):
 
 
 if __name__ == '__main__':
-    create_BriXit_db(cu.settings.labelledPartsDB, "labelledPartsSchema.sql")
-    create_BriXit_db(cu.settings.mainDB, "brixitMainSchema.sql")
+    create_BriXit_db(cu.settings.DB_Parts, "partsSchema.sql")

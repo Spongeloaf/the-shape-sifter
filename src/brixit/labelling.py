@@ -4,7 +4,7 @@ import commonUtils as cu
 import os
 import partIndex as pi
 import imageManager as im
-
+import Constants as k
 
 bp = Blueprint('labelling', __name__)
 
@@ -12,6 +12,12 @@ bp = Blueprint('labelling', __name__)
 class Result:
     partNumber = ""
     label = ""
+
+
+def Error(text :str):
+    """ Handler for error messages that lets us deliver them wherever we'd like """
+    print(text)
+    flash(text)
 
 
 @bp.route('/<path:filename>')
@@ -26,38 +32,39 @@ def labelling(query=None):
     This page presents an image or list of images to the user. It will then ask them to try and identify the part
     by name and show a list of suggested names from the parts db.
     """
-
-    # TODO: need to make an "out of files" page
-    # TODO: return render_template('labelling/OutOfParts.html')
-
     user_id = session["user_id"]
     results = []
 
     if request.method == 'POST':
-        # This check is not robust, but it works.
+        # label submission
         if 'partNum' in request.form:
             formBundle = im.MakeBundleFromForm(request.form, user_id)
-            if formBundle:
+            if formBundle is not None:
                 im.imageMgr.LabelImageBundle(formBundle)
             else:
-                flash("Error in part submission: {}".format(result))
+                Error("Error in part submission: formBundle was 'None' instead of 'ImageBundle'")
 
+        # Search
         elif 'query' in request.form:
             query = request.form['query']
             results = pi.PartIndex.search(query)
             if len(results) > cu.settings.numberOfResults:
                 del results[cu.settings.numberOfResults:]
 
+        # Problem submission; Bad picture, conveyor belt, skipped, etc.
         elif 'problem' in request.form and 'puid' in request.form:
-            im.imageMgr.HandleBadImages(request.form['puid'], request.form['problem'])
+            formBundle = im.MakeBundleFromForm(request.form, user_id)
+            if formBundle is not None:
+                if not im.imageMgr.HandleBadImages(formBundle, request.form['problem']):
+                    Error("Failed to handle a bad image bundle. Problem: {}".format(request.form['problem']))
+            else:
+                Error("HandlePost() had malformed problem submission")
         else:
-            flash("HandlePost() got no query or submission")
+            Error("HandlePost() got no query or submission")
 
     bundle = im.imageMgr.GetImageBundle(user_id)
-    if bundle is None:
-        # TODO: make an out of parts page and show it here.
-        empytImages = []
-        emptyPUID = ""
-        return render_template('labelling/labelling.html', images=empytImages, results=results, puid=emptyPUID)
 
-    return render_template('labelling/labelling.html', images=bundle.images, results=results, puid=bundle.PUID)
+    if bundle is None:
+        return render_template('labelling/labelling.html', images=[], results=results, puid="")
+
+    return render_template('labelling/labelling.html', images=bundle.images, results=results, puid=bundle.PUID, k=k)

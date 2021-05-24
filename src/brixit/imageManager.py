@@ -6,10 +6,34 @@ from typing import List
 import sqlite3
 import fileUtils as fu
 
+# Constant global values. All begin with a lowercase 'k', and should be modified at run time.
+from Constants import *
 
 def MakeBundleFromForm(form, user_id):
+    """ Creates a part bundle from an html form """
+
+    # Typical part bundle
     if ('partNum' in form) and ('puid' in form) and ('images' in form):
-        return ImageBundle(cu.ImageStrToList(form['images']), form['puid'], user_id, form['partNum'])
+        imageStr = form['images']
+        puid = form['puid']
+        partNum = form['partNum']
+
+        # If any of the values in the form are null, consider it an error
+        if "" in [imageStr, puid, partNum]:
+            return None
+
+        images = cu.ImageStrToList(imageStr)
+        return ImageBundle(images, puid, user_id, partNum)
+
+    # Problem image bundle
+    elif ('problem' in form) and ('puid' in form):
+        puid = form['puid']
+        imageStr = form['images']
+        if "" in [imageStr, puid]:
+            return None
+        images = cu.ImageStrToList(imageStr)
+        return ImageBundle(images, puid, user_id, "")
+
     return None
 
 
@@ -39,10 +63,14 @@ class ImageManager:
         self.folder = settings.unlabelledPartsPath
         self.bundleList = []
         self.__CreateBundleList__()
-        self.mainDB = cu.settings.mainDB
-        self.labelledDB = cu.settings.labelledPartsDB
+        self.mainDB = cu.settings.DB_Parts
+        self.labelledDB = cu.settings.DB_LabelLog
         self.__PruneDB__()
         self.__AddImagesToDB__()
+
+        # The bundle list is only to be use during startup to prune the database.
+        # If you need image bundles at run time get them from the DB!
+        del self.bundleList
 
     @staticmethod
     def FileNameToPUID(file: str):
@@ -120,19 +148,12 @@ class ImageManager:
         sql.executemany("INSERT OR IGNORE INTO unlabelledParts(puid, user, images) VALUES (?, ?, ?)", rows)
         sql.commit()
 
-    def DoesPUIDHaveBundle(self, puid):
+    def __DoesPUIDHaveBundle__(self, puid):
         """ Retruns true if a given PUID has an image bundle on the disk. """
         for bundle in self.bundleList:
             if bundle.PUID == puid:
                 return True
         return False
-
-    def GetBundleFromPuid(self, puid):
-        """ Retruns true if a given PUID has an image bundle on the disk. """
-        for bundle in self.bundleList:
-            if bundle.PUID == puid:
-                return bundle
-        return None
 
     def __PruneDB__(self):
         """ Removes any part from the live db if its image bundle cannot be located. """
@@ -144,7 +165,7 @@ class ImageManager:
 
         # row[0] = puid, row[1] = user, row[2] = images
         for row in rows:
-            if not self.DoesPUIDHaveBundle(row[0]):
+            if not self.__DoesPUIDHaveBundle__(row[0]):
                 sql.execute("DELETE FROM unlabelledParts WHERE puid = ?", [row[0]])
         sql.commit()
 
@@ -156,13 +177,14 @@ class ImageManager:
         return ImageBundle(images, row[0], row[1], "")
 
     def __ClaimBundle__(self, bundle: ImageBundle, user: int):
-        """ Changes ownership of a bunbdle in the parts db"""
+        """ Changes ownership of a bundle in the parts db"""
         if not isinstance(bundle, ImageBundle):
-            print("Error in ImageManger::__ClaimBundle__(): Expected an IMageBunbdle object, but got {} instead.".format(type(bundle)))
-            return
+            print("Error in ImageManger::__ClaimBundle__(): Expected an IMageBundle object, but got {} instead.".format(type(bundle)))
+            return False
         sql = sqlite3.connect(self.mainDB)
         sql.execute("UPDATE unlabelledParts SET user = ? WHERE puid = ?", [str(user), bundle.PUID])
         sql.commit()
+        return True
 
     def GetImageBundle(self, user):
         """
@@ -196,14 +218,19 @@ class ImageManager:
 
     def __RemoveBundleFromDB__(self, bundle: ImageBundle):
         sql = sqlite3.connect(self.mainDB)
-        sql.execute("DELETE FROM unlabelledParts WHERE puid = ?", [bundle.PUID])
+        result = sql.execute("DELETE FROM unlabelledParts WHERE puid = ?", [bundle.PUID])
+        sql.commit()
+        if result.rowcount == 1:
+            return True
+        return False
+
+    def __LogBundle__(self, bundle: ImageBundle):
+        """ Logs a part into the logging databse """
+        sql = sqlite3.connect(self.labelledDB)
+        sql.execute("INSERT INTO labelledParts (puid, user, partNum) values (?,?,?)", [bundle.PUID, bundle.user, bundle.partNum])
         sql.commit()
 
-    def __LogBundle__(self, bundle):
-        # TODO: Log the labelling of parts here!
-        pass
-
-    def LabelImageBundle(self, bundle):
+    def LabelImageBundle(self, bundle: ImageBundle):
         """
         Takes a bundle object and labels it. Labelling involves moving the files from the unlabelled directory to
         the labelled directory and tracking the labelling in the DB.
@@ -216,37 +243,42 @@ class ImageManager:
     def __SkipImageBundle__(self, bundle: ImageBundle):
         """ A user skipped an image bundle """
         # TODO: Implement the bounty system for skipping parts
-        self.__ClaimBundle__(bundle, -1)
+        return self.__ClaimBundle__(bundle, -1)
 
     def __BadImages__(self, bundle: ImageBundle):
         """ Handle pictures of different parts or poorly cropped """
-        fu.HandleBadImages(bundle)
-        self.__RemoveBundleFromDB__(bundle)
+        result = True
+        if not fu.HandleBadImages(bundle):
+            result = False
+        if not self.__RemoveBundleFromDB__(bundle):
+            result = False
+        return result
 
     def __ConveyorImage__(self, bundle: ImageBundle):
         """ Handle pictures of the conveyor belt """
-        fu.HandleConveyorImages(bundle)
-        self.__RemoveBundleFromDB__(bundle)
+        result = True
+        if not fu.HandleConveyorImages(bundle):
+            result = False
+        if not self.__RemoveBundleFromDB__(bundle):
+            result = False
+        return result
 
-    def HandleBadImages(self, puid: str, error: str):
+    def HandleBadImages(self, bundle: ImageBundle, error: str):
         """
         Bad image types:
             conveyor - a picture of the conveyor belt
-            badImages - pictures of different parts or pooryl cropped
+            badImages - pictures of different parts or poorly cropped
             skip - a picture was skipped.
         """
-        bundle = self.GetBundleFromPuid(puid)
-        if bundle is None:
-            return
+        if error == kConveyor:
+            return self.__ConveyorImage__(bundle)
 
-        if error == "conveyor":
-            self.__ConveyorImage__(bundle)
+        if error == kBadImages:
+            return self.__BadImages__(bundle)
 
-        if error == "badImages":
-            self.__BadImages__(bundle)
-
-        if error == "skip":
-            self.__SkipImageBundle__(bundle)
+        if error == kSkippedPart:
+            result = self.__SkipImageBundle__(bundle)
+            return result
 
 
 imageMgr = ImageManager(cu.settings)

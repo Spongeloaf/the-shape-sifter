@@ -14,15 +14,16 @@ from flask import Flask
 import commonUtils as cu
 from gevent.pywsgi import WSGIServer
 
+
 def create_app():
     # create and configure the app
     # TODO: Check if I actually need instance path here
-    # TODO: It's quite possible that this may behave differently if I want to run this from the command line
 
-    app = Flask(__name__,instance_path=cu.settings.assetPath)
+    # app = Flask(__name__,instance_path=cu.settings.assetPath)
+    app = Flask(__name__)
     app.config.from_mapping(
         SECRET_KEY='dev',
-        DATABASE=cu.settings.mainDB,
+        DATABASE=cu.settings.DB_Parts,
     )
 
     app.config.from_pyfile('config.py', silent=True)
@@ -32,7 +33,7 @@ def create_app():
     def hello():
         return 'Hello, World!'
 
-    fileUtils.InitApp(app)
+    # fileUtils.InitApp(app)
 
     import auth
     app.register_blueprint(auth.bp)
@@ -46,7 +47,11 @@ def create_app():
 
 if __name__ == "__main__":
     app = create_app()
-    app.run()
-    # http_server = WSGIServer(('192.168.0.11', 5000), app)
-    # print(http_server.address)
-    # http_server.serve_forever()
+    if cu.settings.devMode:
+        print("Running in dev mode. Local access only")
+        app.run()
+    else:
+        print("Running in production mode.")
+        http_server = WSGIServer((cu.settings.serverIp, cu.settings.serverPort), app)
+        print(http_server.address)
+        http_server.serve_forever()

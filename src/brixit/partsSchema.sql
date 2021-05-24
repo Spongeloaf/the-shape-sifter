@@ -1,11 +1,4 @@
-DROP TABLE IF EXISTS user;
 DROP TABLE IF EXISTS unlabelledParts;
-
-CREATE TABLE user (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  username TEXT UNIQUE NOT NULL,
-  password TEXT NOT NULL
-);
 
 CREATE TABLE unlabelledParts (
     puid   CHAR (12) PRIMARY KEY NOT NULL,

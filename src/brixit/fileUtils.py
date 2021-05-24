@@ -7,10 +7,69 @@ import os
 import csv
 
 
+def MoveFiles(bundle: cu.ImageBundle):
+    """
+    Moves an image or a bundle of images from the new parts folder to a training folder.
+    Returns False if any file fails to move
+    """
+    result = True
+    with open(cu.settings.TXT_labelLog, 'a', newline='') as csvFile:
+        writer = csv.writer(csvFile, delimiter='\t')
+        for i in bundle.images:
+            srcPath = cu.settings.unlabelledPartsPath + "\\" + i
+            dstPath = cu.settings.labelledPartsPath + "\\" + i
+            if __MoveImages__(srcPath, dstPath):
+                row = [i, bundle.partNum]
+                writer.writerow(row)
+            else:
+                result = False
+    return result
+
+
+def __MoveImages__(src: str, dst: str):
+    try:
+        os.replace(src, dst)
+        return True
+    except Exception as e:
+        print("Tried to move a file in fileUtils.py::MoveImages() but got an exception: " + str(e))
+        return False
+
+
+def HandleConveyorImages(bundle: cu.ImageBundle):
+    result = True
+    for i in bundle.images:
+        srcPath = cu.settings.unlabelledPartsPath + "\\" + i
+        dstPath = cu.settings.conveyorBeltImgFolder + "\\" + i
+        if not __MoveImages__(srcPath, dstPath):
+            result = False
+    return result
+
+
+def __DeleteFile__(file: str):
+    """ Wrapper to allow real or fake deletion of files. Fake deleted files are just moved to another folder. """
+    if cu.settings.fakeDeleteFiles:
+        dstPath = cu.settings.fakeDeleteFolder + "\\" + os.path.split(file)[1]
+        __MoveImages__(file, dstPath)
+    else:
+        os.remove(file)
+
+
+def HandleBadImages(bundle: cu.ImageBundle):
+    """ Removes unwanted image files. Returns false if any file cannot be found. """
+    result = True
+    for i in bundle.images:
+        file = cu.settings.unlabelledPartsPath + "\\" + i
+        if not os.path.isfile(file):
+            result = False
+        __DeleteFile__(file)
+    return True
+
+
+# Everything below this line came from the flask tutorial
 def GetDb():
     if 'db' not in g:
         g.db = sqlite3.connect(
-            current_app.config['DATABASE'],
+            cu.settings.DB_User,
             detect_types=sqlite3.PARSE_DECLTYPES
         )
         g.db.row_factory = sqlite3.Row
@@ -43,37 +102,3 @@ def InitDbCommand():
 def InitApp(app):
     app.teardown_appcontext(CloseDb)
     app.cli.add_command(InitDbCommand)
-
-
-def MoveFiles(bundle: cu.ImageBundle):
-    """ Moves an image or a bundle of images from the new parts folder to a training folder """
-    # TODO: When we add logging, then the retrun of __MoveImages__() may be interesting to log.
-    with open(cu.settings.labelledPartsTxt, 'a', newline='') as csvFile:
-        writer = csv.writer(csvFile, delimiter='\t')
-        for i in bundle.images:
-            srcPath = cu.settings.unlabelledPartsPath + "\\" + i
-            dstPath = cu.settings.labelledPartsPath + "\\" + i
-            if __MoveImages__(srcPath, dstPath):
-                row = [i, bundle.partNum]
-                writer.writerow(row)
-
-
-def __MoveImages__(src: str, dst: str):
-    try:
-        os.replace(src, dst)
-        return True
-    except Exception as e:
-        print("Tried to move a file in fileUtils.py::MoveImages() but got an exception: " + str(e))
-        return False
-
-
-def HandleConveyorImages(bundle: cu.ImageBundle):
-    for i in bundle.images:
-        srcPath = cu.settings.unlabelledPartsPath + "\\" + i
-        dstPath = cu.settings.conveyorBeltImgFolder + "\\" + i
-        __MoveImages__(srcPath, dstPath)
-
-def HandleBadImages(bundle: cu.ImageBundle):
-    for i in bundle.images:
-        os.remove(cu.settings.unlabelledPartsPath + "\\" + i)
-
