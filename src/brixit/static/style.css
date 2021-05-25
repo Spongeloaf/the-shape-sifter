@@ -25,3 +25,41 @@ nav ul li a, nav ul li span, header .action { display: block; padding: 0.5rem; }
 input.danger { color: #cc2f2e; }
 input[type=submit] { align-self: start; min-width: 10em; }
 img{ max-width:200px; max-height:200px; }
+
+
+/*  This section is for hiding and showing elemetns without using scripts. */
+/*  Courtesy of https://levelup.gitconnected.com/collapsible-sections-with-or-without-javascript-3fd871955a9d. */
+.toggle_collapse {
+  /* make it show to work across all ua's */
+  display:block;
+}
+.toggle_collapse, /* hide off screen */
+.toggle_collapse + *  .collapseAfter ~ * {
+	position:absolute;
+	top:-999em;
+	left:-999em;
+}
+.toggle_collapse:checked + *  .collapseAfter ~ * {
+  position:static;
+}
+.toggle_collapse + * + label {
+  display:inline-block; /* make visible for screen media */
+  color:blue;
+}
+.toggle_collapse + * + label:before {
+	content:"Show Help";
+}
+.toggle_collapse:checked + * + label:before {
+	content:"Hide Help";
+}
+.toggle_collapse + * + label:after {
+	content:"\25BC";
+	display:inline-block;
+	padding:0.4em 0 0 0.3em;
+	vertical-align:top;
+	font-size:0.625em;
+}
+.toggle_collapse:checked + * + label:after {
+	content:"\25B2";
+}
+

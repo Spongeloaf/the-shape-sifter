@@ -225,9 +225,10 @@ class ImageManager:
         return False
 
     def __LogBundle__(self, bundle: ImageBundle):
-        """ Logs a part into the logging databse """
+        """ Logs a part into the logging database """
         sql = sqlite3.connect(self.labelledDB)
-        sql.execute("INSERT INTO labelledParts (puid, user, partNum) values (?,?,?)", [bundle.PUID, bundle.user, bundle.partNum])
+        points = 1
+        sql.execute("INSERT INTO labelledParts (puid, user, partNum, points) values (?,?,?,?)", [bundle.PUID, bundle.user, bundle.partNum, points])
         sql.commit()
 
     def LabelImageBundle(self, bundle: ImageBundle):

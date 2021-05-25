@@ -32,9 +32,7 @@ def register():
     if request.method == 'POST':
         username = request.form['username']
         password = request.form['password']
-        #key = request.form['serialKey']
-
-        key = "1WFJD0CIHZNK3NZD"
+        key = request.form['serialKey']
 
         serverDb = fileUtils.GetDb()
         error = None
