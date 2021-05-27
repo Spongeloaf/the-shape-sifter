@@ -3,6 +3,9 @@ import configparser
 import sys
 from dataclasses import dataclass
 from typing import List
+import platform
+import Constants as k
+
 
 class ImageBundle:
     """
@@ -60,13 +63,25 @@ def GetGoogleDrivePath():
     # https://stackoverflow.com/a/53430229/10236951
 
     import sqlite3
+    db_path = ""
+    path = ""
 
-    db_path = (os.getenv('LOCALAPPDATA') + '/Google/Drive/user_default/sync_config.db')
+    if platform.system() == k.kWindows:
+        db_path = (os.getenv('LOCALAPPDATA') + '/Google/Drive/user_default/sync_config.db')
+    elif platform.system() == k.kMac:
+        db_path = (os.getenv('HOME') + 'Library/Application Support/Google/Drive/user_default/sync_config.db')
+    else:
+        print("Unsupported os")
+        return None
     db = sqlite3.connect(db_path)
     cursor = db.cursor()
     cursor.execute("SELECT * from data where entry_key = 'local_sync_root_path'")
     res = cursor.fetchone()
-    path = res[2][4:]
+    if platform.system() == k.kWindows:
+        # On windows res[2] is filled with gibberish for some reason. We need o drop the first few characters.
+        path = res[2][4:]
+    elif platform.system() == k.kMac:
+        path = res[2]
     db.close()
 
     full_path = path + '/software_dev/the_shape_sifter'
