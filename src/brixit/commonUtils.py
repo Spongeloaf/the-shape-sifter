@@ -1,11 +1,11 @@
 import os
 import configparser
-import sys
 from dataclasses import dataclass
 from typing import List
 import platform
 import Constants as k
 from pathlib import Path
+
 
 class ImageBundle:
     """
@@ -35,23 +35,6 @@ class Part:
     categoryName: str
     stockImage: str
     realImageListStr: str
-
-    # def __int__(self, categoryNum="", categoryName="", partNum="",
-    #             partName="", stockImage="", realImages=""):
-    #     self.partNum = partNum
-    #     self.partName = partName
-    #     self.categoryNum = categoryNum
-    #     self.categoryName = categoryName
-    #     self.stockImage = stockImage
-    #     self.realImageListStr = realImages
-    #
-    # def __init__(self):
-    #     self.partNum = ""
-    #     self.partName = ""
-    #     self.categoryNum = ""
-    #     self.categoryName = ""
-    #     self.stockImage = ""
-    #     self.realImageListStr = ""
 
 
 def GetGoogleDrivePath():
@@ -167,16 +150,6 @@ def ImageStrToList(images: str):
 
 
 class Settings:
-    assetPath: str
-    unlabelledPartsPath: str
-    labelledPartsPath: str
-    instancePath: str
-    DB_Parts: str
-    DB_LabelLog: str
-    TXT_labelLog: str
-    partList: str
-    numberOfResults: int
-
     def __init__(self):
         # Don't check the ini file. I want the program to crash immediately if it cannot be read.
         ini = self.GetIni()
