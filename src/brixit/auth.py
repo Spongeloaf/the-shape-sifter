@@ -1,9 +1,4 @@
 import functools
-import random
-import string
-import commonUtils as cu
-import Constants as k
-import sqlite3
 from flask import (
     Blueprint, flash, g, redirect, render_template, request, session, url_for
 )
@@ -11,20 +6,6 @@ from werkzeug.security import check_password_hash, generate_password_hash
 import fileUtils
 
 bp = Blueprint('auth', __name__, url_prefix='/auth')
-
-
-def GenerateSerial():
-    """ Creates a serial key for a new user and inserts it into the database """
-    key = ''.join(random.SystemRandom().choice(string.ascii_uppercase + string.digits) for _ in range(k.kSerialLength))
-    sql = sqlite3.connect(cu.settings.DB_User)
-    if sql.execute('SELECT serialKey FROM keys WHERE serialKey = ?', [key]).fetchone() is not None:
-        print("Error: Serial key in use!")
-        return
-
-    sql.execute('INSERT INTO keys (serialKey) VALUES (?)', [key])
-    sql.commit()
-    print("Here is your new serial key:")
-    print(key)
 
 
 @bp.route('/register', methods=('GET', 'POST'))
