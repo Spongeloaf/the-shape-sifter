@@ -61,7 +61,7 @@ def GetGoogleDrivePath():
 
     import sqlite3
 
-    db_path = (os.getenv('LOCALAPPDATA') + '\\Google\\Drive\\user_default\\sync_config.db')
+    db_path = (os.getenv('LOCALAPPDATA') + '/Google/Drive/user_default/sync_config.db')
     db = sqlite3.connect(db_path)
     cursor = db.cursor()
     cursor.execute("SELECT * from data where entry_key = 'local_sync_root_path'")
@@ -69,7 +69,7 @@ def GetGoogleDrivePath():
     path = res[2][4:]
     db.close()
 
-    full_path = path + '\\software_dev\\the_shape_sifter'
+    full_path = path + '/software_dev/the_shape_sifter'
 
     return full_path
 
@@ -144,6 +144,7 @@ def ImageStrToList(images: str):
     images = images.replace("[", '')
     images = images.replace("]", '')
     images = images.replace("\\", '')
+    images = images.replace("/", '')
     images = images.replace("'", '')
     result = images.split(',')
     result = [i.strip() for i in result]
@@ -188,7 +189,7 @@ class Settings:
     @staticmethod
     def __GetSettingsFile():
         """ Searches the assset path for a settings file """
-        fName = GetGoogleDrivePath() + "\\settings.ini"
+        fName = GetGoogleDrivePath() + "/settings.ini"
         if os.path.isfile(fName):
             return fName
 

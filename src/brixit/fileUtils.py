@@ -16,8 +16,8 @@ def MoveFiles(bundle: cu.ImageBundle):
     with open(cu.settings.TXT_labelLog, 'a', newline='') as csvFile:
         writer = csv.writer(csvFile, delimiter='\t')
         for i in bundle.images:
-            srcPath = cu.settings.unlabelledPartsPath + "\\" + i
-            dstPath = cu.settings.labelledPartsPath + "\\" + i
+            srcPath = cu.settings.unlabelledPartsPath + "/" + i
+            dstPath = cu.settings.labelledPartsPath + "/" + i
             if __MoveImages__(srcPath, dstPath):
                 row = [i, bundle.partNum]
                 writer.writerow(row)
@@ -38,8 +38,8 @@ def __MoveImages__(src: str, dst: str):
 def HandleConveyorImages(bundle: cu.ImageBundle):
     result = True
     for i in bundle.images:
-        srcPath = cu.settings.unlabelledPartsPath + "\\" + i
-        dstPath = cu.settings.conveyorBeltImgFolder + "\\" + i
+        srcPath = cu.settings.unlabelledPartsPath + "/" + i
+        dstPath = cu.settings.conveyorBeltImgFolder + "/" + i
         if not __MoveImages__(srcPath, dstPath):
             result = False
     return result
@@ -48,7 +48,7 @@ def HandleConveyorImages(bundle: cu.ImageBundle):
 def __DeleteFile__(file: str):
     """ Wrapper to allow real or fake deletion of files. Fake deleted files are just moved to another folder. """
     if cu.settings.fakeDeleteFiles:
-        dstPath = cu.settings.fakeDeleteFolder + "\\" + os.path.split(file)[1]
+        dstPath = cu.settings.fakeDeleteFolder + "/" + os.path.split(file)[1]
         __MoveImages__(file, dstPath)
     else:
         os.remove(file)
@@ -58,7 +58,7 @@ def HandleBadImages(bundle: cu.ImageBundle):
     """ Removes unwanted image files. Returns false if any file cannot be found. """
     result = True
     for i in bundle.images:
-        file = cu.settings.unlabelledPartsPath + "\\" + i
+        file = cu.settings.unlabelledPartsPath + "/" + i
         if not os.path.isfile(file):
             result = False
         __DeleteFile__(file)
