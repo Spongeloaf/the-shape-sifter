@@ -5,7 +5,7 @@ from dataclasses import dataclass
 from typing import List
 import platform
 import Constants as k
-
+from pathlib import Path
 
 class ImageBundle:
     """
@@ -69,7 +69,7 @@ def GetGoogleDrivePath():
     if platform.system() == k.kWindows:
         db_path = (os.getenv('LOCALAPPDATA') + '/Google/Drive/user_default/sync_config.db')
     elif platform.system() == k.kMac:
-        db_path = (os.getenv('HOME') + 'Library/Application Support/Google/Drive/user_default/sync_config.db')
+        db_path = (os.getenv('HOME') + '/Library/Application Support/Google/Drive/user_default/sync_config.db')
     else:
         print("Unsupported os")
         return None
@@ -183,23 +183,23 @@ class Settings:
 
         self.assetPath = GetGoogleDrivePath()
 
-        self.DB_LabelLog = self.assetPath + ini.get('brixit', 'DB_LabelLog')
-        self.DB_Parts = self.assetPath + ini.get('brixit', 'DB_Parts')
-        self.DB_User = self.assetPath + ini.get('brixit', 'DB_User')
-        self.TXT_labelLog = self.assetPath + ini.get('brixit', 'labelledPartsTxt')
-        self.conveyorBeltImgFolder = self.assetPath + ini.get('brixit', 'conveyorBeltImgFolder')
-        self.defaultPartImage = ini.get('brixit', 'defaultPartImage')
+        self.DB_LabelLog = Path(self.assetPath + ini.get('brixit', 'DB_LabelLog'))
+        self.DB_Parts = Path(self.assetPath + ini.get('brixit', 'DB_Parts'))
+        self.DB_User = Path(self.assetPath + ini.get('brixit', 'DB_User'))
+        self.TXT_labelLog = Path(self.assetPath + ini.get('brixit', 'labelledPartsTxt'))
+        self.conveyorBeltImgFolder = Path(self.assetPath + ini.get('brixit', 'conveyorBeltImgFolder'))
+        self.defaultPartImage = Path(ini.get('brixit', 'defaultPartImage'))
         self.devMode = ini.getboolean('brixit', 'devMode')
         self.fakeDeleteFiles = ini.getboolean('brixit', 'fakeDeleteFiles')
-        self.fakeDeleteFolder = self.assetPath + ini.get('brixit', 'fakeDeleteFolder')
-        self.labelledPartsPath = self.assetPath + ini.get('brixit', 'labelledPartsPath')
+        self.fakeDeleteFolder = Path(self.assetPath + ini.get('brixit', 'fakeDeleteFolder'))
+        self.labelledPartsPath = Path(self.assetPath + ini.get('brixit', 'labelledPartsPath'))
         self.numberOfResults = ini.getint('brixit', 'numberOfResults')
-        self.partList = self.assetPath + ini.get('brixit', 'partList')
-        self.renderedImageFolder = self.assetPath + ini.get('brixit', 'renderedImageFolder')
+        self.partList = Path(self.assetPath + ini.get('brixit', 'partList'))
+        self.renderedImageFolder = Path(self.assetPath + ini.get('brixit', 'renderedImageFolder'))
         self.serverIp = ini.get('brixit', 'serverIp')
         self.serverPort = ini.getint('brixit', 'serverPort')
-        self.skippedImageFolder = self.assetPath + ini.get('brixit', 'skippedImageFolder')
-        self.unlabelledPartsPath = self.assetPath + ini.get('brixit', 'unlabelledPartsPath')
+        self.skippedImageFolder = Path(self.assetPath + ini.get('brixit', 'skippedImageFolder'))
+        self.unlabelledPartsPath = Path(self.assetPath + ini.get('brixit', 'unlabelledPartsPath'))
 
     @staticmethod
     def __GetSettingsFile():
