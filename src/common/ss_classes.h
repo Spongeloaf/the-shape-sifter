@@ -35,7 +35,7 @@ const string kNameSUIP = "SUIP";
 const string kNameMtMind = "MtMind";
 const string kNameClassiFist = "ClassiFist";
 const string kNameBeltBuckle = "BeltBuckle";
-
+const string kNameFileWriter = "FileWriter";
 
 namespace Parts
 {

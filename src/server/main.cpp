@@ -5,6 +5,7 @@
 #include "../mt_mind/mt_mind.h"
 #include "../classifist/Classifist.h"
 #include "../belt_buckle_interface/BeltBuckle.h"
+#include "../FileWriter/FileWriter.h"
 
 int main()
 {
@@ -27,6 +28,9 @@ int main()
 
 	BeltBuckle bb{logLevel, kNameMtMind, assetPath, iniReader};
 	std::thread threadBB(&BeltBuckle::Main, &bb);
+
+	FileWriter fw{ logLevel, kNameFileWriter, assetPath, iniReader };
+	std::thread threadFW(&FileWriter::Main, &fw);
 
 	SUIP suip{logLevel, kNameSUIP, assetPath, iniReader};
 

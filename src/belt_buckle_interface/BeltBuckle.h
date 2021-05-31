@@ -10,14 +10,13 @@
 #ifndef BELTBUCKLE_H
 #define BELTBUCKLE_H
 
-#include "../common/ss_classes.h"
 #include "../common/bb_utils.h"
+#include "../common/ss_classes.h"
 #include <vector>
 
 // Max serial buffer length in windows -1
 const unsigned int kMaxBufferLen = 4096;
 const unsigned int kRxCommandLen = 29;
-
 
 class BeltBuckle : public ClientBase
 {

@@ -20,6 +20,7 @@ struct ClientInterfaces
 	ClientBase* mtm;
 	ClientBase* cf;
 	BeltBuckle* bb;
+	ClientBase* fw;
 };
 
 class Server
@@ -31,6 +32,8 @@ public:
 	int Main();
 	void SendPartsListToSUIP();
 	void PullPartsFromClients();
+	void thing();
+	void OverrideClients(ClientInterfaces);
 	void RegisterClients(ClientInterfaces& clients);
 	spdlog::level::level_enum GetLogLevel() { return m_logLevel; };
 	string GetAssetPath() { return m_assetPath; };
