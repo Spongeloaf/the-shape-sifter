@@ -65,6 +65,6 @@ def labelling(query=None):
     bundle = im.imageMgr.GetImageBundle(user_id)
 
     if bundle is None:
-        return render_template('labelling/labelling.html', images=[], results=results, puid="")
+        return render_template('labelling/labelling.html', images=[], results=results, puid="", k=k)
 
     return render_template('labelling/labelling.html', images=bundle.images, results=results, puid=bundle.PUID, k=k)

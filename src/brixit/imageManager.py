@@ -226,11 +226,13 @@ class ImageManager:
 
     def __LogBundle__(self, bundle: ImageBundle):
         """ Logs a part into the logging database """
-        sql = sqlite3.connect(self.labelledDB)
-        points = 1
-        sql.execute("INSERT INTO labelledParts (puid, user, partNum, points) values (?,?,?,?)", [bundle.PUID, bundle.user, bundle.partNum, points])
-        sql.commit()
-
+        try:
+            sql = sqlite3.connect(self.labelledDB)
+            points = 1
+            sql.execute("INSERT INTO labelledParts (puid, user, partNum, points) values (?,?,?,?)", [bundle.PUID, bundle.user, bundle.partNum, points])
+            sql.commit()
+        except:
+            print("ERROR: Tried to label duplicate parts: PUID: {}, User {}, partNum {}".format(bundle.PUID, bundle.user, bundle.partNum))
     def LabelImageBundle(self, bundle: ImageBundle):
         """
         Takes a bundle object and labels it. Labelling involves moving the files from the unlabelled directory to
