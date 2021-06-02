@@ -259,3 +259,36 @@ void Server::PullPartsFromClients()
 	m_clients.cf->SendPartsToServer(m_ActivePartList);
 	m_clients.bb->SendCommandsToServer(m_CommandsForServer);
 }
+
+/*
+string Server::GetAssetPath() 
+{
+	/* Convert this to c++
+	string dbFilePath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+																	 "Google\\Drive\\sync_config.db");
+
+	string csGdrive = @"Data Source=" + dbFilePath + ";Version=3;New=False;Compress=True;";
+
+	try
+	{
+		using(var con = new SQLiteConnection(csGdrive))
+		{
+			con.Open();
+			using(var sqLitecmd = new SQLiteCommand(con))
+			{
+				// To retrieve the folder use the following command text
+				sqLitecmd.CommandText = "select * from data where entry_key='local_sync_root_path'";
+
+				using(var reader = sqLitecmd.ExecuteReader())
+				{
+					reader.Read();
+					// String retrieved is in the format "\\?\<path>" that's why I have used Substring function to extract the
+					// path alone.
+					destFolder = reader["data_value"].ToString().Substring(4);
+					Console.WriteLine("Google Drive Folder: " + destFolder);
+				}
+			}
+		}
+	}
+}
+*/

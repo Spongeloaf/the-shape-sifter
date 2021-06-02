@@ -45,14 +45,14 @@
   </ImportGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|x64'">
     <OutDir>$(SolutionDir)out\$(Configuration)\</OutDir>
-    <IncludePath>$(SolutionDir)include;$(SolutionDir)include_large_libs;$(IncludePath)</IncludePath>
+    <IncludePath>$(OPENCV_DIR)\build\include;$(SolutionDir)include;$(SolutionDir)include_large_libs;$(IncludePath)</IncludePath>
     <LibraryPath>$(ProjectDir)lib\;$(LibraryPath)</LibraryPath>
     <IntDir>$(SolutionDir)out\$(Configuration)\artifacts\</IntDir>
     <SourcePath>$(SolutionDir)src;$(SourcePath)</SourcePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|x64'">
     <OutDir>$(SolutionDir)out\$(Configuration)\</OutDir>
-    <IncludePath>$(SolutionDir)include;$(SolutionDir)include_3rd_party;$(IncludePath)</IncludePath>
+    <IncludePath>$(OPENCV_DIR)build\include;$(SolutionDir)include;$(SolutionDir)include_3rd_party;$(IncludePath);$(OPENCV_DIR)build\include</IncludePath>
     <LibraryPath>$(ProjectDir)lib\;$(LibraryPath)</LibraryPath>
     <IntDir>$(SolutionDir)out\$(Configuration)\artifacts\</IntDir>
     <SourcePath>$(SolutionDir)src;$(SourcePath)</SourcePath>
@@ -63,7 +63,7 @@
     </ClCompile>
     <Link>
       <AdditionalOptions>$(QT_DIR)\lib\*.lib %(AdditionalOptions)</AdditionalOptions>
-      <AdditionalDependencies>opencv_world450d.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>$(OPENCV_DIR)\build\x64\vc15\lib\opencv_world450d.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
       <Command>(ROBOCOPY "$(ProjectDir)dll\$(Configuration)" "$(SolutionDir)out\$(Configuration)" /NFL /NDL /NJH /NJS /nc /ns /np) ^&amp; IF %ERRORLEVEL% LEQ 1 exit 0</Command>
@@ -75,7 +75,7 @@
     </ClCompile>
     <Link>
       <AdditionalOptions>$(QT_DIR)\lib\*.lib %(AdditionalOptions)</AdditionalOptions>
-      <AdditionalDependencies>opencv_world450.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>$(OPENCV_DIR)\build\x64\vc15\lib\opencv_world450.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
       <Command>(ROBOCOPY "$(ProjectDir)dll\$(Configuration)" "$(SolutionDir)out\$(Configuration)" /NFL /NDL /NJH /NJS /nc /ns /np) ^&amp; IF %ERRORLEVEL% LEQ 1 exit 0</Command>

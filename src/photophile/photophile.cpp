@@ -69,6 +69,7 @@ int PhotoPhile::Main()
 	cv::VideoCapture cap;
 	if (m_mode == VideoMode::camera)
 		cap = cv::VideoCapture(0);
+		//cap = cv::VideoCapture("http://127.0.0.1:4747/video");
 	else
 		cap = cv::VideoCapture(m_videoPath);
 
