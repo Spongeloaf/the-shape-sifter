@@ -148,7 +148,7 @@ public:
 
 	virtual int Main() { return -1; };
 	void SendPartsToServer(PartList& partList);
-	void SendPartsToClient(Parts::PartInstance& part);
+	void SendPartToClient(Parts::PartInstance& part);
 	void CopyServerPartListToClient(PartList& partList);
 
 protected:

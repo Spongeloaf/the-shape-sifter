@@ -41,7 +41,6 @@ PhotoPhile::PhotoPhile(spdlog::level::level_enum logLevel, string clientName, st
 		maskFileName = m_assetPath + maskFileName;
 	}
 
-	// TODO: Make this read from config file
 	m_bgSubtractScale = m_iniReader->GetFloat(m_clientName, "BGSubtractScale", 0.5);
 	m_BgSubtractor = cv::createBackgroundSubtractorMOG2();
 	m_MinContourSize = m_iniReader->GetFloat(m_clientName, "MinContourSize", 2000.0) * m_bgSubtractScale;

@@ -35,7 +35,7 @@ int main()
 	SUIP suip{logLevel, kNameSUIP, assetPath, iniReader};
 
 	// Start the server thread
-	ClientInterfaces clients{&phile, &suip, &mtm, &cf, &bb};
+	ClientInterfaces clients{&phile, &suip, &mtm, &cf, &bb, &fw};
 	server.RegisterClients(clients);
 	std::thread threadServer(&Server::Main, &server);
 

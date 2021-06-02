@@ -10,11 +10,14 @@
 namespace fs = std::filesystem;
 
 FileWriter::FileWriter(spdlog::level::level_enum logLevel, string clientName, string assetPath, INIReader* iniReader)
-  : ClientBase(logLevel, clientName, assetPath, iniReader),
-  m_assetPath(assetPath)
+  : ClientBase(logLevel, clientName, assetPath, iniReader)
 {
+  m_assetPath = assetPath;
   m_unlabelledParts = m_assetPath;
-  m_unlabelledParts /= m_iniReader->Get("brixit", "unlabelledPartsPath", "/images/unlabelledParts");
+  std::string path = m_iniReader->Get("brixit", "unlabelledPartsPath", "");
+  path.erase(0, 1);
+  std::replace(path.begin(), path.end(), '/', '\\');
+  m_unlabelledParts.append(path);
 }
 int FileWriter::Main()
 {
@@ -24,10 +27,8 @@ int FileWriter::Main()
     std::optional<Parts::PartInstance> part = GetPartFromInputBuffer();
     if (part)
     {
-      fs::path file = m_unlabelledParts;
-      file /= part->m_PUID;
-      file /= ".png";
-      cv::imwrite(file.string(), part->m_Image);
+      string file = m_unlabelledParts + "\\" + part->m_PUID + ".png";
+      cv::imwrite(file, part->m_Image);
     }
   }
 }

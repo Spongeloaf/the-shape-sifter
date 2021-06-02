@@ -180,19 +180,20 @@ void Server::ProcessActivePartList()
 				// TODO: Need to dispatch to BB
 				part.second.m_BBStatus = Parts::BBStatus::waitAckAdd;
 				part.second.m_ServerStatus = Parts::ServerStatus::waitMTM;
-				m_clients.mtm->SendPartsToClient(part.second);
+				m_clients.mtm->SendPartToClient(part.second);
 				m_clients.bb->SendCommandsToBBClient(CreateBBCommand(part.second));
+				m_clients.fw->SendPartToClient(part.second);
 				break;
 
 			case Parts::ServerStatus::MTMDone:
 				part.second.m_ServerStatus = Parts::ServerStatus::waitCF;
-				m_clients.cf->SendPartsToClient(part.second);
+				m_clients.cf->SendPartToClient(part.second);
 				break;
 
 			case Parts::ServerStatus::cfDone:
 				part.second.m_ServerStatus = Parts::ServerStatus::cfDone;
 				part.second.m_BBStatus = Parts::BBStatus::waitAckAssign;
-				m_clients.bb->SendPartsToClient(part.second);
+				m_clients.bb->SendPartToClient(part.second);
 				m_clients.bb->SendCommandsToBBClient(CreateBBCommand(part.second));
 
 				break;

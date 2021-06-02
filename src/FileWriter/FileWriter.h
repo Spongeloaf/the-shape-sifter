@@ -16,8 +16,8 @@ public:
   int Main();
 
 private:
-  std::filesystem::path m_assetPath;
-  std::filesystem::path m_unlabelledParts;
+  string m_assetPath;
+  string m_unlabelledParts;
 };
 
 #endif // FILE_WRITER_H_958836bf_49f7_4b25_b871_5060509e9ad9
