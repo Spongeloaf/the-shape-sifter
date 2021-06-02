@@ -18,5 +18,16 @@ FileWriter::FileWriter(spdlog::level::level_enum logLevel, string clientName, st
 }
 int FileWriter::Main()
 {
-	return 0;
+  while (true)
+  {
+    std::this_thread::sleep_for(kUpdateInterval);
+    std::optional<Parts::PartInstance> part = GetPartFromInputBuffer();
+    if (part)
+    {
+      fs::path file = m_unlabelledParts;
+      file /= part->m_PUID;
+      file /= ".png";
+      cv::imwrite(file.string(), part->m_Image);
+    }
+  }
 }

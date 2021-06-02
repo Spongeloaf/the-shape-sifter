@@ -23,10 +23,10 @@ int main()
 	MtMind mtm{logLevel, kNameMtMind, assetPath, iniReader};
 	std::thread threadMtMind(&MtMind::Main, &mtm);
 
-	Classifist cf{logLevel, kNameMtMind, assetPath, iniReader};
+	Classifist cf{logLevel, kNameClassiFist, assetPath, iniReader};
 	std::thread threadCF(&Classifist::Main, &cf);
 
-	BeltBuckle bb{logLevel, kNameMtMind, assetPath, iniReader};
+	BeltBuckle bb{logLevel, kNameBeltBuckle, assetPath, iniReader};
 	std::thread threadBB(&BeltBuckle::Main, &bb);
 
 	FileWriter fw{ logLevel, kNameFileWriter, assetPath, iniReader };

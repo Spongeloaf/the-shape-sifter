@@ -51,7 +51,7 @@
     <ClCompile Include="src\belt_buckle_interface\BeltBuckle.cpp">
       <Filter>BeltBuckleInterface</Filter>
     </ClCompile>
-    <ClCompile Include="include\RS-232\rs232.c">
+    <ClCompile Include="include\RS232\rs232.c">
       <Filter>BeltBuckleInterface</Filter>
     </ClCompile>
     <ClCompile Include="src\FileWriter\FileWriter.cpp">

@@ -48,7 +48,7 @@ private:
 
 	ClientInterfaces m_clients;
 	PartList m_ActivePartList;
-	string m_assetPath = "C:\\Users\\peter\\Google Drive\\software_dev\\the_shape_sifter\\";
+	string m_assetPath = "C:\\Users\\peter.vandergragt\\Google Drive\\software_dev\\the_shape_sifter\\"; // TODO: Ugh. Need to fix this.
 	string m_configPath = m_assetPath + "settings.ini";
 	INIReader m_iniReader;
 	bool m_InitializeOK;

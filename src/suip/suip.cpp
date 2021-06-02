@@ -294,17 +294,17 @@ void UIMainWIndow::SetDarkTheme(QApplication* app)
 
 	QPalette dark_palette;
 	dark_palette.setColor(QPalette::Window, QColor(53, 53, 53));
-	dark_palette.setColor(QPalette::WindowText, QColorConstants::White);
+	dark_palette.setColor(QPalette::WindowText, QColor("white"));
 	dark_palette.setColor(QPalette::Base, QColor(25, 25, 25));
 	dark_palette.setColor(QPalette::AlternateBase, QColor(53, 53, 53));
-	dark_palette.setColor(QPalette::ToolTipBase, QColorConstants::White);
-	dark_palette.setColor(QPalette::ToolTipText, QColorConstants::White);
-	dark_palette.setColor(QPalette::Text, QColorConstants::White);
+	dark_palette.setColor(QPalette::ToolTipBase, QColor("white"));
+	dark_palette.setColor(QPalette::ToolTipText, QColor("white"));
+	dark_palette.setColor(QPalette::Text, QColor("white"));
 	dark_palette.setColor(QPalette::Button, QColor(53, 53, 53));
-	dark_palette.setColor(QPalette::ButtonText, QColorConstants::White);
-	dark_palette.setColor(QPalette::BrightText, QColorConstants::Red);
+	dark_palette.setColor(QPalette::ButtonText, QColor("white"));
+	dark_palette.setColor(QPalette::BrightText, QColor("red"));
 	dark_palette.setColor(QPalette::Highlight, QColor(42, 130, 218));
-	dark_palette.setColor(QPalette::HighlightedText, QColorConstants::Black);
+	dark_palette.setColor(QPalette::HighlightedText, QColor("black"));
 
 	app->setPalette(dark_palette);
 	app->setStyleSheet("QToolTip { color: #ffffff; background-color: #2a82da; border: 1px solid white; }");
@@ -378,15 +378,15 @@ inline QStringList UIMainWIndow::CreateQStringListFromPart(Parts::PartInstance& 
 
 	QString serverStatus = EnumToQStr(part.m_ServerStatus);
 	QString partStatus = EnumToQStr(part.m_BBStatus);
-	QString brickPartNumber = QString::fromUtf8(part.m_brickPartNumber);
-	QString brickCategoryNumber = QString::fromUtf8(part.m_brickCategoryNumber);
-	QString brickCategoryName = QString::fromUtf8(part.m_brickCategoryName);
+	QString brickPartNumber = QString::fromStdString(part.m_brickPartNumber);
+	QString brickCategoryNumber = QString::fromStdString(part.m_brickCategoryNumber);
+	QString brickCategoryName = QString::fromStdString(part.m_brickCategoryName);
 
-	QString TimeMTM = QString::fromUtf8(date::format("%T", part.m_TimeMTM));
-	QString TimePhile = QString::fromUtf8(date::format("%T", part.m_TimePhile));
-	QString TimeCF = QString::fromUtf8(date::format("%T", part.m_TimeCF));
-	QString TimeBB = QString::fromUtf8(date::format("%T", part.m_TimeBB));
-	QString TimeUnused = QString::fromUtf8(date::format("%T", part.m_TimeBBAssigned));
+	QString TimeMTM = QString::fromStdString(date::format("%T", part.m_TimeMTM));
+	QString TimePhile = QString::fromStdString(date::format("%T", part.m_TimePhile));
+	QString TimeCF = QString::fromStdString(date::format("%T", part.m_TimeCF));
+	QString TimeBB = QString::fromStdString(date::format("%T", part.m_TimeBB));
+	QString TimeUnused = QString::fromStdString(date::format("%T", part.m_TimeBBAssigned));
 
 	return {ID,
 					bin,
