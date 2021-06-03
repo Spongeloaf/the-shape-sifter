@@ -5,6 +5,8 @@ import Constants as k
 import sqlite3
 from sqlite3 import Error
 import os
+from pathlib import Path
+import uuid
 
 
 def RevertFolder(src, dst):
@@ -68,6 +70,20 @@ def create_BriXit_db(db_file, schema):
             conn.close()
 
 
+def ScrambleUnlabelledImages():
+    """
+    A dangerous function that randomizes filenames in the unlabelled parts folder with 12 characcter GUID names.
+    WARNING: THIS FUNCTION DESTROYS IMAGE BUNDLES! USE AT YOUR OWN RISK!
+    """
+    walker = os.walk(cu.settings.unlabelledPartsPath, topdown=False)
+    for root, dirs, files in walker:
+        for file in files:
+            newName = str(uuid.uuid4())[:12] + ".png"
+            src = Path(root) / file
+            dst = Path(root) / newName
+            os.rename(src, dst)
+
+
 if __name__ == '__main__':
     while True:
         x = int(input("Enter a number:\r\n0: New serial key\r\n1: Create part DB\r\n2: Create log DB\r\n3: Create user DB\r\n4: Reset labelled images\r\n5: Exit\r\n"))
@@ -84,5 +100,6 @@ if __name__ == '__main__':
             y = int(input("Are you sure? This will undo all of your labelling progress!!\r\nPlease enter '9' to confirm!"))
             if y == 9:
                 RevertUnknownFiles()
+
         if x == 5:
             break

@@ -233,6 +233,7 @@ class ImageManager:
             sql.commit()
         except:
             print("ERROR: Tried to label duplicate parts: PUID: {}, User {}, partNum {}".format(bundle.PUID, bundle.user, bundle.partNum))
+
     def LabelImageBundle(self, bundle: ImageBundle):
         """
         Takes a bundle object and labels it. Labelling involves moving the files from the unlabelled directory to

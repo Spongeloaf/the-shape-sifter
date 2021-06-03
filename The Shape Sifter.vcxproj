@@ -66,7 +66,8 @@
       <AdditionalDependencies>$(OPENCV_DIR)\build\x64\vc15\lib\opencv_world450d.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
-      <Command>(ROBOCOPY "$(ProjectDir)dll\$(Configuration)" "$(SolutionDir)out\$(Configuration)" /NFL /NDL /NJH /NJS /nc /ns /np) ^&amp; IF %ERRORLEVEL% LEQ 1 exit 0</Command>
+      <Message>"Copying $(OPENCV_DIR)\build\bin\"</Message>
+      <Command>(ROBOCOPY "$(OPENCV_DIR)build\x64\vc15\bin" "$(SolutionDir)out\$(Configuration)" "opencv_videoio_ffmpeg450_64" "opencv_world450d" /NFL /NDL /NJH /NJS /nc /ns /np) ^&amp; IF %ERRORLEVEL% LEQ 1 exit 0</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
