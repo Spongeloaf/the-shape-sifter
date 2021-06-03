@@ -27,19 +27,13 @@ PhotoPhile::PhotoPhile(spdlog::level::level_enum logLevel, string clientName, st
 		m_mode = VideoMode::camera;
 	else if (mode == "file")
 		m_mode = VideoMode::file;
+	else if (mode == "ip")
+		m_mode = VideoMode::ip;
 	else
 		m_isOk = false;
 
 	m_viewVideo = m_iniReader->GetBoolean(m_clientName, "show_video", 0);
 	m_videoPath = m_assetPath + m_iniReader->Get(m_clientName, "video_file", "");
-
-	string maskFileName = m_iniReader->Get(m_clientName, "belt_mask", "");
-	if (maskFileName == "")
-		m_isOk = false;
-	else
-	{
-		maskFileName = m_assetPath + maskFileName;
-	}
 
 	m_bgSubtractScale = m_iniReader->GetFloat(m_clientName, "BGSubtractScale", 0.5);
 	m_BgSubtractor = cv::createBackgroundSubtractorMOG2();
@@ -51,25 +45,23 @@ PhotoPhile::PhotoPhile(spdlog::level::level_enum logLevel, string clientName, st
 	int kernelY = m_iniReader->GetInteger(m_clientName, "dilateKernelY", 7);
 	m_dilateKernel = cv::getStructuringElement(cv::MorphShapes::MORPH_RECT, cv::Size(kernelX, kernelY));
 	
-	// Edge mask for conveyor belt. Used to eliminate detection of the belt edges.
-	m_beltMask = cv::imread(maskFileName, cv::IMREAD_GRAYSCALE);
-	cv::Size maskSize = m_beltMask.size();
-	maskSize.height = int(float(maskSize.height) * m_bgSubtractScale);				
-	maskSize.width = int(float(maskSize.width) * m_bgSubtractScale);;
+	m_maskFileName = m_iniReader->Get(m_clientName, "belt_mask", "");
+	if (m_maskFileName == "")
+		m_isOk = false;
+	else
+		m_maskFileName = m_assetPath + m_maskFileName;
 
-	cv::resize(m_beltMask, m_beltMask, maskSize, cv::InterpolationFlags::INTER_NEAREST);
-	cv::threshold(m_beltMask, m_beltMask, 127, 255, cv::THRESH_BINARY);
-
-	m_RandomGenerator = std::mt19937(std::random_device()());
-	std::uniform_int_distribution<> m_RandomDistribution(0, 255);
+	m_cameraNum = m_iniReader->GetInteger(m_clientName, "cameraNum", 0);
+	m_IPcameraAddress = m_iniReader->Get(m_clientName, "cameraIP", "");
 }
 
 int PhotoPhile::Main()
 {
 	cv::VideoCapture cap;
 	if (m_mode == VideoMode::camera)
-		cap = cv::VideoCapture(0);
-		//cap = cv::VideoCapture("http://127.0.0.1:4747/video");
+		cap = cv::VideoCapture(m_cameraNum);
+	else if (m_mode == VideoMode::ip)
+		cap = cv::VideoCapture(m_IPcameraAddress);
 	else
 		cap = cv::VideoCapture(m_videoPath);
 
@@ -77,6 +69,8 @@ int PhotoPhile::Main()
 	if (!cap.isOpened())
 	{
 		m_logger->critical("Error opening video stream or file\n\r");
+		cap.setExceptionMode(true);
+		cap.open(m_cameraNum);
 		return -1;
 	}
 	
@@ -86,6 +80,18 @@ int PhotoPhile::Main()
 	m_halfNativeResolution.width = int(float(cap.get(cv::CAP_PROP_FRAME_WIDTH)) * m_bgSubtractScale);
 	m_NextObjectId = 0;
 	m_partCount = 0;
+
+	// Edge mask for conveyor belt. Used to eliminate detection of the belt edges.
+	cv::Size maskSize = m_VideoRes;
+	maskSize.height = int(float(maskSize.height) * m_bgSubtractScale);
+	maskSize.width = int(float(maskSize.width) * m_bgSubtractScale);
+
+	m_beltMask = cv::imread(m_maskFileName, cv::IMREAD_GRAYSCALE);
+	cv::resize(m_beltMask, m_beltMask, maskSize, cv::InterpolationFlags::INTER_NEAREST);
+	cv::threshold(m_beltMask, m_beltMask, 127, 255, cv::THRESH_BINARY);
+
+	m_RandomGenerator = std::mt19937(std::random_device()());
+	std::uniform_int_distribution<> m_RandomDistribution(0, 255);
 
 	while (true)
 	{
