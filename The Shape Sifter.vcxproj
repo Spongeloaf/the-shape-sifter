@@ -52,7 +52,7 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|x64'">
     <OutDir>$(SolutionDir)out\$(Configuration)\</OutDir>
-    <IncludePath>$(OPENCV_DIR)build\include;$(SolutionDir)include;$(SolutionDir)include_3rd_party;$(IncludePath);$(OPENCV_DIR)build\include</IncludePath>
+    <IncludePath>$(OPENCV_DIR)\build\include;$(SolutionDir)include;$(SolutionDir)include_3rd_party;$(IncludePath)</IncludePath>
     <LibraryPath>$(ProjectDir)lib\;$(LibraryPath)</LibraryPath>
     <IntDir>$(SolutionDir)out\$(Configuration)\artifacts\</IntDir>
     <SourcePath>$(SolutionDir)src;$(SourcePath)</SourcePath>
