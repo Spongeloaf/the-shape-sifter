@@ -66,8 +66,15 @@
       <AdditionalDependencies>$(OPENCV_DIR)\build\x64\vc15\lib\opencv_world450d.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
-      <Message>"Copying $(OPENCV_DIR)\build\bin\"</Message>
-      <Command>(ROBOCOPY "$(OPENCV_DIR)build\x64\vc15\bin" "$(SolutionDir)out\$(Configuration)" "opencv_videoio_ffmpeg450_64" "opencv_world450d" /NFL /NDL /NJH /NJS /nc /ns /np) ^&amp; IF %ERRORLEVEL% LEQ 1 exit 0</Command>
+      <Message>Copying OpenCV and QT dlls</Message>
+      <Command>
+		copy "$(OPENCV_DIR)\build\x64\vc15\bin\opencv_world450d.pdb" "$(SolutionDir)out\$(Configuration)\opencv_world450d.pdb"
+		copy "$(OPENCV_DIR)\build\x64\vc15\bin\opencv_world450d.dll" "$(SolutionDir)out\$(Configuration)\opencv_world450d.dll"
+		copy "$(OPENCV_DIR)\build\x64\vc15\bin\opencv_videoio_ffmpeg450_64.dll" "$(SolutionDir)out\$(Configuration)\opencv_videoio_ffmpeg450_64.dll"
+		copy "$(QT_DIR)\bin\QT5Widgetsd.dll" "$(SolutionDir)out\$(Configuration)\QT5Widgetsd.dll"
+		copy "$(QT_DIR)\bin\QT5Guid.dll" "$(SolutionDir)out\$(Configuration)\QT5Guid.dll"
+		copy "$(QT_DIR)\bin\QT5Cored.dll" "$(SolutionDir)out\$(Configuration)\QT5Cored.dll"
+	  </Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -79,7 +86,15 @@
       <AdditionalDependencies>$(OPENCV_DIR)\build\x64\vc15\lib\opencv_world450.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
-      <Command>(ROBOCOPY "$(ProjectDir)dll\$(Configuration)" "$(SolutionDir)out\$(Configuration)" /NFL /NDL /NJH /NJS /nc /ns /np) ^&amp; IF %ERRORLEVEL% LEQ 1 exit 0</Command>
+      <Message>Copying OpenCV and QT dlls</Message>
+      <Command>
+		copy "$(OPENCV_DIR)\build\x64\vc15\bin\opencv_world450d.pdb" "$(SolutionDir)out\$(Configuration)\opencv_world450.pdb"
+		copy "$(OPENCV_DIR)\build\x64\vc15\bin\opencv_world450d.dll" "$(SolutionDir)out\$(Configuration)\opencv_world450.dll"
+		copy "$(OPENCV_DIR)\build\x64\vc15\bin\opencv_videoio_ffmpeg450_64.dll" "$(SolutionDir)out\$(Configuration)\opencv_videoio_ffmpeg450_64.dll"
+		copy "$(QT_DIR)\bin\QT5Widgetsd.dll" "$(SolutionDir)out\$(Configuration)\QT5Widgets.dll"
+		copy "$(QT_DIR)\bin\QT5Guid.dll" "$(SolutionDir)out\$(Configuration)\QT5Gui.dll"
+		copy "$(QT_DIR)\bin\QT5Cored.dll" "$(SolutionDir)out\$(Configuration)\QT5Core.dll"
+	  </Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|x64'" Label="QtSettings">
