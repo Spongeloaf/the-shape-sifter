@@ -1,24 +1,22 @@
 // This is the Shape Sifter server.
 
 #include "server.h"
+#include <cstdlib>
+#include <QtCore\QStandardPaths>
+#include <QtSql\qsqldatabase.h>
+#include <QtSql\qsqlquery.h>
+#include <QtSql/qsqlerror.h>
+#include <QtCore/qstring.h>
 
 Server::Server()
 {
-	m_iniReader = INIReader(m_configPath);
-	m_InitializeOK = LoadConfig();
+	m_InitializeOK &= CreateLogger();
+	m_InitializeOK &= FindAssetPath();
+	m_iniReader = INIReader(m_configPath.string());
+	m_InitializeOK &= LoadConfig();
 }
 
-bool Server::IsOK()
-{
-	return m_InitializeOK;
-}
-
-void Server::RegisterClients(ClientInterfaces& clients)
-{
-	m_clients = clients;
-};
-
-bool Server::LoadConfig()
+bool Server::CreateLogger()
 {
 	// setup logger
 	try
@@ -32,12 +30,22 @@ bool Server::LoadConfig()
 	catch (const spdlog::spdlog_ex& ex)
 	{
 		std::cout << "Log initialization failed: " << ex.what() << std::endl;
+		return false;
 	}
-	
+	return true;
+}
+
+void Server::RegisterClients(ClientInterfaces& clients)
+{
+	m_clients = clients;
+};
+
+bool Server::LoadConfig()
+{
 	if (m_iniReader.ParseError() != 0)
 	{
 		assert(!"Could not load config file! Aborting.");
-		m_logger->critical("Could not load config file: {}", m_configPath);
+		m_logger->critical("Could not load config file: {}", m_configPath.string());
 		return false;
 	}
 
@@ -260,35 +268,50 @@ void Server::PullPartsFromClients()
 	m_clients.bb->SendCommandsToServer(m_CommandsForServer);
 }
 
-/*
-string Server::GetAssetPath() 
+bool Server::FindAssetPath()
 {
-	/* Convert this to c++
-	string dbFilePath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-																	 "Google\\Drive\\sync_config.db");
+	QString gDrivePath = QStandardPaths::writableLocation(QStandardPaths::StandardLocation::AppLocalDataLocation);
+	gDrivePath += "/Google/Drive/user_default/sync_config.db";
+	QFile gDriveFile(gDrivePath);
+	QString result = "";
 
-	string csGdrive = @"Data Source=" + dbFilePath + ";Version=3;New=False;Compress=True;";
+	using std::filesystem::path;
+	m_assetPath = path();
 
-	try
+	if (!gDriveFile.open(QIODevice::ReadOnly)) 
 	{
-		using(var con = new SQLiteConnection(csGdrive))
+		string error = gDriveFile.errorString().toStdString();
+		m_logger->error("Error in opening Google Drive File: " + error);
+		return false;
+	}
+	else {
+		QSqlDatabase gDrivedb = QSqlDatabase::addDatabase("QSQLITE");
+		gDrivedb.setDatabaseName("gdrive.db");
+		if (gDrivedb.open()) 
 		{
-			con.Open();
-			using(var sqLitecmd = new SQLiteCommand(con))
+			QSqlQuery query(gDrivedb);
+			if (query.exec("select * from data where entry_key='local_sync_root_path'")) 
 			{
-				// To retrieve the folder use the following command text
-				sqLitecmd.CommandText = "select * from data where entry_key='local_sync_root_path'";
-
-				using(var reader = sqLitecmd.ExecuteReader())
+				while (query.next()) 
 				{
-					reader.Read();
-					// String retrieved is in the format "\\?\<path>" that's why I have used Substring function to extract the
-					// path alone.
-					destFolder = reader["data_value"].ToString().Substring(4);
-					Console.WriteLine("Google Drive Folder: " + destFolder);
+					result = query.value(2).toString().remove(0, 4);
+					m_assetPath = path(query.lastError().text().toStdString());
+					m_logger->error("Found google drive at - " + m_assetPath.string());
 				}
 			}
+			else 
+			{
+				QString error = query.lastError().text();
+				m_logger->error("Error in querying Google Drive db: " + error.toStdString());
+				return false;
+			}
 		}
+		else
+		{
+			m_logger->error("Error in Opening  Google Drive db");
+			return false;
+		}
+		gDriveFile.close();
 	}
+	return true;
 }
-*/
