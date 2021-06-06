@@ -11,8 +11,10 @@ int main()
 {
 	Server server = Server();
 	if (!server.IsOK())
+	{
+		assert(!"SERVER ISNOT OK!");
 		return -1;
-
+	}
 	INIReader* iniReader = server.GetIniReader();
 	spdlog::level::level_enum logLevel = server.GetLogLevel();
 	std::string assetPath = server.GetAssetPath();

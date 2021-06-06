@@ -10,6 +10,7 @@
 
 Server::Server()
 {
+	m_InitializeOK = true;
 	m_InitializeOK &= CreateLogger();
 	m_InitializeOK &= FindAssetPath();
 	m_iniReader = INIReader(m_configPath.string());
@@ -270,48 +271,12 @@ void Server::PullPartsFromClients()
 
 bool Server::FindAssetPath()
 {
-	QString gDrivePath = QStandardPaths::writableLocation(QStandardPaths::StandardLocation::AppLocalDataLocation);
-	gDrivePath += "/Google/Drive/user_default/sync_config.db";
-	QFile gDriveFile(gDrivePath);
-	QString result = "";
-
-	using std::filesystem::path;
-	m_assetPath = path();
-
-	if (!gDriveFile.open(QIODevice::ReadOnly)) 
+	const char* assets = std::getenv("SHAPE_SIFTER_ASSETS");
+	if (assets)
 	{
-		string error = gDriveFile.errorString().toStdString();
-		m_logger->error("Error in opening Google Drive File: " + error);
-		return false;
+		m_assetPath = std::filesystem::path(assets);
+		m_configPath = m_assetPath /= "settings.ini";
+		return true;
 	}
-	else {
-		QSqlDatabase gDrivedb = QSqlDatabase::addDatabase("QSQLITE");
-		gDrivedb.setDatabaseName("gdrive.db");
-		if (gDrivedb.open()) 
-		{
-			QSqlQuery query(gDrivedb);
-			if (query.exec("select * from data where entry_key='local_sync_root_path'")) 
-			{
-				while (query.next()) 
-				{
-					result = query.value(2).toString().remove(0, 4);
-					m_assetPath = path(query.lastError().text().toStdString());
-					m_logger->error("Found google drive at - " + m_assetPath.string());
-				}
-			}
-			else 
-			{
-				QString error = query.lastError().text();
-				m_logger->error("Error in querying Google Drive db: " + error.toStdString());
-				return false;
-			}
-		}
-		else
-		{
-			m_logger->error("Error in Opening  Google Drive db");
-			return false;
-		}
-		gDriveFile.close();
-	}
-	return true;
+	return false;
 }
