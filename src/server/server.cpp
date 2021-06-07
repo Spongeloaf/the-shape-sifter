@@ -275,7 +275,7 @@ bool Server::FindAssetPath()
 	if (assets)
 	{
 		m_assetPath = std::filesystem::path(assets);
-		m_configPath = m_assetPath /= "settings.ini";
+		m_configPath = m_assetPath / "settings.ini";
 		return true;
 	}
 	return false;
