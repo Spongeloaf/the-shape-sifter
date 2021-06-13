@@ -27,7 +27,7 @@ def register():
         elif serverDb.execute(
             'SELECT id FROM user WHERE username = ?', (username,)
         ).fetchone() is not None:
-            error = 'User {} is already registered.'.format(username)
+            error = 'Username {} is taken.'.format(username)
 
         if serverDb.execute(
             'SELECT serialKey FROM keys WHERE serialKey = ?', [key]

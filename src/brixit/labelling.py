@@ -6,6 +6,7 @@ import partIndex as pi
 import imageManager as im
 import Constants as k
 
+
 bp = Blueprint('labelling', __name__)
 
 

@@ -122,7 +122,7 @@ class ImageManager:
         return None
 
     def __CreateBundleList__(self):
-        """ This function creates a list of file bundles in the unknowParts directory. """
+        """ This function creates a list of file bundles in the unlabelled parts directory. """
         walker = os.walk(self.folder, topdown=False)
         bundle = ImageBundle
         bundle.PUID = ""
@@ -267,6 +267,15 @@ class ImageManager:
             result = False
         return result
 
+    def __UnknownWheel__(self, bundle: ImageBundle):
+        """ Handle pictures of the conveyor belt """
+        result = True
+        if not fu.HandleUnknownWheelImages(bundle):
+            result = False
+        if not self.__RemoveBundleFromDB__(bundle):
+            result = False
+        return result
+
     def HandleBadImages(self, bundle: ImageBundle, error: str):
         """
         Bad image types:
@@ -281,8 +290,10 @@ class ImageManager:
             return self.__BadImages__(bundle)
 
         if error == kSkippedPart:
-            result = self.__SkipImageBundle__(bundle)
-            return result
+            return self.__SkipImageBundle__(bundle)
+
+        if error == kUnknownWheel:
+            return self.__UnknownWheel__(bundle)
 
 
 imageMgr = ImageManager(cu.settings)

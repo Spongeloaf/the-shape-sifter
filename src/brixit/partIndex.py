@@ -47,6 +47,11 @@ class PartSearchIndex:
                 self.__searchTokenIndex[token] = set()
             self.__searchTokenIndex[token].add(part.partNum)
 
+        if part.partNum not in self.__searchTokenIndex:
+            self.__searchTokenIndex[part.partNum] = set()
+            self.__searchTokenIndex[part.partNum].add(part.partNum)
+
+
     def __IndexPartList(self, parts):
         for i, part in enumerate(parts):
             self.__AddToIndex(part)
@@ -75,6 +80,11 @@ class PartSearchIndex:
             return []
         parts = []
         analyzed_query = analyze(query)
+
+        # filter out garbage searches
+        if len(analyzed_query) < 1:
+            return parts
+
         results = self.__results(analyzed_query)
         if searchType == 'AND':
             # all tokens must be in the document

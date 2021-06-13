@@ -58,7 +58,7 @@ def create_BriXit_db(db_file, schema):
     try:
         conn = sqlite3.connect(db_file)
         print("Sqlite version: " + sqlite3.version)
-        print("Filename: " + db_file)
+        print("Filename: " + str(db_file))
 
         f = open(schema)
         conn.executescript(f.read())
@@ -90,12 +90,22 @@ if __name__ == '__main__':
 
         if x == 0:
             GenerateSerial()
+
         if x == 1:
-            create_BriXit_db(cu.settings.DB_Parts, "partsSchema.sql")
+            y = int(input("Are you sure you want to reset the unlabelled part database?\r\nPlease enter '9' to confirm!"))
+            if y == 9:
+                create_BriXit_db(cu.settings.DB_Parts, "partsSchema.sql")
+
         if x == 2:
-            create_BriXit_db(cu.settings.DB_LabelLog, "logSchema.sql")
+            y = int(input("Are you sure you want to reset the log database?\r\nPlease enter '9' to confirm!"))
+            if y == 9:
+                create_BriXit_db(cu.settings.DB_LabelLog, "logSchema.sql")
+
         if x == 3:
-            create_BriXit_db(cu.settings.DB_User, "userSchema.sql")
+            y = int(input("Are you sure you want to reset the user database?\r\nPlease enter '9' to confirm!"))
+            if y == 9:
+                create_BriXit_db(cu.settings.DB_User, "userSchema.sql")
+
         if x == 4:
             y = int(input("Are you sure? This will undo all of your labelling progress!!\r\nPlease enter '9' to confirm!"))
             if y == 9:

@@ -45,6 +45,16 @@ def HandleConveyorImages(bundle: cu.ImageBundle):
     return result
 
 
+def HandleUnknownWheelImages(bundle: cu.ImageBundle):
+    result = True
+    for i in bundle.images:
+        srcPath = cu.settings.unlabelledPartsPath / i
+        dstPath = cu.settings.unknownWheelPath / i
+        if not __MoveImages__(srcPath, dstPath):
+            result = False
+    return result
+
+
 def __DeleteFile__(file: str):
     """ Wrapper to allow real or fake deletion of files. Fake deleted files are just moved to another folder. """
     if cu.settings.fakeDeleteFiles:
