@@ -27,21 +27,14 @@ PhotoPhile::PhotoPhile(spdlog::level::level_enum logLevel, string clientName, st
 		m_mode = VideoMode::camera;
 	else if (mode == "file")
 		m_mode = VideoMode::file;
+	else if (mode == "ip")
+		m_mode = VideoMode::ip;
 	else
 		m_isOk = false;
 
 	m_viewVideo = m_iniReader->GetBoolean(m_clientName, "show_video", 0);
 	m_videoPath = m_assetPath + m_iniReader->Get(m_clientName, "video_file", "");
 
-	string maskFileName = m_iniReader->Get(m_clientName, "belt_mask", "");
-	if (maskFileName == "")
-		m_isOk = false;
-	else
-	{
-		maskFileName = m_assetPath + maskFileName;
-	}
-
-	// TODO: Make this read from config file
 	m_bgSubtractScale = m_iniReader->GetFloat(m_clientName, "BGSubtractScale", 0.5);
 	m_BgSubtractor = cv::createBackgroundSubtractorMOG2();
 	m_MinContourSize = m_iniReader->GetFloat(m_clientName, "MinContourSize", 2000.0) * m_bgSubtractScale;
@@ -52,26 +45,27 @@ PhotoPhile::PhotoPhile(spdlog::level::level_enum logLevel, string clientName, st
 	int kernelY = m_iniReader->GetInteger(m_clientName, "dilateKernelY", 7);
 	m_dilateKernel = cv::getStructuringElement(cv::MorphShapes::MORPH_RECT, cv::Size(kernelX, kernelY));
 	
-	// Edge mask for conveyor belt. Used to eliminate detection of the belt edges.
-	m_beltMask = cv::imread(maskFileName, cv::IMREAD_GRAYSCALE);
-	cv::Size maskSize = m_beltMask.size();
-	maskSize.height = int(float(maskSize.height) * m_bgSubtractScale);				
-	maskSize.width = int(float(maskSize.width) * m_bgSubtractScale);;
+	m_maskFileName = m_iniReader->Get(m_clientName, "belt_mask", "");
+	if (m_maskFileName == "")
+		m_isOk = false;
+	else
+		m_maskFileName = m_assetPath + "\\" + m_maskFileName;
 
-	cv::resize(m_beltMask, m_beltMask, maskSize, cv::InterpolationFlags::INTER_NEAREST);
-	cv::threshold(m_beltMask, m_beltMask, 127, 255, cv::THRESH_BINARY);
-
-	m_RandomGenerator = std::mt19937(std::random_device()());
-	std::uniform_int_distribution<> m_RandomDistribution(0, 255);
+	m_cameraNum = m_iniReader->GetInteger(m_clientName, "cameraNum", 0);
+	m_IPcameraAddress = m_iniReader->Get(m_clientName, "cameraIP", "");
 }
 
 int PhotoPhile::Main()
 {
-	cv::VideoCapture cap;
-	if (m_mode == VideoMode::camera)
-		cap = cv::VideoCapture(0);
-	else
-		cap = cv::VideoCapture(m_videoPath);
+	//cv::VideoCapture cap;
+	//if (m_mode == VideoMode::camera)
+	//	cap = cv::VideoCapture(m_cameraNum);
+	//else if (m_mode == VideoMode::ip)
+	//	cap = cv::VideoCapture(m_IPcameraAddress);
+	//else
+	//	cap = cv::VideoCapture(m_videoPath);
+
+	cv::VideoCapture cap = cv::VideoCapture(m_cameraNum);
 
 	// Check if camera opened successfully
 	if (!cap.isOpened())
@@ -80,6 +74,28 @@ int PhotoPhile::Main()
 		return -1;
 	}
 	
+	//auto zz = cv::VideoWriter::fourcc('M', 'J', 'P', 'G'); // 1196444237
+	int zz = cap.get(cv::CAP_PROP_MODE);
+
+	bool result = false;
+
+	if (m_mode == VideoMode::camera)
+	{
+		//result = cap.set(cv::CAP_PROP_FRAME_COUNT, 30);
+		result = cap.set(cv::CAP_PROP_FRAME_WIDTH, 1280);
+		result = cap.set(cv::CAP_PROP_FRAME_HEIGHT, 720);
+		result = cap.set(cv::CAP_PROP_MODE, cv::VideoWriter::fourcc('M', 'J', 'P', 'G'));
+		//cap.set(cv::CAP_PROP_EXPOSURE, -9);
+		//cap.set(cv::CAP_PROP_WB_TEMPERATURE, 3400);
+		//cap.set(cv::CAP_PROP_BRIGHTNESS, 128);
+		//cap.set(cv::CAP_PROP_CONTRAST, 128);
+		//cap.set(cv::CAP_PROP_SATURATION, 128);
+		//cap.set(cv::CAP_PROP_SHARPNESS, 128);
+		//cap.set(cv::CAP_PROP_FOCUS, 35);
+	}
+
+	int zzz = cap.get(cv::CAP_PROP_MODE);
+
 	m_VideoRes.height = int(cap.get(cv::CAP_PROP_FRAME_HEIGHT));
 	m_VideoRes.width = int(cap.get(cv::CAP_PROP_FRAME_WIDTH));
 	m_halfNativeResolution.height = int(float(cap.get(cv::CAP_PROP_FRAME_HEIGHT)) * m_bgSubtractScale);
@@ -87,16 +103,37 @@ int PhotoPhile::Main()
 	m_NextObjectId = 0;
 	m_partCount = 0;
 
+	// Edge mask for conveyor belt. Used to eliminate detection of the belt edges.
+	cv::Size maskSize = m_VideoRes;
+	maskSize.height = int(float(maskSize.height) * m_bgSubtractScale);
+	maskSize.width = int(float(maskSize.width) * m_bgSubtractScale);
+
+	m_beltMask = cv::imread(m_maskFileName, cv::IMREAD_GRAYSCALE);
+	cv::resize(m_beltMask, m_beltMask, maskSize, cv::InterpolationFlags::INTER_NEAREST);
+	cv::threshold(m_beltMask, m_beltMask, 127, 255, cv::THRESH_BINARY);
+
+	m_RandomGenerator = std::mt19937(std::random_device()());
+	std::uniform_int_distribution<> m_RandomDistribution(0, 255);
+
+	bool ready = false;
+
 	while (true)
 	{
 		auto start = std::chrono::system_clock::now();
 
 		// Capture frame-by-frame
-		cap >> m_CurrentFrame;
+		// cap >> m_CurrentFrame;
+		ready = cap.read(m_CurrentFrame);
 
 		// If the frame is empty, break immediately
-		if (m_CurrentFrame.empty())
+		if (!ready)
+		{
+			m_logger->debug("continue");
 			continue;
+		}
+
+		auto p1 = std::chrono::system_clock::now();
+		string p1s = std::to_string(std::chrono::duration_cast<std::chrono::milliseconds>(p1 - start).count());
 
 		// We need to preserve the original frame
 		mat shroud = GetDetectedObjectMask(m_CurrentFrame);
@@ -105,13 +142,20 @@ int PhotoPhile::Main()
 		cvHierarchy hier;
 		GetContours(shroud, conts, hier);
 
+		auto p2 = std::chrono::system_clock::now();
+		string p2s = std::to_string(std::chrono::duration_cast<std::chrono::milliseconds>(p2 - start).count());
+
 		m_ThisFrameObjectList = GetRects(conts);
 
 		MapOldRectsToNew();
 
+		auto p3 = std::chrono::system_clock::now();
+		string p3s = std::to_string(std::chrono::duration_cast<std::chrono::milliseconds>(p3 - start).count());
+
 		DrawRects(m_CurrentFrame);
 
 		m_LastFrameObjectList = m_ThisFrameObjectList;
+
 		auto end = std::chrono::system_clock::now();
 		string elapsed = std::to_string(std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count());
 
@@ -130,6 +174,8 @@ int PhotoPhile::Main()
 		if (c == 27)
 			break;
 
+		string frameProcessInfo = "p1 :" + p1s + ", p2 :" + p2s + ", p3 :" + p3s + ", el :" + elapsed;
+		m_logger->debug(frameProcessInfo);
 		//if (!rects.empty())
 		//{
 		//	if ((rects.front().objectId % 10) == 0)

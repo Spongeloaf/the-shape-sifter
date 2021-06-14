@@ -35,7 +35,7 @@ const string kNameSUIP = "SUIP";
 const string kNameMtMind = "MtMind";
 const string kNameClassiFist = "ClassiFist";
 const string kNameBeltBuckle = "BeltBuckle";
-
+const string kNameFileWriter = "FileWriter";
 
 namespace Parts
 {
@@ -140,15 +140,15 @@ public:
 		m_isOk(false)
 		{
 			// Create basic file logger (not rotated)
-			m_logger = spdlog::basic_logger_mt(m_clientName, "\\log\\" + m_clientName + ".log", true /* delete old logs */);
-			m_logger->set_level(spdlog::level::info);
+			m_logger = spdlog::basic_logger_mt(m_clientName, m_clientName + ".log", true /* delete old logs */);
+			m_logger->set_level(spdlog::level::debug);
 			m_logger->info(m_clientName + " online");
 			m_logger->flush();
 		};
 
 	virtual int Main() { return -1; };
 	void SendPartsToServer(PartList& partList);
-	void SendPartsToClient(Parts::PartInstance& part);
+	void SendPartToClient(Parts::PartInstance& part);
 	void CopyServerPartListToClient(PartList& partList);
 
 protected:

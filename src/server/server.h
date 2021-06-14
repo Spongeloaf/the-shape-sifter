@@ -10,8 +10,10 @@
 #include "../suip/suip.h"
 #include "../mt_mind/mt_mind.h"
 #include "../belt_buckle_interface/BeltBuckle.h"
+#include <filesystem>
 
 using namespace std::chrono_literals;
+using std::filesystem::path;
 
 struct ClientInterfaces
 {
@@ -20,24 +22,27 @@ struct ClientInterfaces
 	ClientBase* mtm;
 	ClientBase* cf;
 	BeltBuckle* bb;
+	ClientBase* fw;
 };
 
 class Server
 {
 public:
 	Server();
-	bool IsOK();
+	bool IsOK() const { return m_InitializeOK; };
 	void ProcessActivePartList();
 	int Main();
 	void SendPartsListToSUIP();
 	void PullPartsFromClients();
 	void RegisterClients(ClientInterfaces& clients);
-	spdlog::level::level_enum GetLogLevel() { return m_logLevel; };
-	string GetAssetPath() { return m_assetPath; };
+	spdlog::level::level_enum GetLogLevel() const { return m_logLevel; };
+	string GetAssetPath() const { return m_assetPath.string(); };
 	INIReader* GetIniReader() { return &m_iniReader; };
 
 private:
 	bool LoadConfig();
+	bool CreateLogger();
+	bool FindAssetPath();
 	void ExecuteServerCommands();
 	void HandleBBTell(CommandServer&);
 	void HandleBBAck(CommandServer&);
@@ -45,8 +50,8 @@ private:
 
 	ClientInterfaces m_clients;
 	PartList m_ActivePartList;
-	string m_assetPath = "C:\\Users\\peter\\Google Drive\\software_dev\\the_shape_sifter\\";
-	string m_configPath = m_assetPath + "settings.ini";
+	path m_assetPath;
+	path m_configPath;
 	INIReader m_iniReader;
 	bool m_InitializeOK;
 	bool m_PhotophileSimulator;

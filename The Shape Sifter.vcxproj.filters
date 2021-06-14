@@ -22,6 +22,9 @@
     <Filter Include="BeltBuckleInterface">
       <UniqueIdentifier>{bc095c68-f0e8-4889-a321-033f7eded61d}</UniqueIdentifier>
     </Filter>
+    <Filter Include="FileWriter">
+      <UniqueIdentifier>{53e41aa1-d034-4696-b8c1-af6173d6a2b2}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\photophile\photophile.cpp">
@@ -48,8 +51,11 @@
     <ClCompile Include="src\belt_buckle_interface\BeltBuckle.cpp">
       <Filter>BeltBuckleInterface</Filter>
     </ClCompile>
-    <ClCompile Include="include\RS-232\rs232.c">
+    <ClCompile Include="include\RS232\rs232.c">
       <Filter>BeltBuckleInterface</Filter>
+    </ClCompile>
+    <ClCompile Include="src\FileWriter\FileWriter.cpp">
+      <Filter>FileWriter</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -73,6 +79,9 @@
     </ClInclude>
     <ClInclude Include="src\common\bb_utils.h">
       <Filter>common</Filter>
+    </ClInclude>
+    <ClInclude Include="src\FileWriter\FileWriter.h">
+      <Filter>FileWriter</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

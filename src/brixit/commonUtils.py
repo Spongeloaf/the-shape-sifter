@@ -161,6 +161,7 @@ class Settings:
         self.DB_User = Path(self.assetPath + ini.get('brixit', 'DB_User'))
         self.TXT_labelLog = Path(self.assetPath + ini.get('brixit', 'labelledPartsTxt'))
         self.conveyorBeltImgFolder = Path(self.assetPath + ini.get('brixit', 'conveyorBeltImgFolder'))
+        self.unknownWheelPath = Path(self.assetPath + ini.get('brixit', 'unknownWheelPath'))
         self.defaultPartImage = Path(ini.get('brixit', 'defaultPartImage'))
         self.devMode = ini.getboolean('brixit', 'devMode')
         self.fakeDeleteFiles = ini.getboolean('brixit', 'fakeDeleteFiles')

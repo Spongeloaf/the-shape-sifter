@@ -122,7 +122,7 @@ class ImageManager:
         return None
 
     def __CreateBundleList__(self):
-        """ This function creates a list of file bundles in the unknowParts directory. """
+        """ This function creates a list of file bundles in the unlabelled parts directory. """
         walker = os.walk(self.folder, topdown=False)
         bundle = ImageBundle
         bundle.PUID = ""
@@ -226,10 +226,13 @@ class ImageManager:
 
     def __LogBundle__(self, bundle: ImageBundle):
         """ Logs a part into the logging database """
-        sql = sqlite3.connect(self.labelledDB)
-        points = 1
-        sql.execute("INSERT INTO labelledParts (puid, user, partNum, points) values (?,?,?,?)", [bundle.PUID, bundle.user, bundle.partNum, points])
-        sql.commit()
+        try:
+            sql = sqlite3.connect(self.labelledDB)
+            points = 1
+            sql.execute("INSERT INTO labelledParts (puid, user, partNum, points) values (?,?,?,?)", [bundle.PUID, bundle.user, bundle.partNum, points])
+            sql.commit()
+        except:
+            print("ERROR: Tried to label duplicate parts: PUID: {}, User {}, partNum {}".format(bundle.PUID, bundle.user, bundle.partNum))
 
     def LabelImageBundle(self, bundle: ImageBundle):
         """
@@ -264,6 +267,15 @@ class ImageManager:
             result = False
         return result
 
+    def __UnknownWheel__(self, bundle: ImageBundle):
+        """ Handle pictures of the conveyor belt """
+        result = True
+        if not fu.HandleUnknownWheelImages(bundle):
+            result = False
+        if not self.__RemoveBundleFromDB__(bundle):
+            result = False
+        return result
+
     def HandleBadImages(self, bundle: ImageBundle, error: str):
         """
         Bad image types:
@@ -278,8 +290,10 @@ class ImageManager:
             return self.__BadImages__(bundle)
 
         if error == kSkippedPart:
-            result = self.__SkipImageBundle__(bundle)
-            return result
+            return self.__SkipImageBundle__(bundle)
+
+        if error == kUnknownWheel:
+            return self.__UnknownWheel__(bundle)
 
 
 imageMgr = ImageManager(cu.settings)

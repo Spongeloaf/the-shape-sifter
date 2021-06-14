@@ -16,7 +16,7 @@
 #include <date\date.h>
 #include <Qtcore/qobject.h>
 #include <QtCore/QVariant>
-#include <QtGui/QAction>
+#include <QtGui/QActionEvent>
 #include <QtWidgets/QApplication>
 #include <QtWidgets/QHBoxLayout>
 #include <QtWidgets/QHeaderView>
@@ -31,6 +31,7 @@
 #include <QtWidgets/QVBoxLayout>
 #include <QtWidgets/QWidget>
 #include <QtCore/QTimer>
+
 
 class SUIP : public ClientBase
 {

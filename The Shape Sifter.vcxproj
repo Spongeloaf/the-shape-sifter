@@ -45,14 +45,14 @@
   </ImportGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|x64'">
     <OutDir>$(SolutionDir)out\$(Configuration)\</OutDir>
-    <IncludePath>$(SolutionDir)include;$(SolutionDir)include_large_libs;$(IncludePath)</IncludePath>
+    <IncludePath>$(OPENCV_DIR)\build\include;$(SolutionDir)include;$(SolutionDir)include_large_libs;$(IncludePath)</IncludePath>
     <LibraryPath>$(ProjectDir)lib\;$(LibraryPath)</LibraryPath>
     <IntDir>$(SolutionDir)out\$(Configuration)\artifacts\</IntDir>
     <SourcePath>$(SolutionDir)src;$(SourcePath)</SourcePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|x64'">
     <OutDir>$(SolutionDir)out\$(Configuration)\</OutDir>
-    <IncludePath>$(SolutionDir)include;$(SolutionDir)include_3rd_party;$(IncludePath)</IncludePath>
+    <IncludePath>$(OPENCV_DIR)\build\include;$(SolutionDir)include;$(SolutionDir)include_3rd_party;$(IncludePath)</IncludePath>
     <LibraryPath>$(ProjectDir)lib\;$(LibraryPath)</LibraryPath>
     <IntDir>$(SolutionDir)out\$(Configuration)\artifacts\</IntDir>
     <SourcePath>$(SolutionDir)src;$(SourcePath)</SourcePath>
@@ -63,10 +63,18 @@
     </ClCompile>
     <Link>
       <AdditionalOptions>$(QT_DIR)\lib\*.lib %(AdditionalOptions)</AdditionalOptions>
-      <AdditionalDependencies>opencv_world450d.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>$(OPENCV_DIR)\build\x64\vc15\lib\opencv_world450d.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
-      <Command>(ROBOCOPY "$(ProjectDir)dll\$(Configuration)" "$(SolutionDir)out\$(Configuration)" /NFL /NDL /NJH /NJS /nc /ns /np) ^&amp; IF %ERRORLEVEL% LEQ 1 exit 0</Command>
+      <Message>Copying OpenCV and QT dlls</Message>
+      <Command>
+		copy "$(OPENCV_DIR)\build\x64\vc15\bin\opencv_world450d.pdb" "$(SolutionDir)out\$(Configuration)\opencv_world450d.pdb"
+		copy "$(OPENCV_DIR)\build\x64\vc15\bin\opencv_world450d.dll" "$(SolutionDir)out\$(Configuration)\opencv_world450d.dll"
+		copy "$(OPENCV_DIR)\build\x64\vc15\bin\opencv_videoio_ffmpeg450_64.dll" "$(SolutionDir)out\$(Configuration)\opencv_videoio_ffmpeg450_64.dll"
+		copy "$(QT_DIR)\bin\QT5Widgetsd.dll" "$(SolutionDir)out\$(Configuration)\QT5Widgetsd.dll"
+		copy "$(QT_DIR)\bin\QT5Guid.dll" "$(SolutionDir)out\$(Configuration)\QT5Guid.dll"
+		copy "$(QT_DIR)\bin\QT5Cored.dll" "$(SolutionDir)out\$(Configuration)\QT5Cored.dll"
+	  </Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -75,19 +83,26 @@
     </ClCompile>
     <Link>
       <AdditionalOptions>$(QT_DIR)\lib\*.lib %(AdditionalOptions)</AdditionalOptions>
-      <AdditionalDependencies>opencv_world450.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>$(OPENCV_DIR)\build\x64\vc15\lib\opencv_world450.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
-      <Command>(ROBOCOPY "$(ProjectDir)dll\$(Configuration)" "$(SolutionDir)out\$(Configuration)" /NFL /NDL /NJH /NJS /nc /ns /np) ^&amp; IF %ERRORLEVEL% LEQ 1 exit 0</Command>
+      <Message>Copying OpenCV and QT dlls</Message>
+      <Command>
+		copy "$(OPENCV_DIR)\build\x64\vc15\bin\opencv_world450.dll" "$(SolutionDir)out\$(Configuration)\opencv_world450.dll"
+		copy "$(OPENCV_DIR)\build\x64\vc15\bin\opencv_videoio_ffmpeg450_64.dll" "$(SolutionDir)out\$(Configuration)\opencv_videoio_ffmpeg450_64.dll"
+		copy "$(QT_DIR)\bin\QT5Widgets.dll" "$(SolutionDir)out\$(Configuration)\QT5Widgets.dll"
+		copy "$(QT_DIR)\bin\QT5Gui.dll" "$(SolutionDir)out\$(Configuration)\QT5Gui.dll"
+		copy "$(QT_DIR)\bin\QT5Core.dll" "$(SolutionDir)out\$(Configuration)\QT5Core.dll"
+	  </Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|x64'" Label="QtSettings">
-    <QtInstall>msvc2019_64</QtInstall>
+    <QtInstall>5.12.11_msvc2017_64</QtInstall>
     <QtModules>core;gui;widgets</QtModules>
     <QtBuildConfig>debug</QtBuildConfig>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|x64'" Label="QtSettings">
-    <QtInstall>msvc2019_64</QtInstall>
+    <QtInstall>5.12.11_msvc2017_64</QtInstall>
     <QtModules>core;gui;widgets</QtModules>
     <QtBuildConfig>release</QtBuildConfig>
   </PropertyGroup>
@@ -121,10 +136,11 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="include\RS-232\rs232.c" />
+    <ClCompile Include="include\RS232\rs232.c" />
     <ClCompile Include="src\belt_buckle_interface\BeltBuckle.cpp" />
     <ClCompile Include="src\classifist\Classifist.cpp" />
     <ClCompile Include="src\common\ss_classes.cpp" />
+    <ClCompile Include="src\FileWriter\FileWriter.cpp" />
     <ClCompile Include="src\mt_mind\mt_mind.cpp" />
     <ClCompile Include="src\photophile\photophile.cpp" />
     <ClCompile Include="src\server\main.cpp" />
@@ -136,6 +152,7 @@
     <ClInclude Include="src\classifist\Classifist.h" />
     <ClInclude Include="src\common\bb_utils.h" />
     <ClInclude Include="src\common\ss_classes.h" />
+    <ClInclude Include="src\FileWriter\FileWriter.h" />
     <ClInclude Include="src\mt_mind\mt_mind.h" />
     <ClInclude Include="src\photophile\photophile.h" />
     <ClInclude Include="src\server\server.h" />

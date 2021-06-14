@@ -5,12 +5,16 @@
 #include "../mt_mind/mt_mind.h"
 #include "../classifist/Classifist.h"
 #include "../belt_buckle_interface/BeltBuckle.h"
+#include "../FileWriter/FileWriter.h"
 
 int main()
 {
 	Server server = Server();
 	if (!server.IsOK())
+	{
+		assert(!"SERVER ISNOT OK!");
 		return -1;
+	}
 
 	INIReader* iniReader = server.GetIniReader();
 	spdlog::level::level_enum logLevel = server.GetLogLevel();
@@ -22,16 +26,19 @@ int main()
 	MtMind mtm{logLevel, kNameMtMind, assetPath, iniReader};
 	std::thread threadMtMind(&MtMind::Main, &mtm);
 
-	Classifist cf{logLevel, kNameMtMind, assetPath, iniReader};
+	Classifist cf{logLevel, kNameClassiFist, assetPath, iniReader};
 	std::thread threadCF(&Classifist::Main, &cf);
 
-	BeltBuckle bb{logLevel, kNameMtMind, assetPath, iniReader};
+	BeltBuckle bb{logLevel, kNameBeltBuckle, assetPath, iniReader};
 	std::thread threadBB(&BeltBuckle::Main, &bb);
+
+	FileWriter fw{ logLevel, kNameFileWriter, assetPath, iniReader };
+	std::thread threadFW(&FileWriter::Main, &fw);
 
 	SUIP suip{logLevel, kNameSUIP, assetPath, iniReader};
 
 	// Start the server thread
-	ClientInterfaces clients{&phile, &suip, &mtm, &cf, &bb};
+	ClientInterfaces clients{&phile, &suip, &mtm, &cf, &bb, &fw};
 	server.RegisterClients(clients);
 	std::thread threadServer(&Server::Main, &server);
 
