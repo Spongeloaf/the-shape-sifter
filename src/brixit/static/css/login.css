@@ -1,0 +1,11 @@
+.container.content {
+    max-width: 500px;
+    margin-top: 2rem;
+    padding: 1.2rem;
+    background-color: lightgray;
+    box-shadow: 0 0 2rem rgba(var(--rgb-black), 0.2);
+}
+
+.container.content h1 {
+    text-align: center;
+}

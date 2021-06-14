@@ -1,0 +1,55 @@
+@import url('https://fonts.googleapis.com/css2?family=Hammersmith+One&family=Open+Sans:wght@400;600;700&display=swap');
+
+/* VARIABLES */
+:root {
+  --grey: darkgray;
+  --light-grey: lightgray;
+	--black: rgb(49, 49, 49);
+  --blue: rgb(107,150,179);
+  --red: rgb(204,47,46);
+
+  --rgb-black: 49,49,49;
+  --border-color: var(--grey);
+
+	--base-font-size: 18px;
+	/* --h1-font-size: */
+
+}
+
+/* BASE STYLES */
+html {
+  font-family: sans-serif;
+  background: var(--grey);  
+  box-sizing: border-box;
+  height: 100%;
+  color: var(--black);
+}
+
+body {
+  margin: 0;
+  height: inherit;
+}
+
+h1 {
+  font-family: 'Hammersmith One', sans-serif;
+  font-size: 2.5rem;
+  color: var(--blue);
+  margin: 1rem 0;
+}
+
+p, a, label, button, input, span {
+  font-size: var(--base-font-size);
+  font-family: 'Open Sans', sans-serif;
+}
+
+a {
+  color: var(--blue);
+  text-decoration: none;
+}
+a:hover {
+	opacity: 0.7;
+}
+hr {
+  border: none;
+  border-top: 1px solid var(--border-color);
+}
