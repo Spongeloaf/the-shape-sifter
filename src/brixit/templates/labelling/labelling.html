@@ -6,7 +6,9 @@
     <!--  Images of parts  -->
     {% if images %}
       {% for image in images %}
-        <img src="{{ url_for('labelling.GetUnknownImage', filename=image, ) }}">
+      <div class="main">
+        <img src="{{ url_for('labelling.GetUnknownImage', filename=image) }}">
+    </div>
       {% endfor %}
     {% else %}
     <p>Could not find parts!</p>
@@ -15,11 +17,11 @@
 
     <!--  Search Button  -->
     <form method="post">
-    <label for="query">Search for a part:</label>
-    <input name="query" id="query" value="" autofocus required>
-    <input type="submit" value="Search">
+        <label for="query">Search for a part:</label>
+        <input type="search" name="query" id="query" value="" autofocus required>
+        <input type="submit" value="Search">
     </form>
-    <div style="display: flex;">
+    <div class="actions">
         <!--  Picture of conveyor Button  -->
         <form method="post">
             <input type="submit" value="{{k.kConveyor}}">
@@ -50,7 +52,7 @@
         </form>
     </div>
     <!--  Search result form  -->
-    <form method="post">
+    <form method="post" class="search-results">
         <!-- The values names submitted in the form must match the variable names in a Part object -->
         <input type="submit" value="Submit">
         {% for result in results %}
