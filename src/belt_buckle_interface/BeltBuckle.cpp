@@ -8,7 +8,7 @@
 *****************************************************************************************************/
 
 #include "BeltBuckle.h"
-#include <RS-232/rs232.h>
+#include <RS232/rs232.h>
 #include "../common/bb_utils.h"
 
 BeltBuckle::BeltBuckle(spdlog::level::level_enum logLevel, string clientName, string assetPath, INIReader* iniReader)

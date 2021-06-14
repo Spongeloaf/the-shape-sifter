@@ -18,8 +18,8 @@ void ClientBase::SendPartsToServer(PartList& partList)
 	}
 }
 
-// The server call this method to send parts to this client
-void ClientBase::SendPartsToClient(Parts::PartInstance& part)
+// The server call this method to send a part to this client
+void ClientBase::SendPartToClient(Parts::PartInstance& part)
 {
 	if (m_InputLock.try_lock())
 	{

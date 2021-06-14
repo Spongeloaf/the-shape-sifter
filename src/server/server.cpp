@@ -1,24 +1,23 @@
 // This is the Shape Sifter server.
 
 #include "server.h"
+#include <cstdlib>
+#include <QtCore\QStandardPaths>
+#include <QtSql\qsqldatabase.h>
+#include <QtSql\qsqlquery.h>
+#include <QtSql/qsqlerror.h>
+#include <QtCore/qstring.h>
 
 Server::Server()
 {
-	m_iniReader = INIReader(m_configPath);
-	m_InitializeOK = LoadConfig();
+	m_InitializeOK = true;
+	m_InitializeOK &= CreateLogger();
+	m_InitializeOK &= FindAssetPath();
+	m_iniReader = INIReader(m_configPath.string());
+	m_InitializeOK &= LoadConfig();
 }
 
-bool Server::IsOK()
-{
-	return m_InitializeOK;
-}
-
-void Server::RegisterClients(ClientInterfaces& clients)
-{
-	m_clients = clients;
-};
-
-bool Server::LoadConfig()
+bool Server::CreateLogger()
 {
 	// setup logger
 	try
@@ -32,12 +31,22 @@ bool Server::LoadConfig()
 	catch (const spdlog::spdlog_ex& ex)
 	{
 		std::cout << "Log initialization failed: " << ex.what() << std::endl;
+		return false;
 	}
-	
+	return true;
+}
+
+void Server::RegisterClients(ClientInterfaces& clients)
+{
+	m_clients = clients;
+};
+
+bool Server::LoadConfig()
+{
 	if (m_iniReader.ParseError() != 0)
 	{
 		assert(!"Could not load config file! Aborting.");
-		m_logger->critical("Could not load config file: {}", m_configPath);
+		m_logger->critical("Could not load config file: {}", m_configPath.string());
 		return false;
 	}
 
@@ -180,19 +189,20 @@ void Server::ProcessActivePartList()
 				// TODO: Need to dispatch to BB
 				part.second.m_BBStatus = Parts::BBStatus::waitAckAdd;
 				part.second.m_ServerStatus = Parts::ServerStatus::waitMTM;
-				m_clients.mtm->SendPartsToClient(part.second);
+				m_clients.mtm->SendPartToClient(part.second);
 				m_clients.bb->SendCommandsToBBClient(CreateBBCommand(part.second));
+				m_clients.fw->SendPartToClient(part.second);
 				break;
 
 			case Parts::ServerStatus::MTMDone:
 				part.second.m_ServerStatus = Parts::ServerStatus::waitCF;
-				m_clients.cf->SendPartsToClient(part.second);
+				m_clients.cf->SendPartToClient(part.second);
 				break;
 
 			case Parts::ServerStatus::cfDone:
 				part.second.m_ServerStatus = Parts::ServerStatus::cfDone;
 				part.second.m_BBStatus = Parts::BBStatus::waitAckAssign;
-				m_clients.bb->SendPartsToClient(part.second);
+				m_clients.bb->SendPartToClient(part.second);
 				m_clients.bb->SendCommandsToBBClient(CreateBBCommand(part.second));
 
 				break;
@@ -257,4 +267,16 @@ void Server::PullPartsFromClients()
 	m_clients.mtm->SendPartsToServer(m_ActivePartList);
 	m_clients.cf->SendPartsToServer(m_ActivePartList);
 	m_clients.bb->SendCommandsToServer(m_CommandsForServer);
+}
+
+bool Server::FindAssetPath()
+{
+	const char* assets = std::getenv("SHAPE_SIFTER_ASSETS");
+	if (assets)
+	{
+		m_assetPath = std::filesystem::path(assets);
+		m_configPath = m_assetPath / "settings.ini";
+		return true;
+	}
+	return false;
 }

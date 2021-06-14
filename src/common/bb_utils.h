@@ -4,6 +4,8 @@
 #define BB_UTILS_H
 
 #include <string>
+#include <vector>
+#include <map>
 
 // Forward declarations
 struct CommandServer;

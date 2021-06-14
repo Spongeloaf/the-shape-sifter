@@ -36,7 +36,8 @@ using Rect = cv::Rect;
 enum class VideoMode
 {
 	camera,
-	file
+	file,
+	ip
 };
 
 class PhotoPhile : public ClientBase
@@ -60,13 +61,16 @@ private:
 	bool m_viewVideo;
 	mat m_beltMask;
 	string m_clientName;
+	string m_maskFileName;
 	string m_videoPath;
+	string m_IPcameraAddress;
 	unsigned int m_NextObjectId;	// Never use this directly! Call GetObjectId()!
 	unsigned int m_partCount;
 	VideoMode m_mode;
 	ppObjectList m_LastFrameObjectList;
 	ppObjectList m_ThisFrameObjectList;
 	mat m_CurrentFrame;
+	int m_cameraNum;
 
 	// openCV Object detection and background subtraction properties.
 	// Most of these are set in the constructor while reading from the config file.
