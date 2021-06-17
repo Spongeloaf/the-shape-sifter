@@ -3,16 +3,21 @@ nav {
     background: var(--black);
     display: flex;
     align-items: center;
-    margin: 0 auto;
+    margin: 0 auto 1rem;
     padding: 1rem;
+    border-bottom: var(--border-width) solid var(--yellow);
   }
   nav h1 {
     flex: auto;
     margin: 0;
   }
-  nav h1 a {
+  nav a {
     text-decoration: none;
     padding: 0.25rem 0.5rem;
+  }
+  nav a:hover {
+    color: var(--white);
+    opacity: 1;
   }
   nav ul {
     display: flex;
@@ -25,5 +30,6 @@ nav {
   header .action {
     display: block;
     padding: 0.5rem;
-    color: var(--blue);
+    color: var(--yellow);
+    font-weight: 600;
   }

@@ -15,7 +15,7 @@
   }
   .toggle_collapse + * + label {
     display: inline-block; /* make visible for screen media */
-    color: blue;
+    color: var(--yellow);
   }
   .toggle_collapse + * + label:before {
     content: "Show Help";
