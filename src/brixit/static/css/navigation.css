@@ -11,9 +11,13 @@ nav {
     flex: auto;
     margin: 0;
   }
-  nav h1 a {
+  nav a {
     text-decoration: none;
     padding: 0.25rem 0.5rem;
+  }
+  nav a:hover {
+    color: var(--white);
+    opacity: 1;
   }
   nav ul {
     display: flex;

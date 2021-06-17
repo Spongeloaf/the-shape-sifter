@@ -3,7 +3,7 @@
     margin-top: 2rem;
     padding: 1.2rem;
     background-color: var(--black);
-    box-shadow: 0 0 2rem var(--light-grey);
+    box-shadow: 0 0 2rem var(--black);
 }
 
 .container.content h1 {
