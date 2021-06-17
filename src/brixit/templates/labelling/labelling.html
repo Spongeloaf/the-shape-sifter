@@ -13,11 +13,10 @@
     {% else %}
     <p>Could not find parts!</p>
     {% endif %}
- <div></div>
 
     <!--  Search Button  -->
-    <form method="post">
-        <label for="query">Search for a part:</label>
+    <label for="query">Search for a part:</label>
+    <form method="post" class="search-field">
         <input type="search" name="query" id="query" value="" autofocus required>
         <input type="submit" value="Search">
     </form>
@@ -58,13 +57,14 @@
         {% for result in results %}
             <!-- Bricklink hosts pictures of images at http://img.bricklink.com/ItemImage/PL/{{result.partNum}}.png.
                  You can access alternative images of parts by subbing out "/PL/" for "/PN/x/" where 'x' is some index number from 1 upwards   -->
-            <label>
-                <img src="http://img.bricklink.com/ItemImage/PL/{{result.partNum}}.png" style="max-width: 150px; max-height: 150px">
                 <input type="radio" id="{{result.partNum}}" name="partNum" value="{{result.partNum}}">
-                {{result.partName}}
-                <a href="https://www.bricklink.com/v2/catalog/catalogitem.page?P={{result.partNum}}#T=P" target="_blank">
-                    [Bricklink]</a>
-            </label>
+                <label for="{{result.partNum}}">
+                    <img src="http://img.bricklink.com/ItemImage/PL/{{result.partNum}}.png" style="max-width: 150px; max-height: 150px">
+                    {{result.partName}}
+                    <a href="https://www.bricklink.com/v2/catalog/catalogitem.page?P={{result.partNum}}#T=P" target="_blank">
+                        [Bricklink]</a>
+                </label>
+            
         {% endfor %}
         <input type="hidden" id="images" name="images" value="{{images}}">
         <input type="hidden" id="puid" name="puid" value="{{puid}}">

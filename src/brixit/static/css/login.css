@@ -2,10 +2,31 @@
     max-width: 500px;
     margin-top: 2rem;
     padding: 1.2rem;
-    background-color: lightgray;
-    box-shadow: 0 0 2rem rgba(var(--rgb-black), 0.2);
+    background-color: var(--black);
+    box-shadow: 0 0 2rem var(--light-grey);
 }
 
 .container.content h1 {
     text-align: center;
+}
+.container.content label {
+    color: var(--white);
+    font-weight: normal;
+}
+
+.container.content input[type="text"], .container.content input[type="password"] {
+    background-color: var(--light-grey);
+    border: none;
+    border-left: var(--border-width) solid var(--yellow);
+}
+
+.container.content input[type="submit"] {
+    width: 100%;
+    margin-top: var(--default-margin);
+    margin-bottom: var(--default-margin);
+    background-color: var(--yellow);
+    border: var(--border-width) solid var(--yellow);
+}
+.container.content input[type="submit"]:hover {
+    background-color: var(--white);
 }
