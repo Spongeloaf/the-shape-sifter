@@ -2,7 +2,18 @@
 
 # How to use BriXit
 
+Shorthand:
 
+    "mod" : "modified",
+    "minifig" : "minifigure",
+    "cheese wedge" : "slope 30",
+    "snot" : "studs on side",
+    "slur" : "rock panel",
+    "burp" : "rock panel",
+    "lurp" : "rock panel",
+    "tech" : "technic"
+
+Multi-dimensional parts
 
 # Difficult parts
 

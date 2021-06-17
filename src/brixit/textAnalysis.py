@@ -16,6 +16,7 @@ WordSubstitutions = {
     "slur" : "rock panel",
     "burp" : "rock panel",
     "lurp" : "rock panel",
+    "tech" : "technic"
 }
 
 CharacterSubstitutions = {
