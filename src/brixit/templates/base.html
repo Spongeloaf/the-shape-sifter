@@ -1,7 +1,11 @@
 <!doctype html>
-<title>{% block title %}{% endblock %} - BriXit</title>
-
-<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+<head>
+  <title>{% block title %}{% endblock %} - BriXit</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta charset="utf-8">
+  <html lang="en-CA"></html>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
 
 <nav>
   <h1>BriXit</h1>
