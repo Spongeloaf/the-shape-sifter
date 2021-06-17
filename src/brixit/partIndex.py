@@ -1,10 +1,7 @@
-from typing import List
-import os
 from commonUtils import settings, Part
 from textAnalysis import analyze
 from timing import timing
 import csv
-import commonUtils as cu
 
 
 # This code was largely stolen from https://bart.degoe.de/building-a-full-text-search-engine-150-lines-of-code/

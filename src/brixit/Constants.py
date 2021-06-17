@@ -1,4 +1,4 @@
-kConveyor = "Image of Conveyor Belt"
+kConveyor = "Conveyor Belt"
 kBadImages = "Bad Image(s)"
 kSkippedPart = "Skip Part"
 kUnknownWheel = "Unknown Wheel"
