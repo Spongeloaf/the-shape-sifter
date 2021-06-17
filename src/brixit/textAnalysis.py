@@ -8,9 +8,9 @@ STOPWORDS = {'the', 'of', 'a', 'that', 'have', 'it', 'for',
              'as', 'do', 'at', 'this', 'but'}
 
 # All substitutions must be in lower case!
-SUBSTITUTIONS = {
-    "by" : 'x',
-    "*" : 'x',
+WordSubstitutions = {
+    "mod" : "modified",
+    "minifig" : "minifigure",
     "cheese wedge" : "slope 30",
     "snot" : "studs on side",
     "slur" : "rock panel",
@@ -18,6 +18,10 @@ SUBSTITUTIONS = {
     "lurp" : "rock panel",
 }
 
+CharacterSubstitutions = {
+    "by": 'x',
+    "*": 'x',
+}
 
 def ReorderDimensions(text: str):
     """
@@ -144,10 +148,19 @@ def stem_filter(tokens):
 
 
 def keywordReplace(text: str):
-    text = text.lower()
-    for word in SUBSTITUTIONS:
-        text = text.replace(word, SUBSTITUTIONS[word])
-    return text
+    newText = ""
+
+    # Replace whole words
+    for word in text.split():
+        if word in WordSubstitutions:
+            word = WordSubstitutions[word]
+        newText = newText + " " + word
+
+    # Replace character(s) like '*' or 'by'
+    for sub in CharacterSubstitutions:
+        newText = newText.replace(sub, CharacterSubstitutions[sub])
+
+    return newText
 
 
 def analyze(text):

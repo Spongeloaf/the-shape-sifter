@@ -72,3 +72,7 @@ input[type="submit"]:hover {
 .search-results label a {
     margin-left: 1rem;
 }
+
+input[type='radio'] {
+     transform: scale(2);
+ }

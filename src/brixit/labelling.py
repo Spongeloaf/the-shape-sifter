@@ -42,6 +42,7 @@ def labelling(query=None):
             formBundle = im.MakeBundleFromForm(request.form, user_id)
             if formBundle is not None:
                 im.imageMgr.LabelImageBundle(formBundle)
+                print("Part {} labelled by {}".format(formBundle.PUID, str(formBundle.user)))
             else:
                 Error("Error in part submission: formBundle was 'None' instead of 'ImageBundle'")
 

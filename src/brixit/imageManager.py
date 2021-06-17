@@ -9,6 +9,7 @@ import fileUtils as fu
 # Constant global values. All begin with a lowercase 'k', and should be modified at run time.
 from Constants import *
 
+
 def MakeBundleFromForm(form, user_id):
     """ Creates a part bundle from an html form """
 
@@ -147,6 +148,7 @@ class ImageManager:
             rows.append([bundle.PUID, 0, images])
         sql.executemany("INSERT OR IGNORE INTO unlabelledParts(puid, user, images) VALUES (?, ?, ?)", rows)
         sql.commit()
+        print("Added {} images to unlabelled parts DB".format(len(self.bundleList)))
 
     def __DoesPUIDHaveBundle__(self, puid):
         """ Retruns true if a given PUID has an image bundle on the disk. """
@@ -162,12 +164,14 @@ class ImageManager:
         cursor.execute("SELECT * from unlabelledParts")
         rows = cursor.fetchall()
         cursor.close()
+        rowCount = len(rows)
 
         # row[0] = puid, row[1] = user, row[2] = images
         for row in rows:
             if not self.__DoesPUIDHaveBundle__(row[0]):
                 sql.execute("DELETE FROM unlabelledParts WHERE puid = ?", [row[0]])
         sql.commit()
+        print("Pruned the image DB and removed {} parts".format(rowCount))
 
     @staticmethod
     def RowToBundle(row: List):
@@ -219,9 +223,12 @@ class ImageManager:
     def __RemoveBundleFromDB__(self, bundle: ImageBundle):
         sql = sqlite3.connect(self.mainDB)
         result = sql.execute("DELETE FROM unlabelledParts WHERE puid = ?", [bundle.PUID])
+        resultCount = result.rowcount
         sql.commit()
-        if result.rowcount == 1:
+        print("Removed PUID {} from unlabelled parts db".format(bundle.PUID))
+        if resultCount == 1:
             return True
+        print("Error in __RemoveBundleFromDB__(): result.rowcount == {}".format(resultCount))
         return False
 
     def __LogBundle__(self, bundle: ImageBundle):
