@@ -14,9 +14,10 @@
   --border-color: var(--light-grey);
   --border-width: 0.4rem;
 
-	--base-font-size: 20px;
+	--base-font-size: 18px;
   --transition: all 0.3s ease-in;
-  --default-margin: 1.5rem;
+  --default-margin: 1rem;
+  --default-margin-large: 1.5rem;
 
 }
 

@@ -8,7 +8,9 @@
   font-size: var(--base-font-size);
   line-height: 1.5;
   margin-bottom: var(--default-margin);
-  padding: 1rem;
+  padding: 0.5rem;
+  -webkit-appearance: none;
+    -moz-appearance: none;
 }
 
 .content textarea {
@@ -24,19 +26,21 @@ input[type='radio'] {
     display: none;
 }
 
-input[type="submit"] {
+input[type="submit"], button {
     align-self: start;
-    min-width: 10rem;
+    /* min-width: 10rem; */
     margin: 0;
     cursor: pointer;
-    padding: 1rem;
+    padding: 0.5rem;
     font-weight: 700;
     transition: all 300ms ease-in-out;
     border: var(--border-width) solid var(--border-color);
     background-color: var(--light-grey);
+    -webkit-appearance: none;
+    -moz-appearance: none;
   
 }
-input[type="submit"]:hover {
+button:hover, input[type="submit"]:hover {
     background-color: var(--yellow);
     border-color: var(--yellow);
 }
@@ -52,23 +56,24 @@ input[type="search"] {
 .content label {
     font-weight: bold;
     display: block;
-    margin-bottom: 1rem;
+    margin-bottom: 0.5rem;
 }
 
-.search-field input[type="submit"] {
+.search-field button, .search-field input[type="submit"] {
     width: 100%;
     margin-bottom: var(--default-margin);
     background-color: var(--yellow);
     border: var(--border-width) solid var(--yellow);
+    padding-left: var(--default-margin);
+    padding-right: var(--default-margin);
 }
-.search-field input[type="submit"]:hover {
+.search-field button:hover, .search-field input[type="submit"]:hover {
     background-color: var(--white);
 }
 
 .actions {
     border-bottom: 1px solid var(--border-color);
-    padding-bottom: var(--default-margin);
-    margin-bottom: calc(var(--default-margin) * 2);
+    margin-bottom: var(--default-margin);
 }
 .actions form {
     display: inline-block;
@@ -86,7 +91,7 @@ input[type="search"] {
 }
 .search-results label:hover {
     cursor: pointer;
-    opacity: 0.7;
+    border-color: var(--yellow);
 }
 
 input[type='radio']:checked + label {
@@ -94,13 +99,15 @@ input[type='radio']:checked + label {
     transition: all 0.1s ease-in;;
 }
 
-.search-results input[type="submit"] {
+.search-results button, .search-results input[type="submit"] {
     margin: 0 auto var(--default-margin);
+    padding-left: var(--default-margin);
+    padding-right: var(--default-margin);
     width: 100%;
     background-color: var(--yellow);
     border: 4px solid var(--yellow);
 }
-.search-results input[type="submit"]:hover {
+.search-results button:hover, .search-results input[type="submit"]:hover {
     background-color: var(--white);
 }
 .search-results label img {
@@ -116,10 +123,13 @@ input[type='radio']:checked + label {
     flex-wrap: wrap;
 }
 .actions form {
-    width: 100%;
+    /* width: 100%; */
+    width: calc(50% - (var(--default-margin) / 2));
 }
-.actions form input[type="submit"] {
+.actions form button, .actions form input[type="submit"] {
     width: 100%;
+    height: 100%;
+    font-size: 16px;
 }
 
 @media only screen and (min-width: 740px) {
@@ -130,15 +140,19 @@ input[type='radio']:checked + label {
     .search-field input[type="search"] {
         margin-right: var(--default-margin);
     }
-    .search-field input[type="submit"] {
+    .search-field button, .search-field input[type="submit"] {
         width: auto;
     }
     
+    .actions {
+        padding-bottom: var(--default-margin);
+        margin-bottom: calc(var(--default-margin) * 2);
+    }
     .actions form {
         width: calc(50% - (var(--default-margin) / 2));
     }
 
-    .search-results input[type="submit"] {
+    .search-results button, .search-results input[type="submit"] {
         width: auto;
     }
 }
@@ -154,5 +168,8 @@ input[type='radio']:checked + label {
 @media only screen and (min-width: 940px) {
     .actions form {
         width: auto;
+    }
+    input[type="submit"], button {
+        padding: 0.5rem var(--default-margin-large);
     }
 }

@@ -17,34 +17,34 @@
     <!--  Search Button  -->
     <label for="query">Search for a part:</label>
     <form method="post" class="search-field">
-        <input type="search" name="query" id="query" value="" autofocus required>
-        <input type="submit" value="Search">
+        <input type="search" name="query" id="query" value="" placeholder="e.g. Brick 2x4" autofocus required>
+        <button type="submit" value="Search">Search</button>
     </form>
     <div class="actions">
         <!--  Picture of conveyor Button  -->
         <form method="post">
-            <input type="submit" value="{{k.kConveyor}}">
+            <button type="submit" value="{{k.kConveyor}}">{{k.kConveyor}}</button>
             <input type="hidden" name="problem" value="{{k.kConveyor}}">
             <input type="hidden" name="puid" value="{{puid}}">
             <input type="hidden" name="images" value="{{images}}">
         </form>
         <!--  Bad pictures Button  -->
         <form method="post">
-            <input type="submit" value="{{k.kBadImages}}">
+            <button type="submit" value="{{k.kBadImages}}">{{k.kBadImages}}</button>
             <input type="hidden" name="problem" value="{{k.kBadImages}}">
             <input type="hidden" name="puid" value="{{puid}}">
             <input type="hidden" name="images" value="{{images}}">
         </form>
         <!--  Skip Parts Button  -->
         <form method="post">
-            <input type="submit" value="{{k.kSkippedPart}}">
+            <button type="submit" value="{{k.kSkippedPart}}">{{k.kSkippedPart}}</button>
             <input type="hidden" name="problem" value="{{k.kSkippedPart}}">
             <input type="hidden" name="puid" value="{{puid}}">
             <input type="hidden" name="images" value="{{images}}">
         </form>
         <!--  Unknown wheel button  -->
         <form method="post">
-            <input type="submit" value="{{k.kUnknownWheel}}">
+            <button type="submit" value="{{k.kUnknownWheel}}">{{k.kUnknownWheel}}</button>
             <input type="hidden" name="problem" value="{{k.kUnknownWheel}}">
             <input type="hidden" name="puid" value="{{puid}}">
             <input type="hidden" name="images" value="{{images}}">
@@ -53,7 +53,7 @@
     <!--  Search result form  -->
     <form method="post" class="search-results">
         <!-- The values names submitted in the form must match the variable names in a Part object -->
-        <input type="submit" value="Submit">
+        <button type="submit" value="Submit">Submit</button>
         {% for result in results %}
             <!-- Bricklink hosts pictures of images at http://img.bricklink.com/ItemImage/PL/{{result.partNum}}.png.
                  You can access alternative images of parts by subbing out "/PL/" for "/PN/x/" where 'x' is some index number from 1 upwards   -->
