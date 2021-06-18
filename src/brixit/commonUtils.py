@@ -174,6 +174,7 @@ class Settings:
         self.serverPort = ini.getint('brixit', 'serverPort')
         self.skippedImageFolder = Path(self.assetPath + ini.get('brixit', 'skippedImageFolder'))
         self.unlabelledPartsPath = Path(self.assetPath + ini.get('brixit', 'unlabelledPartsPath'))
+        self.staticImageFolder = Path(self.assetPath + ini.get('brixit', 'staticImageFolder'))
 
     @staticmethod
     def __GetSettingsFile():

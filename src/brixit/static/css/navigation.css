@@ -29,7 +29,7 @@ nav {
   nav ul li span,
   header .action {
     display: block;
-    padding: 0.5rem;
+    padding: 0.8rem;
     color: var(--yellow);
     font-weight: 600;
   }

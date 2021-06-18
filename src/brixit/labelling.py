@@ -1,7 +1,6 @@
-from flask import (Blueprint, render_template, send_from_directory, flash, request, redirect, url_for, session)
+from flask import (Blueprint, render_template, send_from_directory, flash, request, redirect, url_for, session, app)
 from auth import login_required
 import commonUtils as cu
-import os
 import partIndex as pi
 import imageManager as im
 import Constants as k
@@ -24,6 +23,12 @@ def Error(text :str):
 @bp.route('/<path:filename>')
 def GetUnknownImage(filename):
     return send_from_directory(cu.settings.unlabelledPartsPath, filename, as_attachment=True)
+
+
+# TODO: Figure out how to make this work
+@bp.route('/<path:staticImg>')
+def GetStaticImage(staticImg):
+    return send_from_directory(cu.settings.staticImageFolder, staticImg, as_attachment=True)
 
 
 @bp.route('/', methods=('GET', 'POST'))

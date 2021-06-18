@@ -1,4 +1,39 @@
-Part dimensions may be entered as digits separated by 'x', '*', or 'by'. The order of the values does not matter either, <b>"2x4"</b> is equivalent to <b>"4x2"</b>. Some parts have three dimensions, simply write the m out like "3x2x5". Whitespace is optional for dimensions; "2 x 4"  and "2x4" are both acceptable.
+{% extends 'base.html' %}
 
-For example, <b>"2 x 4"</b> would be equivalent to <b>"4by2"</b> or <b>"2* 4"</b>, and <b>"2 x 4 x 8"</b> would be equivalent to <b>"8by2 x 4"</b> or <b>"4 * 8
-    by2"</b>.
+{% block content %}
+<body>
+
+<h1>How to use BriXit</h1>
+
+The image at the top of the page is a picture of a lego part taken from my conveyor belt.
+<img src="{{ url_for('labelling.GetStaticImage', staticImg='help_main_screen.png') }}">
+
+
+
+Shorthand:
+
+    "mod" : "modified",
+    "minifig" : "minifigure",
+    "cheese wedge" : "slope 30",
+    "snot" : "studs on side",
+    "slur" : "rock panel",
+    "burp" : "rock panel",
+    "lurp" : "rock panel",
+    "tech" : "technic"
+
+Multi-dimensional parts
+
+# Difficult parts
+
+Slope, Curved 3 x 2 x 2/3 with Two Studs, Wing End
+
+<img src="http://img.bricklink.com/ItemImage/PL/47456.png">
+
+---
+
+Slope, Inverted 45 6 x 1 Double with 1 x 4 Cutout
+
+<img src="https://img.bricklink.com/ItemImage/PN/85/52501.png">
+
+</body>
+{% endblock %}

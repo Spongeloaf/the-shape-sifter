@@ -10,9 +10,10 @@
 
 
 import fileUtils
-from flask import Flask
+from flask import Flask, render_template
 import commonUtils as cu
 from gevent.pywsgi import WSGIServer
+from auth import login_required
 
 
 def create_app():
@@ -28,12 +29,10 @@ def create_app():
 
     app.config.from_pyfile('config.py', silent=True)
 
-    # a simple page that says hello
-    @app.route('/hello')
-    def hello():
-        return 'Hello, World!'
-
-    # fileUtils.InitApp(app)
+    @app.route('/help')
+    @login_required
+    def help():
+        return render_template('help.html')
 
     import auth
     app.register_blueprint(auth.bp)
@@ -55,3 +54,5 @@ if __name__ == "__main__":
         http_server = WSGIServer((cu.settings.serverIp, cu.settings.serverPort), app)
         print(http_server.address)
         http_server.serve_forever()
+
+

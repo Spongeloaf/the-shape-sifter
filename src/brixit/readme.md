@@ -1,6 +1,6 @@
-# Welcome to Brixit
-
 # How to use BriXit
+
+The image at the top of the page is a picture of a lego part taken from my conveyor belt. 
 
 Shorthand:
 
