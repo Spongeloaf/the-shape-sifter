@@ -1,0 +1,38 @@
+// Login & Registration 
+
+.container.content {
+    max-width: 500px;
+    margin: 2rem 1rem;
+    padding: 1.2rem;
+    background-color: $black;
+    box-shadow: 0 0 2rem $black;
+
+    @include small-screen-up {
+        margin: 2rem auto;
+    }
+    
+    h1 {
+        text-align: center;
+    }
+
+    label {
+        color: $white;
+        font-weight: normal;
+    }
+    input[type="text"], input[type="password"] {
+        background-color: $light-grey;
+        border: none;
+        border-left: $border-width solid $yellow;
+    }
+    button, input[type="submit"] {
+        width: 100%;
+        margin-top: $default-margin;
+        margin-bottom: $default-margin;
+        background-color: $yellow;
+        border: $border-width solid $yellow;
+
+        &:hover {
+            background-color: $white;
+        }
+    }
+}

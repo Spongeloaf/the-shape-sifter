@@ -4,7 +4,7 @@ nav {
     display: flex;
     align-items: center;
     margin: 0 auto 1rem;
-    padding: 1rem;
+    padding: 1rem 1rem 0.5rem 1rem;
     border-bottom: var(--border-width) solid var(--yellow);
   }
   nav h1 {
@@ -29,7 +29,7 @@ nav {
   nav ul li span,
   header .action {
     display: block;
-    padding: 0.8rem;
+    padding: 0 0.5rem 0.5rem 0.5rem;
     color: var(--yellow);
     font-weight: 600;
   }

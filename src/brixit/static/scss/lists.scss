@@ -1,0 +1,19 @@
+li {
+    margin-bottom: 0.5rem;
+}
+
+dl {
+    padding-left: 1rem;
+
+    dt{        
+        font-weight: bold;
+
+        &::after {
+            content: ": ";
+        }
+    }
+    dd {
+        margin-left: 1rem;
+        margin-bottom: 1rem;
+    }
+}

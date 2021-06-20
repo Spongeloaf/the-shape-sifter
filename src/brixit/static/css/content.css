@@ -2,7 +2,7 @@
 .content {
   max-width: 960px;
   margin: 0 auto;
-  padding: 0 3rem 3rem;
+  padding: 0 var(--default-margin) var(--default-margin);
 }
 
 .content > * > * {
@@ -10,7 +10,6 @@
 }
 
 .content > header {
-  /* border-bottom: 1px solid var(--light-grey); */
   display: flex;
   align-items: flex-end;
 }
@@ -30,4 +29,8 @@
   margin: var(--default-margin) auto;
 }
   
-  
+@media only screen and (min-width: 740px) {
+  .content {
+    padding: 0 calc(var(--default-margin-large) * 2) calc(var(--default-margin-large) * 2);
+  }
+}

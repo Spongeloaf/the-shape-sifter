@@ -1,6 +1,6 @@
 .container.content {
     max-width: 500px;
-    margin-top: 2rem;
+    margin: 2rem 1rem;
     padding: 1.2rem;
     background-color: var(--black);
     box-shadow: 0 0 2rem var(--black);
@@ -20,13 +20,19 @@
     border-left: var(--border-width) solid var(--yellow);
 }
 
-.container.content input[type="submit"] {
+.container.content button, .container.content input[type="submit"] {
     width: 100%;
     margin-top: var(--default-margin);
     margin-bottom: var(--default-margin);
     background-color: var(--yellow);
     border: var(--border-width) solid var(--yellow);
 }
-.container.content input[type="submit"]:hover {
+.container.content button:hover, .container.content input[type="submit"]:hover {
     background-color: var(--white);
+}
+
+@media only screen and (min-width: 570px) {
+    .container.content {
+        margin: 2rem auto;
+    }
 }
