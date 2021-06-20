@@ -1,0 +1,30 @@
+/* CONTENT */
+
+.content {
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 0 $default-margin $default-margin;
+    padding-bottom: 6rem;
+
+    @include medium-screen-up {
+        padding: 0 calc(#{$default-margin-large} * 2) 6rem;
+    }
+
+    &> * > * {
+        margin-bottom: $default-margin;
+    }
+
+    &> header {
+        display: flex;
+        align-items: flex-end;
+
+        h1 {
+            flex: auto;
+            margin: $default-margin 0 0.25rem 0;
+        }
+    }
+
+    &:last-child {
+        margin-bottom: 0;
+      }
+  }

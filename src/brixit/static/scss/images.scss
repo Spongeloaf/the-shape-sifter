@@ -1,0 +1,15 @@
+/* IMAGES */
+img {
+  width: 100%;
+}
+
+.main img {
+    max-width: 300px;
+    max-height: 300px;
+    display: block;
+    margin: $default-margin auto;
+}
+
+figure.part  {
+  max-width: 20rem;
+}

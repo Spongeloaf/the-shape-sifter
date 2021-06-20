@@ -1,0 +1,19 @@
+{
+  "name": "brixit",
+  "version": "1.0.0",
+  "description": "s",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "sass --watch static/scss/main.scss:static/main.css",
+    "prod": "sass --style=compressed --watch static/scss/main.scss:static/main.min.css",
+    "watch": "npm run dev & npm run prod"
+  },
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "browser-sync": "^2.26.12",
+    "sass": "^1.32.8",
+    "sass-loader": "^8.0.0"
+  }
+}

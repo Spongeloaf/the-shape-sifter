@@ -1,0 +1,45 @@
+// FONTS
+@import url('https://fonts.googleapis.com/css2?family=Hammersmith+One&family=Open+Sans:wght@400;600;700&display=swap');
+
+$fonts-heading: 'Hammersmith One', sans-serif;
+$fonts-main: 'Open Sans', sans-serif;
+$base-font-size: 18px;
+
+
+// COLOURS
+$light-grey: #e9e9e9;
+$black: #272727;
+$blue: #70c5ff;
+$yellow: #ffc706;
+$red: #d02012;
+$white: #fff;
+
+
+// BREAKPOINTS
+$small-width: 570px;
+$medium-width: 740px;
+$large-width: 800px;
+$max-width: 940px;
+
+// Breakpoint mixins
+@mixin small-screen-up {
+    @media (min-width: $small-width) { @content; }
+}
+@mixin medium-screen-up {
+    @media (min-width: $medium-width) { @content; }
+}
+@mixin large-screen-up {
+    @media (min-width: $large-width) { @content; }
+}
+@mixin xlarge-screen-up {
+    @media (min-width: $max-width) { @content; }
+}
+
+
+// OTHER VARIABLES
+$transition: all 0.3s ease-in;
+$default-margin: 1rem;
+$default-margin-large: 1.5rem;
+
+$border-color: $light-grey;
+$border-width: 0.4rem;
