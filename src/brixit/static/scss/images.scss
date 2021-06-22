@@ -8,6 +8,7 @@ img {
     max-height: 300px;
     display: block;
     margin: $default-margin auto;
+    object-fit: contain;
 }
 
 figure.part  {

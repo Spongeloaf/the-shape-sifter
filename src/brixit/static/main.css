@@ -27,7 +27,7 @@ p, a, label, button, input, span {
 }
 
 a {
-  color: #ffc706;
+  color: #5472d9;
   text-decoration: none;
 }
 a:hover {
@@ -67,7 +67,7 @@ nav {
   padding: 1rem 1rem 0.5rem 1rem;
   border-bottom: 0.4rem solid #ffc706;
 }
-nav h1 {
+nav > a, nav h1 {
   flex: auto;
   margin: 0;
 }
@@ -311,6 +311,7 @@ img {
   max-height: 300px;
   display: block;
   margin: 1rem auto;
+  object-fit: contain;
 }
 
 figure.part {
