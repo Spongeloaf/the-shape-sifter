@@ -86,6 +86,7 @@ class PartSearchIndex:
         if searchType == 'AND':
             # all tokens must be in the document
             parts = [self.parts[doc_id] for doc_id in set.intersection(*results)]
+
         if searchType == 'OR':
             # only one token has to be in the document
             parts = [self.parts[doc_id] for doc_id in set.union(*results)]

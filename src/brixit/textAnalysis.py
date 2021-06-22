@@ -1,28 +1,14 @@
 import re
 import string
 import Stemmer
+import Constants as k
+
 
 PUNCTUATION = re.compile('[%s]' % re.escape(string.punctuation))
 STEMMER = Stemmer.Stemmer('english')
 STOPWORDS = {'the', 'of', 'a', 'that', 'have', 'it', 'for',
              'as', 'do', 'at', 'this', 'but'}
 
-# All substitutions must be in lower case!
-WordSubstitutions = {
-    "mod" : "modified",
-    "minifig" : "minifigure",
-    "cheese wedge" : "slope 30",
-    "snot" : "studs on side",
-    "slur" : "rock panel",
-    "burp" : "rock panel",
-    "lurp" : "rock panel",
-    "tech" : "technic"
-}
-
-CharacterSubstitutions = {
-    "by": 'x',
-    "*": 'x',
-}
 
 def ReorderDimensions(text: str):
     """
@@ -153,16 +139,19 @@ def keywordReplace(text: str):
 
     # Replace whole words
     for word in text.split():
-        if word in WordSubstitutions:
-            word = WordSubstitutions[word]
+        if word in k.kWordSubstitutions:
+            word = k.kWordSubstitutions[word]
         newText = newText + " " + word
 
     # Replace character(s) like '*' or 'by'
-    for sub in CharacterSubstitutions:
-        newText = newText.replace(sub, CharacterSubstitutions[sub])
+    for sub in k.kCharacterSubstitutions:
+        newText = newText.replace(sub, k.kCharacterSubstitutions[sub])
+
+    # Replace multiple words like "cheese wedge"
+    for sub in k.kMultiWordSubstitutions:
+        newText = newText.replace(sub, k.kMultiWordSubstitutions[sub])
 
     return newText
-
 
 def analyze(text):
     """
@@ -182,4 +171,5 @@ def analyze(text):
     tokens = stem_filter(tokens)
 
     # if buffalo for buffalo in Buffalo with buffalo while buffalo is buffalo return buffalo.
-    return [token for token in tokens if token]
+    result = [token for token in tokens if token]
+    return result

@@ -14,6 +14,7 @@ from flask import Flask, render_template
 import commonUtils as cu
 from gevent.pywsgi import WSGIServer
 from auth import login_required
+import Constants as k
 
 
 def create_app():
@@ -32,7 +33,14 @@ def create_app():
     @app.route('/help')
     @login_required
     def help():
-        return render_template('help.html')
+        substitutions = []
+        for item in k.kMultiWordSubstitutions.items():
+            substitutions.append([item[0], item[1]])
+        for item in k.kWordSubstitutions.items():
+            substitutions.append([item[0], item[1]])
+        for item in k.kCharacterSubstitutions.items():
+            substitutions.append([item[0], item[1]])
+        return render_template('help.html', substitutions=substitutions)
 
     import auth
     app.register_blueprint(auth.bp)

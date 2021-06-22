@@ -7,35 +7,69 @@
 
     <section id="basics">
         <h2>Basics</h2>
-        <p>The image at the top of the page is a picture of a lego part taken from my conveyor belt.</p>
-        <img src="{{ url_for('labelling.GetStaticImage', staticImg='help_main_screen.png') }}">
-    </section>
+        <p>The image at the top of the page is a picture of a lego part taken from my conveyor belt. Below the image is a search box. Enter the name of the
+            part in the box, and a list of search results from bricklink will be displayed. Scroll down through the results to find the correct entry and
+            select it. Scroll back up and click the submit button. The part will be tagged with the bricklink number, and the next image is displayed.</p>
 
+        <p>There is a link next to each search result, that says "BrickLink". This will open a new tab that shows the catalog entry of the part on BrickLink
+            .com</p>
+
+        <p>There are four buttons to handle cases where the image is poor or the part cannot be identified</p>
+        <ul>
+            <li><strong>Conveyor Belt</strong> Pictures of the conveyor belt. Clean pictures with no visible parts or debris.</li>
+            <li><strong>Bad Image</strong> The picture is cropped poorly, contains multiple parts, is too dark, or the part is not clearly visible.</li>
+            <li><strong>Skip Part</strong> If the picture is good, but you cannot find a part by searching, skip this part and move on.</li>
+            <li><strong>Unknown Wheel</strong> If the picture is good, but it contains a wheel that you cannot identify</li>
+        </ul>
+
+    </section>
+    <section id="dimensions">
+        <h2>Dimensions</h2>
+        <p>Part dimensions are order-agnostic, and you can use "*", "x", or "by" as separators, with or without spaces. The following search terms are
+            equivalent:</p>
+        <ul>
+            <li><strong>"2 x 4"</strong></li>
+            <li><strong>"2 by 4"</strong></li>
+            <li><strong>"4 x2"</strong></li>
+            <li><strong>"2*4"</strong></li>
+            <li><strong>"4* 2"</strong></li>
+        </ul>
+    </section>
     <section id="shorthand">
         <h2>Shorthand</h2>
+        <p>There are a few shorthand keywords you can use to make searching for certain parts easier.</p>
         <ul>
-            <li><strong>mod:</strong> modified</li>
-            <li><strong>minifig:</strong> minifigure</li>
-            <li><strong>cheese wedge:</strong> slope 30</li>
-            <li><strong>snot:</strong> studs on side</li>
-            <li><strong>slur:</strong> rock panel</li>
-            <li><strong>burp:</strong> rock panel</li>
-            <li><strong>lurp:</strong> rock panel</li>
-            <li><strong>tech:</strong> technic</li>
+            {% for sub in substitutions %}
+            <li><strong>{{sub[0]}}:</strong> {{sub[1]}}</li>
+            {% endfor %}
         </ul>
     </section>
     <section id="multi">
         <h2>Multi-dimensional parts</h2>
-
-        <h3>Difficult parts</h3>
-
+            <p>Some parts have 3 dimensions in their name, such as <a
+                    href="https://www.bricklink.com/v2/catalog/catalogitem.page?P=47456&name=Slope,%20Curved%203%20x%202%20x%202/3%20with%20Two%20Studs,%20Wing%20End&category=%5BSlope,%20Curved%5D#T=P">Slope, Curved 3 x 2 x 2/3 with Two Studs, Wing End</a>
+            you might expect that you could find such a part with a search query such as "curved slope 3x2", however this will not work. Due to time
+                restrictions and the complexity of the search engine, searching with two dimensions i.e. "3x1" will not return results like "3x1x1". I will
+                attempt to fix this in the future, however it is not a simple problem.</p>
+    </section>
+    <section id="difficult parts">
+        <h2>Difficult parts</h2>
+        <p>During testing, we have identified a some parts that proved to be particularly difficult to identify, mostly due to having unexpected or overly
+            complex names. I have been adding them to this page in the hope that it will save others some headache</p>
         <figure class="part">
             <img src="http://img.bricklink.com/ItemImage/PL/47456.png">
-            <figcaption>Slope, Curved 3 x 2 x 2/3 with Two Studs, Wing End</figcaption>
+            <figcaption>"Slope, Curved 3 x 2 x 2/3 with Two Studs, Wing End". The killer on this one was the "x 2/3" portion of the name. (See the
+                multidimensional parts section)</figcaption>
         </figure>
         <figure class="part">
             <img src="https://img.bricklink.com/ItemImage/PN/85/52501.png">
-            <figcaption>Slope, Inverted 45 6 x 1 Double with 1 x 4 Cutout</figcaption>
+            <figcaption>"Slope, Inverted 45 6 x 1 Double with 1 x 4 Cutout". I didn't ever think this would be a "slope" category part, and "cutout"
+                was not obvious either.</figcaption>
+        </figure>
+        <figure class="part">
+            <img src="http://img.bricklink.com/ItemImage/PL/41532.png">
+            <figcaption>"Hinge Cylinder 1 x 3 Locking with 1 Finger and Pin with Round Hole and Friction Ridges Lengthwise on Ends". The takeaway here is
+                that these male hinge connectors that click are tagged "Locking with 1 Finger".</figcaption>
         </figure>
 
     </section>
