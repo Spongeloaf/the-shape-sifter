@@ -67,7 +67,7 @@ nav {
   padding: 1rem 1rem 0.5rem 1rem;
   border-bottom: 0.4rem solid #ffc706;
 }
-nav h1 {
+nav > a, nav h1 {
   flex: auto;
   margin: 0;
 }

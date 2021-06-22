@@ -7,7 +7,7 @@ nav {
     padding: 1rem 1rem 0.5rem 1rem;
     border-bottom: $border-width solid $yellow;
 
-    h1 {
+    > a, h1 {
         flex: auto;
         margin: 0;
     }
