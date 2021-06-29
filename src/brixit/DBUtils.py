@@ -113,6 +113,11 @@ def GetUserList():
     return users
 
 
+def SortScores(score):
+    """ Sorts score objects by the number of parts a user has sorted """
+    return score.score
+
+
 def GetHighScores():
     """ Reads the log DB and counts how many parts were labelled by each user"""
     users = GetUserList()
@@ -127,6 +132,7 @@ def GetHighScores():
         if result:
             scores.append(Score(user.userNum, user.userName, result[0]))
 
+    scores.sort(key=SortScores, reverse=True)
     return scores
 
 

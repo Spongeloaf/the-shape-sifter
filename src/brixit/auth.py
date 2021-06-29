@@ -46,6 +46,7 @@ def register():
 
     return render_template('auth/register.html')
 
+
 @bp.route('/login', methods=('GET', 'POST'))
 def login():
     if request.method == 'POST':
@@ -89,6 +90,7 @@ def logout():
     session.clear()
     return redirect(url_for('index'))
 
+
 def login_required(view):
     @functools.wraps(view)
     def wrapped_view(**kwargs):
@@ -98,6 +100,7 @@ def login_required(view):
         return view(**kwargs)
 
     return wrapped_view
+
 
 if __name__ == "__main__":
     GenerateSerial()

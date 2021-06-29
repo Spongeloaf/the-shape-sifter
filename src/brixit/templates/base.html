@@ -20,6 +20,7 @@
             </svg>
           </a>
         </li>
+        <li><a href="{{ url_for('scoreboard') }}">Scores</a></li>
         <li><a href="{{ url_for('auth.logout') }}">Log Out</a></li>
       {% else %}
         <li><a href="{{ url_for('auth.register') }}">Register</a></li>

@@ -15,6 +15,7 @@ import commonUtils as cu
 from gevent.pywsgi import WSGIServer
 from auth import login_required
 import Constants as k
+import DBUtils as DB
 
 
 def create_app():
@@ -30,6 +31,7 @@ def create_app():
 
     app.config.from_pyfile('config.py', silent=True)
 
+
     @app.route('/help')
     @login_required
     def help():
@@ -41,6 +43,15 @@ def create_app():
         for item in k.kCharacterSubstitutions.items():
             substitutions.append([item[0], item[1]])
         return render_template('help.html', substitutions=substitutions)
+
+    @app.route('/scoreboard')
+    @login_required
+    def scoreboard():
+        scores = DB.GetHighScores()
+        if scores is None:
+            scores = []
+        return render_template('scoreboard.html', scores=scores)
+
 
     import auth
     app.register_blueprint(auth.bp)
