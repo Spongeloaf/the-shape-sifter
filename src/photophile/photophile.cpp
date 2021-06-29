@@ -57,15 +57,17 @@ PhotoPhile::PhotoPhile(spdlog::level::level_enum logLevel, string clientName, st
 
 int PhotoPhile::Main()
 {
-	//cv::VideoCapture cap;
-	//if (m_mode == VideoMode::camera)
-	//	cap = cv::VideoCapture(m_cameraNum);
-	//else if (m_mode == VideoMode::ip)
-	//	cap = cv::VideoCapture(m_IPcameraAddress);
-	//else
-	//	cap = cv::VideoCapture(m_videoPath);
-
-	cv::VideoCapture cap = cv::VideoCapture(m_cameraNum);
+	// WARNING: As of OpenCV 4.5.0, you cannot set ANY capture settings on Windows.
+	// There is a bug (feature?) where OpenCV will reset the camera mode to YUV2 
+	// if you change ANY setting. So for now, you have to configure the camera using
+	// an extern tool like OBS.
+	cv::VideoCapture cap;
+	if (m_mode == VideoMode::camera)
+		cap = cv::VideoCapture(m_cameraNum);
+	else if (m_mode == VideoMode::ip)
+		cap = cv::VideoCapture(m_IPcameraAddress);
+	else
+		cap = cv::VideoCapture(m_videoPath);
 
 	// Check if camera opened successfully
 	if (!cap.isOpened())
@@ -74,28 +76,7 @@ int PhotoPhile::Main()
 		return -1;
 	}
 	
-	//auto zz = cv::VideoWriter::fourcc('M', 'J', 'P', 'G'); // 1196444237
-	int zz = cap.get(cv::CAP_PROP_MODE);
-
 	bool result = false;
-
-	if (m_mode == VideoMode::camera)
-	{
-		//result = cap.set(cv::CAP_PROP_FRAME_COUNT, 30);
-		result = cap.set(cv::CAP_PROP_FRAME_WIDTH, 1280);
-		result = cap.set(cv::CAP_PROP_FRAME_HEIGHT, 720);
-		result = cap.set(cv::CAP_PROP_MODE, cv::VideoWriter::fourcc('M', 'J', 'P', 'G'));
-		//cap.set(cv::CAP_PROP_EXPOSURE, -9);
-		//cap.set(cv::CAP_PROP_WB_TEMPERATURE, 3400);
-		//cap.set(cv::CAP_PROP_BRIGHTNESS, 128);
-		//cap.set(cv::CAP_PROP_CONTRAST, 128);
-		//cap.set(cv::CAP_PROP_SATURATION, 128);
-		//cap.set(cv::CAP_PROP_SHARPNESS, 128);
-		//cap.set(cv::CAP_PROP_FOCUS, 35);
-	}
-
-	int zzz = cap.get(cv::CAP_PROP_MODE);
-
 	m_VideoRes.height = int(cap.get(cv::CAP_PROP_FRAME_HEIGHT));
 	m_VideoRes.width = int(cap.get(cv::CAP_PROP_FRAME_WIDTH));
 	m_halfNativeResolution.height = int(float(cap.get(cv::CAP_PROP_FRAME_HEIGHT)) * m_bgSubtractScale);
@@ -122,7 +103,6 @@ int PhotoPhile::Main()
 		auto start = std::chrono::system_clock::now();
 
 		// Capture frame-by-frame
-		// cap >> m_CurrentFrame;
 		ready = cap.read(m_CurrentFrame);
 
 		// If the frame is empty, break immediately
@@ -169,13 +149,14 @@ int PhotoPhile::Main()
 		// Display the resulting frame
 		cv::imshow("Frame Shroud", shroud);
 
-		// Press  ESC on keyboard to exit
+	  // Press  ESC on keyboard to exit
 		char c = (char)cv::waitKey(1);
 		if (c == 27)
 			break;
 
 		string frameProcessInfo = "p1 :" + p1s + ", p2 :" + p2s + ", p3 :" + p3s + ", el :" + elapsed;
 		m_logger->debug(frameProcessInfo);
+		
 		//if (!rects.empty())
 		//{
 		//	if ((rects.front().objectId % 10) == 0)
