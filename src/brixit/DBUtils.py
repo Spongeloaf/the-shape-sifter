@@ -84,9 +84,55 @@ def ScrambleUnlabelledImages():
             os.rename(src, dst)
 
 
+class Score:
+    """ Contains a singe score record """
+    userNum: int
+    userName: str
+    score: int
+
+    def __init__(self, userNum, userName, score):
+        self.userNum = userNum
+        self.userName = userName
+        self.score = score
+
+    def __str__(self):
+        return str(self.userNum) + ", " + self.userName + ", " + str(self.score)
+
+
+def GetUserList():
+    """ Gets a list of users from the user DB """
+    sql = sqlite3.connect(cu.settings.DB_User)
+    command = "SELECT id, username FROM user"
+    cursor = sql.cursor()
+    cursor.execute(command)
+    users = []
+
+    for row in cursor.fetchall():
+        users.append(Score(userNum=row[0], userName=row[1], score=0))
+
+    return users
+
+
+def GetHighScores():
+    """ Reads the log DB and counts how many parts were labelled by each user"""
+    users = GetUserList()
+    sql = sqlite3.connect(cu.settings.DB_LabelLog)
+    cursor = sql.cursor()
+    scores = []
+
+    for user in users:
+        command = "SELECT count(*) FROM labelledParts WHERE user={}".format(user.userNum)
+        cursor.execute(command)
+        result = cursor.fetchone()
+        if result:
+            scores.append(Score(user.userNum, user.userName, result[0]))
+
+    return scores
+
+
 if __name__ == '__main__':
     while True:
-        x = int(input("Enter a number:\r\n0: New serial key\r\n1: Create part DB\r\n2: Create log DB\r\n3: Create user DB\r\n4: Reset labelled images\r\n5: Exit\r\n"))
+        x = int(input("Enter a number:\r\n0: New serial key\r\n1: Create part DB\r\n2: Create log DB\r\n3: Create user DB\r\n4: Reset labelled images\r\n5: Print High scores\r\n6: Exit\r\n"))
 
         if x == 0:
             GenerateSerial()
@@ -112,4 +158,8 @@ if __name__ == '__main__':
                 RevertUnknownFiles()
 
         if x == 5:
+            for score in GetHighScores():
+                print(score)
+
+        if x == 6:
             break
