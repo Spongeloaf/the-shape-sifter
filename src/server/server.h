@@ -48,19 +48,20 @@ private:
 	void HandleBBAck(CommandServer&);
 	CommandBB CreateBBCommand(const Parts::PartInstance&);
 
+	bool m_InitializeOK;
+	bool m_PhotophileSimulator;
 	ClientInterfaces m_clients;
+	CommandServerList m_CommandsForBB;
+	CommandServerList m_CommandsForServer;
+	INIReader m_iniReader;
+	Mode m_mode;
 	PartList m_ActivePartList;
 	path m_assetPath;
 	path m_configPath;
-	INIReader m_iniReader;
-	bool m_InitializeOK;
-	bool m_PhotophileSimulator;
-	std::shared_ptr<spdlog::logger> m_logger;
+	spdlog::level::level_enum m_logLevel = spdlog::level::level_enum::err;
 	std::chrono::milliseconds m_BbPacketTimeout = 50ms;
 	std::chrono::milliseconds m_ServerTickInterval = 32ms;
-	spdlog::level::level_enum m_logLevel = spdlog::level::level_enum::err;
-	CommandServerList m_CommandsForServer;
-	CommandServerList m_CommandsForBB;
+	std::shared_ptr<spdlog::logger> m_logger;
 };
 
 #endif // !SERVER_H_E3C650C14FA146B6AA281A3CC17B52E2

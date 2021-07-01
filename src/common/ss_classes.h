@@ -127,6 +127,11 @@ namespace Parts
 
 };	// namespace Parts
 
+struct Mode
+{
+	bool saveImages = false;
+};
+
 using PartList = std::unordered_map<string, Parts::PartInstance>;
 
 class ClientBase
@@ -157,18 +162,18 @@ protected:
 	void TimeStampPart(Parts::PartInstance& part);
 	unsigned int RandomInteger();
 
-	spdlog::level::level_enum m_logLevel;
-	string m_clientName;
-	string m_assetPath;
-	INIReader* m_iniReader;
 	bool m_isOk;
-	std::shared_ptr<spdlog::logger> m_logger;
-	std::mutex m_OutputLock;
-	std::mutex m_InputLock;
-	PartList m_OutputBuffer;
+	INIReader* m_iniReader;
 	PartList m_InputBuffer;
+	PartList m_OutputBuffer;
+	spdlog::level::level_enum m_logLevel;
 	std::mt19937 m_RandomGenerator;
+	std::mutex m_InputLock;
+	std::mutex m_OutputLock;
+	std::shared_ptr<spdlog::logger> m_logger;
 	std::uniform_int_distribution<> m_RandomDistribution;
+	string m_assetPath;
+	string m_clientName;
 };
 
 #endif // !SS_CLASSES_H_11205B5C8C7047CAAA518874BA2C272C

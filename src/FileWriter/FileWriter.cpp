@@ -17,7 +17,7 @@ FileWriter::FileWriter(spdlog::level::level_enum logLevel, string clientName, st
   std::string path = m_iniReader->Get("brixit", "unlabelledPartsPath", "");
   path.erase(0, 1);
   std::replace(path.begin(), path.end(), '/', '\\');
-  m_unlabelledParts.append(path);
+  m_unlabelledParts.append("\\" + path);
 }
 int FileWriter::Main()
 {

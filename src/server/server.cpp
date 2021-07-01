@@ -53,7 +53,7 @@ bool Server::LoadConfig()
 	m_BbPacketTimeout = std::chrono::milliseconds(m_iniReader.GetInteger("server", "bb_ack_timeout", -1));
 	m_ServerTickInterval = std::chrono::milliseconds(m_iniReader.GetInteger("server", "global_tick_rate", -1));
 	m_PhotophileSimulator = m_iniReader.GetBoolean("server", "photophileSimulator", false);
-
+	m_mode = { m_iniReader.GetBoolean("defaultMode", "saveImages", false) };
 	return true;
 }
 
@@ -191,7 +191,8 @@ void Server::ProcessActivePartList()
 				part.second.m_ServerStatus = Parts::ServerStatus::waitMTM;
 				m_clients.mtm->SendPartToClient(part.second);
 				m_clients.bb->SendCommandsToBBClient(CreateBBCommand(part.second));
-				m_clients.fw->SendPartToClient(part.second);
+				 if (m_mode.saveImages)
+					 m_clients.fw->SendPartToClient(part.second);
 				break;
 
 			case Parts::ServerStatus::MTMDone:
