@@ -63,14 +63,14 @@
     </ClCompile>
     <Link>
       <AdditionalOptions>$(QT_DIR)\lib\*.lib %(AdditionalOptions)</AdditionalOptions>
-      <AdditionalDependencies>$(OPENCV_DIR)\build\x64\vc15\lib\opencv_world450d.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>$(OPENCV_DIR)\build\x64\vc15\lib\opencv_world3414d.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
       <Message>Copying OpenCV and QT dlls</Message>
       <Command>
-		copy "$(OPENCV_DIR)\build\x64\vc15\bin\opencv_world450d.pdb" "$(SolutionDir)out\$(Configuration)\opencv_world450d.pdb"
-		copy "$(OPENCV_DIR)\build\x64\vc15\bin\opencv_world450d.dll" "$(SolutionDir)out\$(Configuration)\opencv_world450d.dll"
-		copy "$(OPENCV_DIR)\build\x64\vc15\bin\opencv_videoio_ffmpeg450_64.dll" "$(SolutionDir)out\$(Configuration)\opencv_videoio_ffmpeg450_64.dll"
+		copy "$(OPENCV_DIR)\build\x64\vc15\bin\opencv_world3414d.pdb" "$(SolutionDir)out\$(Configuration)\opencv_world3414d.pdb"
+		copy "$(OPENCV_DIR)\build\x64\vc15\bin\opencv_world3414d.dll" "$(SolutionDir)out\$(Configuration)\opencv_world3414d.dll"
+		copy "$(OPENCV_DIR)\build\x64\vc15\bin\opencv_videoio_ffmpeg3414_64.dll" "$(SolutionDir)out\$(Configuration)\opencv_videoio_ffmpeg3414_64.dll"
 		copy "$(QT_DIR)\bin\QT5Widgetsd.dll" "$(SolutionDir)out\$(Configuration)\QT5Widgetsd.dll"
 		copy "$(QT_DIR)\bin\QT5Guid.dll" "$(SolutionDir)out\$(Configuration)\QT5Guid.dll"
 		copy "$(QT_DIR)\bin\QT5Cored.dll" "$(SolutionDir)out\$(Configuration)\QT5Cored.dll"
@@ -83,13 +83,13 @@
     </ClCompile>
     <Link>
       <AdditionalOptions>$(QT_DIR)\lib\*.lib %(AdditionalOptions)</AdditionalOptions>
-      <AdditionalDependencies>$(OPENCV_DIR)\build\x64\vc15\lib\opencv_world450.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>$(OPENCV_DIR)\build\x64\vc15\lib\opencv_world3414.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
       <Message>Copying OpenCV and QT dlls</Message>
       <Command>
-		copy "$(OPENCV_DIR)\build\x64\vc15\bin\opencv_world450.dll" "$(SolutionDir)out\$(Configuration)\opencv_world450.dll"
-		copy "$(OPENCV_DIR)\build\x64\vc15\bin\opencv_videoio_ffmpeg450_64.dll" "$(SolutionDir)out\$(Configuration)\opencv_videoio_ffmpeg450_64.dll"
+		copy "$(OPENCV_DIR)\build\x64\vc15\bin\opencv_world3414.dll" "$(SolutionDir)out\$(Configuration)\opencv_world3414.dll"
+		copy "$(OPENCV_DIR)\build\x64\vc15\bin\opencv_videoio_ffmpeg3414_64.dll" "$(SolutionDir)out\$(Configuration)\opencv_videoio_ffmpeg3414_64.dll"
 		copy "$(QT_DIR)\bin\QT5Widgets.dll" "$(SolutionDir)out\$(Configuration)\QT5Widgets.dll"
 		copy "$(QT_DIR)\bin\QT5Gui.dll" "$(SolutionDir)out\$(Configuration)\QT5Gui.dll"
 		copy "$(QT_DIR)\bin\QT5Core.dll" "$(SolutionDir)out\$(Configuration)\QT5Core.dll"

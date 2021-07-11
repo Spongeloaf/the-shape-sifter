@@ -77,6 +77,21 @@ int PhotoPhile::Main()
 	}
 	
 	bool result = false;
+	if (m_mode == VideoMode::camera)
+	{
+		result = cap.set(cv::CAP_PROP_FRAME_WIDTH, 1920);
+		result = cap.set(cv::CAP_PROP_FRAME_HEIGHT, 1080);
+		result = cap.set(cv::CAP_PROP_EXPOSURE, -9);
+		cap.set(CV_CAP_PROP_SETTINGS, 0);
+		//result = cap.set(cv::CAP_PROP_WB_TEMPERATURE, 3400); // failed
+		//result = cap.set(cv::CAP_PROP_BRIGHTNESS, 128); // failed
+		//result = cap.set(cv::CAP_PROP_CONTRAST, 128);
+		//result = cap.set(cv::CAP_PROP_SATURATION, 128);
+		//result = cap.set(cv::CAP_PROP_SHARPNESS, 128);
+		//result = cap.set(cv::CAP_PROP_FRAME_COUNT, 30);
+		//result = cap.set(cv::CAP_PROP_FOCUS, 35);
+	}
+
 	m_VideoRes.height = int(cap.get(cv::CAP_PROP_FRAME_HEIGHT));
 	m_VideoRes.width = int(cap.get(cv::CAP_PROP_FRAME_WIDTH));
 	m_halfNativeResolution.height = int(float(cap.get(cv::CAP_PROP_FRAME_HEIGHT)) * m_bgSubtractScale);
